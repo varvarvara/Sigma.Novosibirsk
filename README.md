@@ -1,1 +1,1 @@
-# SIGMA.NSK
+# Sigma.Novosibirsk
