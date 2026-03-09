@@ -1,0 +1,72 @@
+from sqlalchemy import Column, Integer, String, ForeignKey, Enum,  TIMESTAMP
+from sqlalchemy.orm import relationship
+from ..db.base import Base
+
+class Staff(Base):
+    __tablename__ = "staff"
+
+    id = Column(Integer, primary_key=True, index=True)
+    first_name = Column(String(50), nullable=False)
+    last_name = Column(String(50), nullable=False)
+    partonymic = Column(String(50))
+    email = Column(String(254), unique=True, nullable=False)
+    staff_role = Column(Enum('Teacher', 'Admin', name="staff_roles"), nullable=False)
+
+    courses = relationship("Course", back_populates="staff")
+    slots = relationship("Slot", back_populates="staff") 
+    schedules = relationship("Schedule", back_populates="staff")
+    extracurricular_activities = relationship("ExtracurricularActivity", back_populates="staff")
+    
+
+class Student(Base):
+    __tablename__ = "students"
+
+    id = Column(Integer, primary_key=True, index=True)
+    first_name = Column(String(50), nullable=False)
+    last_name = Column(String(50), nullable=False)
+    partonymic = Column(String(50))
+    email = Column(String(254), unique=True, nullable=False)
+    phone = Column(String(20), nullable=False)
+    tg_nickname = Column(String(50))
+    year_of_study = Column(Integer, nullable=False)
+    city = Column(String(30))
+    school = Column(String(100))
+    parent_name = Column(String(150), nullable=False)
+    parent_phone = Column(String(20), nullable=False)
+    student_status = Column(Enum('Registered', 'Enrolled', 'Blocked', name="student_statuses"), nullable=False)
+
+    enrollments = relationship("Enrollment", back_populates="student")
+    attendance = relationship("Attendance", back_populates="student")
+    gamification = relationship("Gamification", back_populates="student")
+    
+
+class PreRegistration(Base):
+    __tablename__ = "pre_registration"
+
+    id = Column(Integer, primary_key=True, index=True)
+    first_name = Column(String(50), nullable=False)
+    last_name = Column(String(50), nullable=False)
+    partonymic = Column(String(50))
+    pre_registration_status = Column(Enum('PendingApproval', 'Approved', name="pre_registration_statuses"))
+
+    # Добавленные колонки
+    phone = Column(String(20), nullable=False)
+    email = Column(String(254), unique=True, nullable=False)
+    tg_nickname = Column(String(50))
+
+    
+class TeacherCertificate(Base):
+    __tablename__ = "teacher_certificate"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("staff.id"), nullable=False)  # Ссылка на преподавателя
+    course_id = Column(Integer, ForeignKey("course.id"), nullable=False)  # Ссылка на курс
+    issued_by = Column(Integer, ForeignKey("staff.id"), nullable=False)  # Ссылка на сотрудника, который выдал сертификат
+    issued_at = Column(TIMESTAMP, default="now()")  # Дата и время выдачи
+    certificate_url = Column(String(200), nullable=False)  # Ссылка на сертификат
+    certificate_status = Column(String(50))  # Статус сертификата (например, "Выдан", "Истекший")
+
+    user = relationship("Staff", foreign_keys=[user_id], back_populates="teacher_certificates")
+    course = relationship("Course", back_populates="teacher_certificates")
+    issuer = relationship("Staff", foreign_keys=[issued_by], back_populates="issued_certificates")
+    
