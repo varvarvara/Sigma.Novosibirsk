@@ -1,6 +1,6 @@
 from sqlalchemy import Column, Integer, ForeignKey, Date, Time
 from sqlalchemy.orm import relationship
-from ..db.base import Base
+from app.db.base import Base
 
 class Schedule(Base):
     __tablename__ = "schedule"
@@ -11,7 +11,7 @@ class Schedule(Base):
     lesson_date = Column(Date, nullable=False)
     lesson_time = Column(Time, nullable=False)
 
-    staff = relationship("Staff", back_populates="slots")
+    staff = relationship("Staff", back_populates="schedules")
     attendances = relationship("Attendance", back_populates="schedule")
 
 class Slot(Base):

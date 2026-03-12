@@ -1,6 +1,6 @@
 from sqlalchemy import Column, Integer, String, Text, ForeignKey, Enum, TIMESTAMP
 from sqlalchemy.orm import relationship
-from ..db.base import Base
+from app.db.base import Base
 
 class Course(Base):
     __tablename__ = "course"
@@ -17,6 +17,9 @@ class Course(Base):
     staff = relationship("Staff", back_populates="courses")
     course_classes = relationship("CourseClass", back_populates="course")
     enrollments = relationship("Enrollment", back_populates="course")
+    teacher_certificates = relationship("TeacherCertificate", back_populates="course")
+    achievements = relationship("Achievement", back_populates="course")
+    student_certificates = relationship("StudentCertificate", back_populates="course")
 
 ## не понятно, пока куда таблицу courseclass
 class CourseClass(Base):

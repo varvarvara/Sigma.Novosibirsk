@@ -1,6 +1,6 @@
 from sqlalchemy import Column, Integer, ForeignKey, String
 from sqlalchemy.orm import relationship
-from ..db.base import Base
+from app.db.base import Base
 
 class Gamification(Base):
     __tablename__ = "gamification"
@@ -44,6 +44,8 @@ class ExtracurricularTeam(Base):
 
     # Связь с моделью Student
     student = relationship("Student", back_populates="extracurricular_teams")
+    members = relationship("ExtracurricularTeamMember", back_populates="team")
+    scores = relationship("ExtracurricularScore", back_populates="team")
     
     
 class ExtracurricularTeamMember(Base):

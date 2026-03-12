@@ -1,6 +1,6 @@
 from sqlalchemy import Column, Integer, String, ForeignKey, Enum,  TIMESTAMP
 from sqlalchemy.orm import relationship
-from ..db.base import Base
+from db.base import Base
 
 class Staff(Base):
     __tablename__ = "staff"
@@ -48,8 +48,6 @@ class PreRegistration(Base):
     last_name = Column(String(50), nullable=False)
     partonymic = Column(String(50))
     pre_registration_status = Column(Enum('PendingApproval', 'Approved', name="pre_registration_statuses"))
-
-    # Добавленные колонки
     phone = Column(String(20), nullable=False)
     email = Column(String(254), unique=True, nullable=False)
     tg_nickname = Column(String(50))
