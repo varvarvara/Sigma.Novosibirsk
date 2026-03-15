@@ -1,7 +1,6 @@
-from sqlalchemy import Column, Integer, Boolean, ForeignKey, String, TIMESTAMP
+from sqlalchemy import Column, Integer, Boolean, ForeignKey, String, TIMESTAMP, Text, Enum
 from sqlalchemy.orm import relationship
 from app.db.base import Base
-from enums import CertificateStatuses
 
 class Achievement(Base):
     __tablename__ = "achievement"
@@ -46,9 +45,7 @@ class StudentCertificate(Base):
     certificate_url = Column(Text)
 
     certificate_status = Column(
-        Enum(cer"in_progress", "issued", name="certificate_statuses"),
-        nullable=False
-    )
+        Enum("In progress", "Issued", name="certificate_statuses"),nullable=False)
 
     student = relationship("Students", back_populates="student_certificates")
     course = relationship("Course", back_populates="student_certificates")
