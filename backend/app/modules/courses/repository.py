@@ -70,6 +70,29 @@ class CourseRepository:
     
         return None 
     
+    def get_teacher_by_course(self, course_id: int = None, course_title: str = None):
+
+        query = (
+        self.db.query(Staff.first_name, Staff.last_name)
+        .join(Course, Course.staff_id == Staff.id)
+        )
+
+        if course_id:
+            query = query.filter(Course.id == course_id)
+
+        elif course_title:
+            query = query.filter(Course.title == course_title)
+
+        teacher = query.first()
+
+        if not teacher:
+            return "Преподаватель не найден!"
+
+        return {
+            "first_name": teacher.first_name,
+            "last_name": teacher.last_name
+        }
+    
     
     def create_course(self, title: str, description: str, staff_id: int, course_status: str, syllabus_url: str):
         db_course = Course(

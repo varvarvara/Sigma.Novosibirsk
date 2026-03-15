@@ -14,3 +14,7 @@ class StudentStatuses(str, Enum):
 class PreRegistrationStatuses(str, Enum):
     PENDING_APPROVAL = "PendingApproval"
     APPROVED = "Approved"
+
+class CertificateStatuses(str, Enum):
+    IN_PROGRESS = "In progress"
+    ISSUED = "Issued"
