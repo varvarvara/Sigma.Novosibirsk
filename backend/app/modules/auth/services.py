@@ -1,74 +1,75 @@
-from fastapi import HTTPException
+from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
-from app.security.hashHelper import HashHelper
+
+from app.modules.auth.schemas import LoginRequest, UserWithToken
+from app.modules.users.repository import UsersRepository
 from app.security.authHandler import AuthHandler
-from app.modules.auth.repository import UserRepository
-from app.modules.auth.schemas import (
-    StudentInCreate,
-    StudentInLogin,
-    StudentOutput,
-    StaffInCreate,
-    StaffInLogin,
-    StaffOutput,
-    UserWithToken,
-)
+from app.security.hashHelper import HashHelper
 
-class UserServices:
+
+class AuthService:
     def __init__(self, session: Session):
-        self._user_repository = UserRepository(session=session)
+        self._users_repository = UsersRepository(session=session)
 
-    def signup_student(self, user_details: StudentInCreate) -> StudentOutput:
-        if self._user_repository.user_exist_by_email(email=user_details.email):
-            raise HTTPException(status_code=400, detail="Пользователь уже существует, выполните вход")
-
-        password_hash = HashHelper.get_password_hash(plain_password=user_details.password)
-        student = self._user_repository.create_student_user(
-            user_data=user_details,
-            password_hash=password_hash,
+    @staticmethod
+    def _credentials_exception(detail: str = "Incorrect email or password") -> HTTPException:
+        return HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=detail,
+            headers={"WWW-Authenticate": "Bearer"},
         )
-        return StudentOutput.model_validate(student)
 
-    def login_student(self, login_details: StudentInLogin) -> UserWithToken:
-        student = self._user_repository.get_student_by_email(email=login_details.email)
-        if student is None:
-            raise HTTPException(status_code=400, detail="Пожалуйста, создайте аккаунт")
-
-        if not HashHelper.verify_password(
-            plain_password=login_details.password,
-            hashed_password=student["password_hash"],
-        ):
-            raise HTTPException(status_code=400, detail="Неверный email или пароль")
-
-        token = AuthHandler.sign_jwt(user_id=student.id)
-        if not token:
-            raise HTTPException(status_code=500, detail="Невозможно выполнить запрос обработки")
-
-        return UserWithToken(token=token)
-
-    def signup_staff(self, user_details: StaffInCreate) -> StaffOutput:
-        if self._user_repository.user_exist_by_email(email=user_details.email):
-            raise HTTPException(status_code=400, detail="Пользователь уже существует, выполните вход")
-
-        password_hash = HashHelper.get_password_hash(plain_password=user_details.password)
-        staff = self._user_repository.create_staff_user(
-            user_data=user_details,
-            password_hash=password_hash,
+    @staticmethod
+    def _issue_tokens(user_id: int, user_type: str, staff_role: str | None = None) -> UserWithToken:
+        access_token = AuthHandler.sign_jwt(
+            user_id=user_id,
+            user_type=user_type,
+            staff_role=staff_role,
         )
-        return StaffOutput.model_validate(staff)
+        refresh_token = AuthHandler.create_refresh_token(
+            user_id=user_id,
+            user_type=user_type,
+            staff_role=staff_role,
+        )
+        return UserWithToken(access_token=access_token, refresh_token=refresh_token)
 
-    def login_staff(self, login_details: StaffInLogin) -> UserWithToken:
-        staff = self._user_repository.get_staff_by_email(email=login_details.email)
-        if staff is None:
-            raise HTTPException(status_code=400, detail="Пожалуйста, создайте аккаунт")
+    def login(self, login_details: LoginRequest) -> UserWithToken:
+        student = self._users_repository.get_student_by_email(email=login_details.email)
+        if student is not None:
+            if not HashHelper.verify_password(
+                plain_password=login_details.password,
+                hashed_password=student.password_hash,
+            ):
+                raise self._credentials_exception()
+            return self._issue_tokens(user_id=student.id, user_type="student")
 
-        if not HashHelper.verify_password(
-            plain_password=login_details.password,
-            hashed_password=staff.password_hash,
-        ):
-            raise HTTPException(status_code=400, detail="Неверный email или пароль")
+        staff = self._users_repository.get_staff_by_email(email=login_details.email)
+        if staff is not None:
+            if not HashHelper.verify_password(
+                plain_password=login_details.password,
+                hashed_password=staff.password_hash,
+            ):
+                raise self._credentials_exception()
 
-        token = AuthHandler.sign_jwt(user_id=staff.id)
-        if not token:
-            raise HTTPException(status_code=500, detail="Невозможно выполнить запрос обработки")
+            role_value = staff.staff_role.value if hasattr(staff.staff_role, "value") else staff.staff_role
+            return self._issue_tokens(user_id=staff.id, user_type="staff", staff_role=role_value)
 
-        return UserWithToken(token=token)
+        raise self._credentials_exception(detail="Пожалуйста, создайте аккаунт")
+
+    def refresh_tokens(self, refresh_token: str) -> UserWithToken:
+        try:
+            token_data = AuthHandler.validate_refresh_token(refresh_token)
+        except ValueError as error:
+            raise self._credentials_exception(detail=str(error))
+
+        AuthHandler.revoke_refresh_token(refresh_token)
+
+        return self._issue_tokens(
+            user_id=int(token_data["user_id"]),
+            user_type=token_data["user_type"],
+            staff_role=token_data.get("staff_role"),
+        )
+
+    def logout(self, refresh_token: str | None = None) -> None:
+        if refresh_token:
+            AuthHandler.revoke_refresh_token(refresh_token)

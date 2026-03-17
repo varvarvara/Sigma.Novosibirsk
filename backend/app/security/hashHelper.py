@@ -1,4 +1,4 @@
-from bcrypt import checkpw, hashpw, gensault
+from bcrypt import checkpw, hashpw, gensalt
 
 class HashHelper(object):
 
@@ -14,5 +14,5 @@ class HashHelper(object):
     def get_password_hash(plain_password: str):
         return hashpw(
             plain_password.encode("utf-8"),
-            gensault()
+            gensalt()
         ).decode('utf-8')

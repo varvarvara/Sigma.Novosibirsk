@@ -1,60 +1,24 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Response, status
 from sqlalchemy.orm import Session
 
 from app.db.session import get_db
-from app.modules.auth.schemas import (
-    StudentInCreate,
-    StudentInLogin,
-    StudentOutput,
-    StaffInCreate,
-    StaffInLogin,
-    StaffOutput,
-    UserWithToken,
-)
-from app.modules.auth.services import UserServices
-from fastapi.security import OAuth2PasswordRequestForm
-
+from app.modules.auth.schemas import LoginRequest, LogoutRequest, RefreshTokenRequest, UserWithToken
+from app.modules.auth.services import AuthService
 
 authRouter = APIRouter(prefix="/auth", tags=["auth"])
 
-@authRouter.post("/token", response_model=UserWithToken)
-def token(form_data: OAuth2PasswordRequestForm = Depends(), session: Session = Depends(get_db)):
-    return UserServices(session=session).login_oauth2(
-        email=form_data.username,
-        password=form_data.password,
-    )
 
-@authRouter.post("/students/login", status_code=200, response_model=UserWithToken)
-def studentLogin(loginDetails: StudentInLogin, session: Session = Depends(get_db)):
-    try:
-        return UserServices(session=session).login_student(login_details=loginDetails)
-    except Exception as error:
-        print(error)
-        raise error
+@authRouter.post("/login", response_model=UserWithToken)
+def login(body: LoginRequest, session: Session = Depends(get_db)):
+    return AuthService(session=session).login(login_details=body)
 
 
-@authRouter.post("/students/signup", status_code=201, response_model=StudentOutput)
-def studentSignUp(signUpDetails: StudentInCreate, session: Session = Depends(get_db)):
-    try:
-        return UserServices(session=session).signup_student(user_details=signUpDetails)
-    except Exception as error:
-        print(error)
-        raise error
+@authRouter.post("/refresh", response_model=UserWithToken)
+def refresh(body: RefreshTokenRequest, session: Session = Depends(get_db)):
+    return AuthService(session=session).refresh_tokens(refresh_token=body.refresh_token)
 
 
-@authRouter.post("/staff/login", status_code=200, response_model=UserWithToken)
-def staffLogin(loginDetails: StaffInLogin, session: Session = Depends(get_db)):
-    try:
-        return UserServices(session=session).login_staff(login_details=loginDetails)
-    except Exception as error:
-        print(error)
-        raise error
-
-
-@authRouter.post("/staff/signup", status_code=201, response_model=StaffOutput)
-def staffSignUp(signUpDetails: StaffInCreate, session: Session = Depends(get_db)):
-    try:
-        return UserServices(session=session).signup_staff(user_details=signUpDetails)
-    except Exception as error:
-        print(error)
-        raise error
+@authRouter.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
+def logout(body: LogoutRequest, session: Session = Depends(get_db)) -> Response:
+    AuthService(session=session).logout(refresh_token=body.refresh_token)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)

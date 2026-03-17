@@ -1,55 +1,131 @@
-# import os
-# import redis, json
-# from sqlalchemy.orm import Session
+import json
+import os
+import time
+from pathlib import Path
 
-# from redis import asyncio as aioredis
-# from redis.asyncio.client import Redis
-# from decouple import config
+from dotenv import load_dotenv
+from redis import Redis
+from redis.exceptions import RedisError
 
-# from app.modules.attendance.models import Attendance, Achievement
-# from app.modules.gamification.models import Gamification, GamificationLevel, ExtracurricularScore, ExtracurricularTeam, ExtracurricularTeamMember, ExtracurricularActivity 
+BASE_DIR = Path(__file__).resolve().parents[2]
+load_dotenv(BASE_DIR / ".env")
 
-# r = redis.ConnectionPool(host="localhost", port=6379, decode_response=True)
-# redis_client = Redis | None = None
+REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
+class TokenStore:
+    def __init__(self):
+        self._redis: Redis | None = None
+        self._refresh_tokens_memory: dict[str, dict] = {}
+        self._blacklisted_jti_memory: dict[str, int] = {}
+        self._init_redis()
 
-# # async def init_redis():
-# #     """Initialize Redis connection at app startup"""
-# #     global redis
-# #     redis = Redis(
-# #         host=conf.redis_host,
-# #         port=conf.redis_port,
-# #         db=conf.redis_db,
-# #         password=conf.redis_password,
-# #         decode_responses=True,
-# #     )
+    def _init_redis(self) -> None:
+        try:
+            client = Redis.from_url(REDIS_URL, decode_responses=True)
+            client.ping()
+            self._redis = client
+        except RedisError:
+            self._redis = None
 
-# async def close_redis():
-#     """Close Redis connection at app shutdown"""
-#     global redis
-#     if redis:
-#         await redis.close()
+    @staticmethod
+    def _now_ts() -> int:
+        return int(time.time())
 
-# async def get_cache(key: str):
-#     if not redis:
-#         raise RuntimeError("Redis not initialized. Call init_redis() first.")
-#     return await redis.get(key)
+    def _cleanup_memory(self) -> None:
+        now_ts = self._now_ts()
 
-# async def set_cache(key: str, value: str, ttl: int = 300):
-#     if not redis:
-#         raise RuntimeError("Redis not initialized. Call init_redis() first.")
-#     await redis.set(key, value, ex=ttl)
+        for refresh_token, info in list(self._refresh_tokens_memory.items()):
+            if info["exp"] <= now_ts:
+                self._refresh_tokens_memory.pop(refresh_token, None)
 
-# async def delete_cache(key: str):
-#     if not redis:
-#         raise RuntimeError("Redis not initialized. Call init_redis() first.")
-#     await redis.delete(key)
+        for token_jti, exp_ts in list(self._blacklisted_jti_memory.items()):
+            if exp_ts <= now_ts:
+                self._blacklisted_jti_memory.pop(token_jti, None)
 
-#получит кэщ для пользователя по баллам, чтобы не было постоянного запроса в бд
-#проверка, что кэш был
-#если нет  - бд
+    def save_refresh(self, refresh_token: str, payload: dict, ttl_seconds: int) -> None:
+        ttl = max(ttl_seconds, 1)
+        if self._redis:
+            self._redis.setex(f"auth:refresh:{refresh_token}", ttl, json.dumps(payload))
+            return
 
-#на сколько сохраняется кэш
+        self._refresh_tokens_memory[refresh_token] = {
+            "payload": payload,
+            "exp": self._now_ts() + ttl,
+        }
 
-#инвалидация
+    def get_refresh(self, refresh_token: str) -> dict | None:
+        if self._redis:
+            raw = self._redis.get(f"auth:refresh:{refresh_token}")
+            if not raw:
+                return None
+            return json.loads(raw)
 
-#сумму
+        self._cleanup_memory()
+        info = self._refresh_tokens_memory.get(refresh_token)
+        if not info:
+            return None
+        return info["payload"]
+
+    def revoke_refresh(self, refresh_token: str) -> None:
+        if self._redis:
+            self._redis.delete(f"auth:refresh:{refresh_token}")
+            return
+
+        self._refresh_tokens_memory.pop(refresh_token, None)
+
+    def blacklist(self, token_jti: str, access_exp_ts: int) -> None:
+        ttl = max(access_exp_ts - self._now_ts(), 1)
+        if self._redis:
+            self._redis.setex(f"auth:blacklist:{token_jti}", ttl, "1")
+            return
+
+        self._blacklisted_jti_memory[token_jti] = access_exp_ts
+
+    def is_blacklisted(self, token_jti: str) -> bool:
+        if self._redis:
+            return self._redis.exists(f"auth:blacklist:{token_jti}") == 1
+
+        self._cleanup_memory()
+        return token_jti in self._blacklisted_jti_memory
+
+
+class CacheStore:
+    def __init__(self, redis_client: Redis | None):
+        self._redis = redis_client
+
+    def set_json(self, key: str, value: dict, ttl_seconds: int = 300) -> None:
+        if not self._redis:
+            return
+        self._redis.setex(key, max(ttl_seconds, 1), json.dumps(value))
+
+    def get_json(self, key: str) -> dict | None:
+        if not self._redis:
+            return None
+        raw = self._redis.get(key)
+        if not raw:
+            return None
+        return json.loads(raw)
+
+    def delete(self, key: str) -> None:
+        if not self._redis:
+            return
+        self._redis.delete(key)
+
+
+token_store = TokenStore()
+cache_store = CacheStore(token_store._redis)
+
+
+def set_cache(key: str, value: dict, ttl_seconds: int = 300) -> None:
+    cache_store.set_json(key=key, value=value, ttl_seconds=ttl_seconds)
+
+
+def get_cache(key: str) -> dict | None:
+    return cache_store.get_json(key=key)
+
+
+def delete_cache(key: str) -> None:
+    cache_store.delete(key=key)
+
+
+def gamification_cache_key(student_id: int) -> str:
+    return f"gamification:student:{student_id}"

@@ -1,6 +1,6 @@
 from sqlalchemy import Column, Integer, String, ForeignKey, Enum,  TIMESTAMP
 from sqlalchemy.orm import relationship
-from db.base import Base
+from app.db.base import Base
 
 class Staff(Base):
     __tablename__ = "staff"
@@ -10,6 +10,7 @@ class Staff(Base):
     last_name = Column(String(50), nullable=False)
     partonymic = Column(String(50))
     email = Column(String(254), unique=True, nullable=False)
+    password_hash = Column(String(255), nullable=False)
     staff_role = Column(Enum('Teacher', 'Admin', name="staff_roles"), nullable=False)
 
     courses = relationship("Course", back_populates="staff")
@@ -26,6 +27,7 @@ class Student(Base):
     last_name = Column(String(50), nullable=False)
     partonymic = Column(String(50))
     email = Column(String(254), unique=True, nullable=False)
+    password_hash = Column(String(255), nullable=False)
     phone = Column(String(20), nullable=False)
     tg_nickname = Column(String(50))
     year_of_study = Column(Integer, nullable=False)

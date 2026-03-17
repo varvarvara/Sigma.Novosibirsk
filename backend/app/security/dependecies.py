@@ -1,15 +1,27 @@
-from fastapi import Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordBearer
+from fastapi import Depends, HTTPException, Request, status
+from jose import JWTError
 from sqlalchemy.orm import Session
 
 from app.db.session import get_db
-from app.modules.auth.repository import UserRepository
+from app.modules.users.repository import UsersRepository
 from app.security.authHandler import AuthHandler
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/token")
+
+def get_token_from_header(request: Request) -> str:
+    authorization = request.headers.get("Authorization")
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authorization header missing or invalid",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    return authorization.split(" ", 1)[1]
 
 
-def get_current_user(token: str = Depends(oauth2_scheme), session: Session = Depends(get_db)):
+def get_current_user(
+    token: str = Depends(get_token_from_header),
+    session: Session = Depends(get_db),
+):
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
@@ -18,7 +30,7 @@ def get_current_user(token: str = Depends(oauth2_scheme), session: Session = Dep
 
     try:
         payload = AuthHandler.decode_jwt(token)
-    except Exception:
+    except JWTError:
         raise credentials_exception
 
     user_id = payload.get("sub")
@@ -27,7 +39,7 @@ def get_current_user(token: str = Depends(oauth2_scheme), session: Session = Dep
     if user_id is None or user_type is None:
         raise credentials_exception
 
-    repository = UserRepository(session=session)
+    repository = UsersRepository(session=session)
 
     if user_type == "student":
         user = repository.get_student_by_id(int(user_id))
