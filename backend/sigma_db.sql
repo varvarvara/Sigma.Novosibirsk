@@ -110,9 +110,6 @@ CREATE TABLE extracurricular_score (
 
 CREATE TABLE schedule (
 	id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-	--student_id BIGINT, -- как будто лучше убрать отсюда студентов, по курсам ориентироваться
-	--FOREIGN KEY (student_id) REFERENCES students(id)
-	--ON DELETE CASCADE,
 	staff_id BIGINT,
 	FOREIGN KEY (staff_id) REFERENCES staff(id)
 	ON DELETE CASCADE,
@@ -127,10 +124,10 @@ CREATE TABLE schedule (
 
 CREATE TABLE attendance (
 	id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-	student_id BIGINT,
+	student_id BIGINT NOT NULL,
 	FOREIGN KEY (student_id) REFERENCES students(id)
 	ON DELETE CASCADE,
-	schedule_id BIGINT,
+	schedule_id BIGINT NOT NULL,
 	FOREIGN KEY (schedule_id) REFERENCES schedule(id)
 	ON DELETE CASCADE,
 	attendance_status BOOLEAN NOT NULL,
@@ -188,11 +185,7 @@ CREATE TABLE gamification_level(
 CREATE TABLE achievement (
     id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     achievement_description VARCHAR(100) NOT NULL,
-    course_id BIGINT NOT NULL,
-    FOREIGN KEY (course_id) REFERENCES course(id)
-    ON DELETE CASCADE,
-    achievement_score INT NOT NULL,
-    CONSTRAINT cn_achievement_unique UNIQUE (course_id, achievement_description)
+    achievement_score INT NOT NULL
 );
 
 CREATE TABLE student_achievement (
@@ -203,12 +196,14 @@ CREATE TABLE student_achievement (
     achievement_id BIGINT NOT NULL,
     FOREIGN KEY (achievement_id) REFERENCES achievement(id)
     ON DELETE CASCADE,
+    course_id BIGINT NOT NULL,
+    FOREIGN KEY (course_id) REFERENCES course(id)
+    ON DELETE CASCADE,
     awarded_at timestamptz DEFAULT now(),
-    CONSTRAINT cn_student_achievement UNIQUE (student_id, achievement_id)
+    CONSTRAINT cn_student_achievement UNIQUE (student_id, achievement_id, course_id)
 );
 
-
-CREATE TYPE certificate_statuses AS ENUM ('In progress', 'Issued'); -- поменять этот енам в новой бд
+CREATE TYPE certificate_statuses AS ENUM ('In progress', 'Issued'); 
 
 CREATE TABLE student_certificate (
 	id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
