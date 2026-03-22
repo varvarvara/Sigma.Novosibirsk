@@ -165,7 +165,7 @@ CREATE TABLE gamification_level (
 -- Extracurricular
 CREATE TABLE extracurricular_activity (
     id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    ex_course_name VARCHAR(100) NOT NULL,
+    ex_course_name VARCHAR(100) UNIQUE NOT NULL,
     staff_id BIGINT NOT NULL REFERENCES staff(id) ON DELETE CASCADE,
     ex_course_score INT NOT NULL
 );
@@ -173,7 +173,7 @@ CREATE TABLE extracurricular_activity (
 CREATE TABLE extracurricular_team (
     id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     ex_team_number INT UNIQUE NOT NULL,
-    student_id BIGINT NOT NULL REFERENCES students(id) ON DELETE CASCADE
+    ex_team_name VARCHAR(50) NOT NULL
 );
 
 CREATE TABLE extracurricular_team_members (
@@ -244,3 +244,232 @@ CREATE TRIGGER trg_course_updated_at
 BEFORE UPDATE ON course
 FOR EACH ROW
 EXECUTE FUNCTION set_updated_at();
+
+CREATE OR REPLACE PROCEDURE approve_pre_registration(
+    p_pre_registration_id BIGINT,
+    p_email TEXT
+)
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    v_first_name TEXT;
+    v_last_name TEXT;
+    v_partonymic TEXT;
+BEGIN
+
+    SELECT first_name, last_name, partonymic
+    INTO v_first_name, v_last_name, v_partonymic
+    FROM pre_registration
+    WHERE id = p_pre_registration_id;
+
+    INSERT INTO staff(
+        first_name,
+        last_name,
+        partonymic,
+        email,
+        staff_role
+    )
+    VALUES (
+        v_first_name,
+        v_last_name,
+        v_partonymic,
+        p_email,
+        'Teacher'::staff_roles
+    );
+
+    UPDATE pre_registration
+    SET pre_registration_status = 'Approved'
+    WHERE id = p_pre_registration_id;
+
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION recalc_gamification(p_student_id BIGINT) --проверить считаемость ф-и и написать под всех
+RETURNS VOID
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    v_attendance_score INT;
+    v_achievement_score INT;
+    v_extracurricular_score INT;
+    v_total_score INT;
+    v_level INT;
+BEGIN
+
+-- attendance (например 3 балла за посещение)
+
+SELECT COUNT(*) * 3
+INTO v_attendance_score
+FROM attendance
+WHERE student_id = p_student_id
+AND attendance_status = TRUE;
+
+-- achievement
+
+SELECT COALESCE(SUM(achievement_score),0)
+INTO v_achievement_score
+FROM achievement
+WHERE student_id = p_student_id;
+
+-- extracurricular
+
+SELECT COALESCE(SUM(a.ex_course_score),0)
+INTO v_extracurricular_score
+FROM extracurricular_team_members m
+JOIN extracurricular_score s
+ON m.team_id = s.team_id
+JOIN extracurricular_activity a
+ON s.ex_course_id = a.id
+WHERE m.student_id = p_student_id;
+
+-- total
+
+v_total_score :=
+v_attendance_score +
+v_achievement_score +
+v_extracurricular_score;
+
+-- level
+
+SELECT gamification_level
+INTO v_level
+FROM gamification_level
+WHERE gamification_level_score <= v_total_score
+ORDER BY gamification_level_score DESC
+LIMIT 1;
+
+-- update gamification
+
+UPDATE gamification
+SET
+attendance_score = v_attendance_score,
+achievement_score = v_achievement_score,
+extracurricular_score = v_extracurricular_score,
+level = COALESCE(v_level,0)
+WHERE student_id = p_student_id;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION recalc_gamification_all()
+RETURNS VOID
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    r RECORD;
+BEGIN
+
+FOR r IN
+    SELECT student_id FROM gamification
+LOOP
+    PERFORM recalc_gamification(r.student_id);
+END LOOP;
+
+END;
+$$;
+
+
+CREATE OR REPLACE FUNCTION trg_attendance_gamification()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+AS $$
+BEGIN
+PERFORM recalc_gamification(NEW.student_id);
+RETURN NEW;
+END;
+$$;
+
+CREATE TRIGGER attendance_gamification_trigger
+AFTER INSERT OR UPDATE
+ON attendance
+FOR EACH ROW
+EXECUTE FUNCTION trg_attendance_gamification();
+
+CREATE OR REPLACE FUNCTION trg_achievement_gamification()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+AS $$
+BEGIN
+PERFORM recalc_gamification(NEW.student_id);
+RETURN NEW;
+END;
+$$;
+
+CREATE TRIGGER achievement_gamification_trigger
+AFTER INSERT OR UPDATE
+ON achievement
+FOR EACH ROW
+EXECUTE FUNCTION trg_achievement_gamification();
+
+CREATE OR REPLACE FUNCTION trg_extracurricular_gamification()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    v_student_id BIGINT;
+BEGIN
+FOR v_student_id IN
+SELECT student_id
+FROM extracurricular_team_members
+WHERE team_id = NEW.team_id
+LOOP
+    PERFORM recalc_gamification(v_student_id);
+END LOOP;
+RETURN NEW;
+END;
+$$;
+
+CREATE TRIGGER extracurricular_gamification_trigger
+AFTER INSERT OR UPDATE
+ON extracurricular_score
+FOR EACH ROW
+EXECUTE FUNCTION trg_extracurricular_gamification();
+
+CREATE OR REPLACE FUNCTION create_gamification_row()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+AS $$
+BEGIN
+INSERT INTO gamification(student_id)
+VALUES(NEW.id);
+RETURN NEW;
+END;
+$$;
+
+CREATE TRIGGER student_gamification_init
+AFTER INSERT
+ON students
+FOR EACH ROW
+EXECUTE FUNCTION create_gamification_row();
+
+
+CREATE OR REPLACE FUNCTION check_full_attendance_for_certificate()
+RETURNS TRIGGER AS $$
+BEGIN
+
+    IF NEW.certificate_status = 'issued' THEN
+
+        IF EXISTS (
+            SELECT 1
+            FROM attendance a
+            JOIN schedule s ON a.schedule_id = s.id
+            JOIN course_class cc ON s.course_class_id = cc.id
+            WHERE a.student_id = NEW.student_id
+              AND cc.course_id = NEW.course_id
+              AND a.attendance_status = FALSE
+        ) THEN
+            RAISE EXCEPTION 
+            'Нельзя выдать сертификат: у студента есть пропуски на курсе';
+        END IF;
+
+    END IF;
+
+    RETURN NEW;
+
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_check_full_attendance_for_certificate
+BEFORE INSERT OR UPDATE ON student_certificate
+FOR EACH ROW
+EXECUTE FUNCTION check_full_attendance_for_certificate();
+
