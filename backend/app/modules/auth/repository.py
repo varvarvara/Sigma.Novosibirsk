@@ -7,10 +7,10 @@ from enums import StudentStatuses, PreRegistrationStatuses
 
 class UserRepository(BaseRepository):
 
-    def create_student_user(self, user_data: StudentInCreate, password_hash: str) -> Student:
+    def create_student_user(self, user_data: StudentInCreate, password: str) -> Student:
         new_student = Student(
             **user_data.model_dump(exclude={"password"}, exclude_none=True),
-            password_hash=password_hash,
+            password=password,
             student_status=StudentStatuses.REGISTERED.value,
         )
         self.session.add(instance=new_student)
@@ -25,10 +25,10 @@ class UserRepository(BaseRepository):
         return self.session.query(Student).filter_by(id=user_id).first()
 
 
-    def create_staff_user(self, user_data: StaffInCreate, password_hash: str) -> Staff:
+    def create_staff_user(self, user_data: StaffInCreate, password: str) -> Staff:
         new_staff = Staff(
             **user_data.model_dump(exclude={"password"}, exclude_none=True, mode="json"),
-            password_hash=password_hash,
+            password=password,
         )
         self.session.add(instance=new_staff)
         self.session.commit()

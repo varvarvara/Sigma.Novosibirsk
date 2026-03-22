@@ -1,0 +1,229 @@
+from datetime import date, time
+import re
+
+from sqlalchemy import func
+from sqlalchemy.orm import Session
+
+from app.modules.courses.models import Course, CourseClass
+from app.modules.scheduling.models import Schedule, Slot
+from app.modules.users.models import IntakeControl, Staff
+
+
+class SchedulingRepository:
+    def __init__(self, db: Session):
+        self.db = db
+
+    def get_or_create_intake_control(self) -> IntakeControl:
+        control = self.db.query(IntakeControl).filter(IntakeControl.id == 1).first()
+        if control is None:
+            control = IntakeControl(id=1, intake_closed=False, closed_at=None, closed_by=None)
+            self.db.add(control)
+            self.db.commit()
+            self.db.refresh(control)
+        return control
+
+    def is_intake_closed(self) -> bool:
+        return self.get_or_create_intake_control().intake_closed
+
+    def get_course_by_id(self, course_id: int) -> Course | None:
+        return self.db.query(Course).filter(Course.id == course_id).first()
+
+    def list_courses_for_global(self) -> list[Course]:
+        return (
+            self.db.query(Course)
+            .filter(Course.course_status != "Archived")
+            .order_by(Course.id.asc())
+            .all()
+        )
+
+    def count_schedule_items(self, course_id: int) -> int:
+        return (
+            self.db.query(Schedule)
+            .join(CourseClass, Schedule.course_class_id == CourseClass.id)
+            .filter(CourseClass.course_id == course_id)
+            .count()
+        )
+
+    def list_schedule_by_course(self, course_id: int) -> list[Schedule]:
+        return (
+            self.db.query(Schedule)
+            .join(CourseClass, Schedule.course_class_id == CourseClass.id)
+            .filter(CourseClass.course_id == course_id)
+            .order_by(Schedule.lesson_date.asc(), Schedule.lesson_time.asc())
+            .all()
+        )
+
+    def list_timetable_rows(self):
+        return (
+            self.db.query(Schedule, CourseClass, Course, Staff)
+            .join(CourseClass, Schedule.course_class_id == CourseClass.id)
+            .join(Course, CourseClass.course_id == Course.id)
+            .join(Staff, Schedule.staff_id == Staff.id)
+            .order_by(Schedule.lesson_date.asc(), Schedule.lesson_time.asc(), Course.id.asc())
+            .all()
+        )
+
+    def list_timetable_rows_by_staff(self, staff_id: int):
+        return (
+            self.db.query(Schedule, CourseClass, Course, Staff)
+            .join(CourseClass, Schedule.course_class_id == CourseClass.id)
+            .join(Course, CourseClass.course_id == Course.id)
+            .join(Staff, Schedule.staff_id == Staff.id)
+            .filter(Schedule.staff_id == staff_id)
+            .order_by(Schedule.lesson_date.asc(), Schedule.lesson_time.asc(), Course.id.asc())
+            .all()
+        )
+
+    def get_staff_by_id(self, staff_id: int) -> Staff | None:
+        return self.db.query(Staff).filter(Staff.id == staff_id).first()
+
+    def has_teacher_conflict(self, staff_id: int, lesson_date: date, lesson_time: time) -> bool:
+        return (
+            self.db.query(Schedule.id)
+            .filter(
+                Schedule.staff_id == staff_id,
+                Schedule.lesson_date == lesson_date,
+                Schedule.lesson_time == lesson_time,
+            )
+            .first()
+            is not None
+        )
+
+    def has_course_title_conflict(
+        self,
+        course_title: str,
+        lesson_date: date,
+        lesson_time: time,
+        exclude_course_id: int | None = None,
+    ) -> bool:
+        query = (
+            self.db.query(Schedule.id)
+            .join(CourseClass, Schedule.course_class_id == CourseClass.id)
+            .join(Course, CourseClass.course_id == Course.id)
+            .filter(
+                Course.title == course_title,
+                Schedule.lesson_date == lesson_date,
+                Schedule.lesson_time == lesson_time,
+            )
+        )
+
+        if exclude_course_id is not None:
+            query = query.filter(Course.id != exclude_course_id)
+
+        return query.first() is not None
+
+    @staticmethod
+    def _subject_key(title: str) -> str:
+        # Heuristic: first meaningful token in title is treated as subject key.
+        # Example: "Biology Advanced" and "Biology Basic" => "biology"
+        if not title:
+            return ""
+
+        tokens = [token for token in re.split(r"[\s\-:|/()[\],.]+", title.strip().lower()) if token]
+        if not tokens:
+            return title.strip().lower()
+
+        stopwords = {"course", "курс", "subject", "предмет"}
+        for token in tokens:
+            if token not in stopwords and not token.isdigit():
+                return token
+        return tokens[0]
+
+    def has_subject_conflict(
+        self,
+        course_title: str,
+        lesson_date: date,
+        lesson_time: time,
+        exclude_course_id: int | None = None,
+    ) -> bool:
+        target_key = self._subject_key(course_title)
+        if not target_key:
+            return False
+
+        query = (
+            self.db.query(Course.id, Course.title)
+            .join(CourseClass, CourseClass.course_id == Course.id)
+            .join(Schedule, Schedule.course_class_id == CourseClass.id)
+            .filter(
+                Schedule.lesson_date == lesson_date,
+                Schedule.lesson_time == lesson_time,
+            )
+        )
+
+        if exclude_course_id is not None:
+            query = query.filter(Course.id != exclude_course_id)
+
+        for _, title in query.all():
+            if self._subject_key(title) == target_key:
+                return True
+
+        return False
+
+    def get_slot(self, staff_id: int, slot_date: date, slot_time: time) -> Slot | None:
+        return (
+            self.db.query(Slot)
+            .filter(
+                Slot.staff_id == staff_id,
+                Slot.slot_date == slot_date,
+                Slot.slot_time == slot_time,
+            )
+            .first()
+        )
+
+    def create_slot(self, staff_id: int, slot_date: date, slot_time: time) -> Slot:
+        slot = Slot(staff_id=staff_id, slot_date=slot_date, slot_time=slot_time)
+        self.db.add(slot)
+        self.db.commit()
+        self.db.refresh(slot)
+        return slot
+
+    def get_or_create_slot(self, staff_id: int, slot_date: date, slot_time: time) -> Slot:
+        existing = self.get_slot(staff_id=staff_id, slot_date=slot_date, slot_time=slot_time)
+        if existing is not None:
+            return existing
+        return self.create_slot(staff_id=staff_id, slot_date=slot_date, slot_time=slot_time)
+
+    def list_free_staff_slots(self, staff_id: int, start_date: date | None = None) -> list[Slot]:
+        query = (
+            self.db.query(Slot)
+            .outerjoin(Schedule, Schedule.slot_id == Slot.id)
+            .filter(Slot.staff_id == staff_id, Schedule.id.is_(None))
+        )
+        if start_date is not None:
+            query = query.filter(Slot.slot_date >= start_date)
+        return query.order_by(Slot.slot_date.asc(), Slot.slot_time.asc()).all()
+
+    def next_course_class_number(self, course_id: int) -> int:
+        current_max = self.db.query(func.max(CourseClass.class_number)).filter(CourseClass.course_id == course_id).scalar()
+        return (current_max or 0) + 1
+
+    def create_course_class(self, course_id: int, class_number: int, class_description: str) -> CourseClass:
+        course_class = CourseClass(
+            course_id=course_id,
+            class_number=class_number,
+            class_description=class_description,
+        )
+        self.db.add(course_class)
+        self.db.commit()
+        self.db.refresh(course_class)
+        return course_class
+
+    def create_schedule(
+        self,
+        staff_id: int,
+        course_class_id: int,
+        slot_id: int | None,
+        lesson_date: date,
+        lesson_time: time,
+    ) -> Schedule:
+        schedule = Schedule(
+            staff_id=staff_id,
+            course_class_id=course_class_id,
+            slot_id=slot_id,
+            lesson_date=lesson_date,
+            lesson_time=lesson_time,
+        )
+        self.db.add(schedule)
+        self.db.commit()
+        self.db.refresh(schedule)
+        return schedule

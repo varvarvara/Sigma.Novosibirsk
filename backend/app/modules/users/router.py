@@ -2,12 +2,11 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from app.db.session import get_db
-from app.modules.users.schemas import StaffInCreate, StaffOutput, StudentInCreate, StudentOutput
+from app.modules.users.schemas import StaffOutput, StudentInCreate, StudentOutput
 from app.modules.users.service import UsersService
 from app.security.dependecies import get_current_user
 
 usersRouter = APIRouter(prefix="/users", tags=["users"])
-
 
 @usersRouter.get("/me")
 def get_me(current_user=Depends(get_current_user)):
@@ -19,8 +18,3 @@ def get_me(current_user=Depends(get_current_user)):
 @usersRouter.post("/students/signup", status_code=201, response_model=StudentOutput)
 def student_signup(signup_details: StudentInCreate, session: Session = Depends(get_db)):
     return UsersService(session=session).signup_student(user_details=signup_details)
-
-
-@usersRouter.post("/staff/signup", status_code=201, response_model=StaffOutput)
-def staff_signup(signup_details: StaffInCreate, session: Session = Depends(get_db)):
-    return UsersService(session=session).signup_staff(user_details=signup_details)

@@ -14,10 +14,10 @@ class UsersService:
         if self._users_repository.user_exist_by_email(email=user_details.email):
             raise HTTPException(status_code=400, detail="Пользователь уже существует, выполните вход")
 
-        password_hash = HashHelper.get_password_hash(plain_password=user_details.password)
+        password = HashHelper.get_password_hash(plain_password=user_details.password)
         student = self._users_repository.create_student_user(
             user_data=user_details,
-            password_hash=password_hash,
+            password=password,
         )
         return StudentOutput.model_validate(student)
 
@@ -25,9 +25,9 @@ class UsersService:
         if self._users_repository.user_exist_by_email(email=user_details.email):
             raise HTTPException(status_code=400, detail="Пользователь уже существует, выполните вход")
 
-        password_hash = HashHelper.get_password_hash(plain_password=user_details.password)
+        password = HashHelper.get_password_hash(plain_password=user_details.password)
         staff = self._users_repository.create_staff_user(
             user_data=user_details,
-            password_hash=password_hash,
+            password=password,
         )
         return StaffOutput.model_validate(staff)

@@ -1,7 +1,12 @@
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
-from app.modules.auth.schemas import LoginRequest, UserWithToken
+from app.modules.auth.schemas import (
+    LoginRequest,
+    PreRegistrationCreateIn,
+    PreRegistrationOut,
+    UserWithToken,
+)
 from app.modules.users.repository import UsersRepository
 from app.security.authHandler import AuthHandler
 from app.security.hashHelper import HashHelper
@@ -38,7 +43,7 @@ class AuthService:
         if student is not None:
             if not HashHelper.verify_password(
                 plain_password=login_details.password,
-                hashed_password=student.password_hash,
+                hashed_password=student.password,
             ):
                 raise self._credentials_exception()
             return self._issue_tokens(user_id=student.id, user_type="student")
@@ -47,7 +52,7 @@ class AuthService:
         if staff is not None:
             if not HashHelper.verify_password(
                 plain_password=login_details.password,
-                hashed_password=staff.password_hash,
+                hashed_password=staff.password,
             ):
                 raise self._credentials_exception()
 
@@ -73,3 +78,10 @@ class AuthService:
     def logout(self, refresh_token: str | None = None) -> None:
         if refresh_token:
             AuthHandler.revoke_refresh_token(refresh_token)
+
+    def staff_pre_registration(self, data: PreRegistrationCreateIn) -> PreRegistrationOut:
+        if self._users_repository.user_exist_by_email(email=data.email):
+            raise HTTPException(status_code=400, detail="Пользователь с таким email уже существует")
+
+        pre_registration = self._users_repository.create_pre_registration(data=data)
+        return PreRegistrationOut.model_validate(pre_registration)

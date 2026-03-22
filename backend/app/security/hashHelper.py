@@ -1,5 +1,4 @@
 from bcrypt import checkpw, hashpw, gensalt
-
 class HashHelper(object):
 
     @staticmethod

@@ -1,6 +1,8 @@
-from sqlalchemy import Column, Integer, String, Text, ForeignKey, Enum, TIMESTAMP
+from sqlalchemy import Column, Enum, ForeignKey, Integer, String, Text, TIMESTAMP
 from sqlalchemy.orm import relationship
+
 from app.db.base import Base
+
 
 class Course(Base):
     __tablename__ = "course"
@@ -9,8 +11,10 @@ class Course(Base):
     title = Column(String(100), nullable=False)
     descriptions = Column(String(200))
     staff_id = Column(Integer, ForeignKey("staff.id"), nullable=False)
-    course_status = Column(Enum('Draft', 'Archived', 'Published', name="course_statuses"))
+    course_status = Column(Enum("Draft", "Archived", "Published", name="course_statuses"), nullable=False)
+    course_type = Column(Enum("ThreeDays", "SixDays", name="course_types"), nullable=False, default="ThreeDays")
     syllabus_url = Column(Text)
+    capacity = Column(Integer, nullable=True)  # NULL means unlimited seats
     created_at = Column(TIMESTAMP, default="now()")
     updated_at = Column(TIMESTAMP, default="now()")
 
@@ -21,7 +25,7 @@ class Course(Base):
     achievements = relationship("Achievement", back_populates="course")
     student_certificates = relationship("StudentCertificate", back_populates="course")
 
-## не понятно, пока куда таблицу courseclass
+
 class CourseClass(Base):
     __tablename__ = "course_class"
 
@@ -31,4 +35,4 @@ class CourseClass(Base):
     class_description = Column(String(200), nullable=False)
 
     course = relationship("Course", back_populates="course_classes")
-    
+    schedules = relationship("Schedule", back_populates="course_class")

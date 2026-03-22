@@ -1,4 +1,5 @@
-from fastapi import Depends, HTTPException, Request, status
+from fastapi import Depends, HTTPException, status
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import JWTError
 from sqlalchemy.orm import Session
 
@@ -6,16 +7,19 @@ from app.db.session import get_db
 from app.modules.users.repository import UsersRepository
 from app.security.authHandler import AuthHandler
 
+bearer_scheme = HTTPBearer(auto_error=False)
 
-def get_token_from_header(request: Request) -> str:
-    authorization = request.headers.get("Authorization")
-    if not authorization or not authorization.startswith("Bearer "):
+
+def get_token_from_header(
+    credentials: HTTPAuthorizationCredentials | None = Depends(bearer_scheme),
+) -> str:
+    if credentials is None or credentials.scheme.lower() != "bearer":
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Authorization header missing or invalid",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    return authorization.split(" ", 1)[1]
+    return credentials.credentials
 
 
 def get_current_user(

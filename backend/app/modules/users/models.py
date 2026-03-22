@@ -1,6 +1,8 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, Enum,  TIMESTAMP
+from sqlalchemy import Boolean, Column, Enum, ForeignKey, Integer, String, TIMESTAMP
 from sqlalchemy.orm import relationship
+
 from app.db.base import Base
+
 
 class Staff(Base):
     __tablename__ = "staff"
@@ -10,14 +12,27 @@ class Staff(Base):
     last_name = Column(String(50), nullable=False)
     partonymic = Column(String(50))
     email = Column(String(254), unique=True, nullable=False)
-    password_hash = Column(String(255), nullable=False)
-    staff_role = Column(Enum('Teacher', 'Admin', name="staff_roles"), nullable=False)
+    password = Column(String(255), nullable=False)
+    staff_role = Column(Enum("Teacher", "Admin", name="staff_roles"), nullable=False)
 
     courses = relationship("Course", back_populates="staff")
-    slots = relationship("Slot", back_populates="staff") 
+    slots = relationship("Slot", back_populates="staff")
     schedules = relationship("Schedule", back_populates="staff")
     extracurricular_activities = relationship("ExtracurricularActivity", back_populates="staff")
-    
+
+    # Certificates
+    teacher_certificates = relationship(
+        "TeacherCertificate",
+        foreign_keys="TeacherCertificate.user_id",
+        back_populates="user",
+    )
+    issued_certificates = relationship(
+        "TeacherCertificate",
+        foreign_keys="TeacherCertificate.issued_by",
+        back_populates="issuer",
+    )
+    issued_student_certificates = relationship("StudentCertificate", back_populates="staff")
+
 
 class Student(Base):
     __tablename__ = "students"
@@ -27,7 +42,7 @@ class Student(Base):
     last_name = Column(String(50), nullable=False)
     partonymic = Column(String(50))
     email = Column(String(254), unique=True, nullable=False)
-    password_hash = Column(String(255), nullable=False)
+    password = Column(String(255), nullable=False)
     phone = Column(String(20), nullable=False)
     tg_nickname = Column(String(50))
     year_of_study = Column(Integer, nullable=False)
@@ -35,12 +50,21 @@ class Student(Base):
     school = Column(String(100))
     parent_name = Column(String(150), nullable=False)
     parent_phone = Column(String(20), nullable=False)
-    student_status = Column(Enum('Registered', 'Enrolled', 'Blocked', name="student_statuses"), nullable=False)
+    student_status = Column(
+        Enum("Registered", "Enrolled", "Blocked", name="student_statuses"),
+        nullable=False,
+    )
 
     enrollments = relationship("Enrollment", back_populates="student")
     attendance = relationship("Attendance", back_populates="student")
-    gamification = relationship("Gamification", back_populates="student")
-    
+    gamification = relationship("Gamification", back_populates="student", uselist=False)
+
+    student_achievements = relationship("StudentAchievement", back_populates="student")
+    student_certificates = relationship("StudentCertificate", back_populates="student")
+
+    extracurricular_teams = relationship("ExtracurricularTeam", back_populates="student")
+    team_members = relationship("ExtracurricularTeamMember", back_populates="student")
+
 
 class PreRegistration(Base):
     __tablename__ = "pre_registration"
@@ -49,24 +73,39 @@ class PreRegistration(Base):
     first_name = Column(String(50), nullable=False)
     last_name = Column(String(50), nullable=False)
     partonymic = Column(String(50))
-    pre_registration_status = Column(Enum('PendingApproval', 'Approved', name="pre_registration_statuses"))
+    pre_registration_status = Column(
+        Enum("PendingApproval", "Approved", name="pre_registration_statuses"),
+        nullable=False,
+    )
     phone = Column(String(20), nullable=False)
     email = Column(String(254), unique=True, nullable=False)
     tg_nickname = Column(String(50))
 
-    
+
+class IntakeControl(Base):
+    __tablename__ = "intake_control"
+
+    id = Column(Integer, primary_key=True, default=1)
+    intake_closed = Column(Boolean, nullable=False, default=False)
+    closed_at = Column(TIMESTAMP, nullable=True)
+    closed_by = Column(Integer, ForeignKey("staff.id"), nullable=True)
+
+
 class TeacherCertificate(Base):
     __tablename__ = "teacher_certificate"
 
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("staff.id"), nullable=False)  # Ссылка на преподавателя
-    course_id = Column(Integer, ForeignKey("course.id"), nullable=False)  # Ссылка на курс
-    issued_by = Column(Integer, ForeignKey("staff.id"), nullable=False)  # Ссылка на сотрудника, который выдал сертификат
-    issued_at = Column(TIMESTAMP, default="now()")  # Дата и время выдачи
-    certificate_url = Column(String(200), nullable=False)  # Ссылка на сертификат
-    certificate_status = Column(String(50))  # Статус сертификата (например, "Выдан", "Истекший")
+    user_id = Column(Integer, ForeignKey("staff.id"), nullable=False)
+    course_id = Column(Integer, ForeignKey("course.id"), nullable=False)
+    issued_by = Column(Integer, ForeignKey("staff.id"), nullable=True)
+    issued_at = Column(TIMESTAMP, default="now()")
+    certificate_url = Column(String(200), nullable=False)
+    certificate_status = Column(
+        Enum("In progress", "Issued", name="certificate_statuses"),
+        nullable=False,
+        default="In progress",
+    )
 
     user = relationship("Staff", foreign_keys=[user_id], back_populates="teacher_certificates")
     course = relationship("Course", back_populates="teacher_certificates")
     issuer = relationship("Staff", foreign_keys=[issued_by], back_populates="issued_certificates")
-    
