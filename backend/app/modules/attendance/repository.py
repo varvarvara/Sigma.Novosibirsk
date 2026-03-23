@@ -1,562 +1,284 @@
-from sqlalchemy.orm import Session, joinedload
-from sqlalchemy.exc import IntegrityError, DBAPIError
-from sqlalchemy import and_
-from sqlalchemy import select
-from models import Achievement, StudentAchievement, StudentCertificate, Students, Course, Attendance#, Schedule
-from enums import CertificateStatuses
+from sqlalchemy import func, or_
+from sqlalchemy.orm import Session
+
+from app.modules.attendance.models import Attendance
+from app.modules.courses.models import Course, CourseClass
+from app.modules.enrollment.models import Enrollment
+from app.modules.gamification.models import Gamification
+from app.modules.scheduling.models import Schedule
+from app.modules.users.models import Staff, Student
+
 
 class AttendanceRepository:
     def __init__(self, db: Session):
         self.db = db
 
-    def create(self, student_id: int, schedule_id: int, status: bool):
-        obj = Attendance(
-            student_id=student_id,
-            schedule_id=schedule_id,
-            attendance_status=status
+    def get_schedule_with_course(self, schedule_id: int):
+        return (
+            self.db.query(Schedule, CourseClass, Course, Staff)
+            .join(CourseClass, Schedule.course_class_id == CourseClass.id)
+            .join(Course, CourseClass.course_id == Course.id)
+            .join(Staff, Schedule.staff_id == Staff.id)
+            .filter(Schedule.id == schedule_id)
+            .first()
         )
 
-        self.db.add(obj)
-
-        try:
-            self.db.commit()
-            self.db.refresh(obj)
-            return obj
-
-        except IntegrityError:
-            self.db.rollback()
-            raise ValueError(
-                "Запись посещаемости уже существует для этого студента и занятия"
-            )
-            
-    def exists(self, student_id: int, schedule_id: int) -> bool:
+    def get_course_with_staff(self, course_id: int):
         return (
-            self.db.query(Attendance.id)
+            self.db.query(Course, Staff)
+            .join(Staff, Course.staff_id == Staff.id)
+            .filter(Course.id == course_id)
+            .first()
+        )
+
+    def get_student_by_id(self, student_id: int) -> Student | None:
+        return self.db.query(Student).filter(Student.id == student_id).first()
+
+    def is_student_enrolled_in_course(self, student_id: int, course_id: int) -> bool:
+        return (
+            self.db.query(Enrollment.id)
             .filter(
-                Attendance.student_id == student_id,
-                Attendance.schedule_id == schedule_id
+                Enrollment.student_id == student_id,
+                Enrollment.course_id == course_id,
+                Enrollment.enrollment_status != "Dropped",
             )
             .first()
             is not None
         )
-        
-    def get_by_student_and_schedule(self, student_id: int, schedule_id: int):
+
+    def get_attendance(self, student_id: int, schedule_id: int) -> Attendance | None:
         return (
             self.db.query(Attendance)
             .filter(
                 Attendance.student_id == student_id,
-                Attendance.schedule_id == schedule_id
+                Attendance.schedule_id == schedule_id,
             )
             .first()
         )
-        
-    def update_status(self, student_id: int, schedule_id: int, new_status: bool):
-        obj = self.get_by_student_and_schedule(student_id, schedule_id)
 
-        if not obj:
-            return None
+    def upsert_attendance(self, student_id: int, schedule_id: int, attendance_status: bool) -> tuple[Attendance, bool]:
+        attendance = self.get_attendance(student_id=student_id, schedule_id=schedule_id)
+        created = False
 
-        obj.attendance_status = new_status
+        if attendance is None:
+            attendance = Attendance(
+                student_id=student_id,
+                schedule_id=schedule_id,
+                attendance_status=attendance_status,
+            )
+            self.db.add(attendance)
+            created = True
+        else:
+            attendance.attendance_status = attendance_status
 
         self.db.commit()
-        self.db.refresh(obj)
-        return obj
-    
-    def delete(self, student_id: int, schedule_id: int):
-        obj = self.get_by_student_and_schedule(student_id, schedule_id)
+        self.db.refresh(attendance)
+        return attendance, created
 
-        if not obj:
-            return False
+    def count_course_lessons(self, course_id: int) -> int:
+        return (
+            self.db.query(Schedule.id)
+            .join(CourseClass, Schedule.course_class_id == CourseClass.id)
+            .filter(CourseClass.course_id == course_id)
+            .count()
+        )
 
-        self.db.delete(obj)
-        self.db.commit()
-        return True
-    
-    def get_by_student(self, student_id: int):
-        results = (
+    def list_course_student_summaries(self, course_id: int, search: str | None = None) -> list[dict]:
+        total_lessons = self.count_course_lessons(course_id=course_id)
+
+        attended_subq = (
             self.db.query(
-                Attendance.schedule_id,
-                Attendance.attendance_status,
-                Schedule.lesson_date,
-                Schedule.lesson_time
+                Attendance.student_id.label("student_id"),
+                func.count(Attendance.id).label("attended_lessons"),
             )
             .join(Schedule, Attendance.schedule_id == Schedule.id)
-            .filter(Attendance.student_id == student_id)
-            .all()
+            .join(CourseClass, Schedule.course_class_id == CourseClass.id)
+            .filter(
+                CourseClass.course_id == course_id,
+                Attendance.attendance_status.is_(True),
+            )
+            .group_by(Attendance.student_id)
+            .subquery()
         )
 
-        return [
-            {
-                "schedule_id": r.schedule_id,
-                "lesson_date": r.lesson_date,
-                "lesson_time": r.lesson_time,
-                "attendance_status": r.attendance_status
-            }
-            for r in results
-        ]
-        
-    def get_by_schedule(self, schedule_id: int):
-        results = (
+        query = (
             self.db.query(
-                Students.id,
-                Students.first_name,
-                Students.last_name,
-                Attendance.attendance_status,
+                Student.id.label("student_id"),
+                Student.first_name,
+                Student.last_name,
+                Student.email,
+                func.coalesce(attended_subq.c.attended_lessons, 0).label("attended_lessons"),
+            )
+            .join(Enrollment, Enrollment.student_id == Student.id)
+            .outerjoin(attended_subq, attended_subq.c.student_id == Student.id)
+            .filter(
+                Enrollment.course_id == course_id,
+                Enrollment.enrollment_status != "Dropped",
+            )
+        )
+
+        if search:
+            like_query = f"%{search}%"
+            query = query.filter(
+                or_(
+                    Student.first_name.ilike(like_query),
+                    Student.last_name.ilike(like_query),
+                    Student.email.ilike(like_query),
+                )
+            )
+
+        rows = query.order_by(Student.last_name.asc(), Student.first_name.asc()).all()
+
+        results: list[dict] = []
+        for row in rows:
+            attendance_percent = 0.0
+            if total_lessons > 0:
+                attendance_percent = round((row.attended_lessons / total_lessons) * 100, 2)
+
+            results.append(
+                {
+                    "student_id": row.student_id,
+                    "first_name": row.first_name,
+                    "last_name": row.last_name,
+                    "email": row.email,
+                    "attended_lessons": int(row.attended_lessons),
+                    "total_lessons": total_lessons,
+                    "attendance_percent": attendance_percent,
+                }
+            )
+
+        return results
+
+    def list_course_lessons_with_student_attendance(self, course_id: int, student_id: int) -> list[dict]:
+        rows = (
+            self.db.query(
+                Schedule.id.label("schedule_id"),
                 Schedule.lesson_date,
-                Schedule.lesson_time
+                Schedule.lesson_time,
+                Attendance.attendance_status,
             )
-            .join(Attendance, Attendance.student_id == Students.id)
-            .join(Schedule, Attendance.schedule_id == Schedule.id)
-            .filter(Attendance.schedule_id == schedule_id)
+            .join(CourseClass, Schedule.course_class_id == CourseClass.id)
+            .outerjoin(
+                Attendance,
+                (Attendance.schedule_id == Schedule.id) & (Attendance.student_id == student_id),
+            )
+            .filter(CourseClass.course_id == course_id)
+            .order_by(Schedule.lesson_date.asc(), Schedule.lesson_time.asc())
             .all()
         )
 
         return [
             {
-                "student_id": r.id,
-                "first_name": r.first_name,
-                "last_name": r.last_name,
-                "attendance_status": r.attendance_status,
-                "lesson_date": r.lesson_date,
-                "lesson_time": r.lesson_time
+                "schedule_id": row.schedule_id,
+                "lesson_date": row.lesson_date,
+                "lesson_time": row.lesson_time,
+                "attendance_status": row.attendance_status,
             }
-            for r in results
+            for row in rows
         ]
-class AchievementRepository:
 
-    def __init__(self, db: Session):
-        self.db = db
-        
-    def create_achievement(self, description: str, score: int):
-        achievement = Achievement(
-            achievement_description=description,
-            achievement_score=score
-        )
-        self.db.add(achievement)
-        self.db.commit()
-        self.db.refresh(achievement)
-        return achievement
-    
-    def get_all_achievements(self):
-        return self.db.query(Achievement).all()
-
-    def assign_achievement_to_student(
-        self,
-        student_id: int,
-        achievement_id: int,
-        course_id: int
-    ):
-        obj = StudentAchievement(
-            student_id=student_id,
-            achievement_id=achievement_id,
-            course_id=course_id
-        )
-
-        self.db.add(obj)
-
-        try:
-            self.db.commit()
-            self.db.refresh(obj)
-            return obj
-
-        except IntegrityError:
-            self.db.rollback()
-            raise ValueError(
-                "Эта ачивка уже назначена студенту на этом курсе"
-            )
-            
-    def get_student_achievements(self, student_id: int):
-        results = (
-            self.db.query(
-                Achievement.id,
-                Achievement.achievement_description,
-                Achievement.achievement_score,
-                Course.id.label("course_id"),
-                Course.title,
-                StudentAchievement.awarded_at
-            )
-            .join(StudentAchievement, StudentAchievement.achievement_id == Achievement.id)
-            .join(Course, StudentAchievement.course_id == Course.id)
-            .filter(StudentAchievement.student_id == student_id)
-            .all()
-        )
-
-        return [
-            {
-                "achievement_id": r.id,
-                "description": r.achievement_description,
-                "score": r.achievement_score,
-                "course_id": r.course_id,
-                "course_title": r.title,
-                "awarded_at": r.awarded_at
-            }
-            for r in results
-        ] 
-        
-    def get_student_achievements_by_course(
-        self,
-        student_id: int,
-        course_id: int
-    ):
+    def search_students_global(self, query_value: str, limit: int = 50) -> list[Student]:
+        like_query = f"%{query_value}%"
         return (
-            self.db.query(
-                Achievement.achievement_description,
-                Achievement.achievement_score,
-                StudentAchievement.awarded_at
-            )
-            .join(StudentAchievement)
+            self.db.query(Student)
             .filter(
-                StudentAchievement.student_id == student_id,
-                StudentAchievement.course_id == course_id
-            )
-            .all()
-        )
-        
-    def get_students_by_achievement(self, achievement_id: int):
-        return (
-            self.db.query(
-                Students.id,
-                Students.first_name,
-                Students.last_name,
-                Course.title
-            )
-            .join(StudentAchievement, StudentAchievement.student_id == Students.id)
-            .join(Course, StudentAchievement.course_id == Course.id)
-            .filter(StudentAchievement.achievement_id == achievement_id)
-            .all()
-        )
-        
-    def remove_achievement_from_student(
-        self,
-        student_id: int,
-        achievement_id: int,
-        course_id: int
-    ):
-        obj = (
-            self.db.query(StudentAchievement)
-            .filter(
-                and_(
-                    StudentAchievement.student_id == student_id,
-                    StudentAchievement.achievement_id == achievement_id,
-                    StudentAchievement.course_id == course_id
+                or_(
+                    Student.first_name.ilike(like_query),
+                    Student.last_name.ilike(like_query),
+                    Student.email.ilike(like_query),
                 )
             )
-            .first()
-        )
-
-        if not obj:
-            return False
-
-        self.db.delete(obj)
-        self.db.commit()
-        return True
-    
-    def remove_achievement_from_student(
-        self,
-        student_id: int,
-        achievement_id: int,
-        course_id: int
-    ):
-        obj = (
-            self.db.query(StudentAchievement)
-            .filter(
-                and_(
-                    StudentAchievement.student_id == student_id,
-                    StudentAchievement.achievement_id == achievement_id,
-                    StudentAchievement.course_id == course_id
-                )
-            )
-            .first()
-        )
-
-        if not obj:
-            return False
-
-        self.db.delete(obj)
-        self.db.commit()
-        return True
-    
-class StudentAchievementRepository:
-
-    def __init__(self, db: Session):
-        self.db = db
-        
-    def create(
-        self,
-        student_id: int,
-        achievement_id: int,
-        course_id: int
-    ):
-        obj = StudentAchievement(
-            student_id=student_id,
-            achievement_id=achievement_id,
-            course_id=course_id
-        )
-
-        self.db.add(obj)
-
-        try:
-            self.db.commit()
-            self.db.refresh(obj)
-            return obj
-
-        except IntegrityError:
-            self.db.rollback()
-            raise ValueError(
-                "Ачивка уже выдана студенту на этом курсе"
-            )
-            
-    def get_by_student(self, student_id: int):
-        results = (
-            self.db.query(
-                Achievement.id,
-                Achievement.achievement_description,
-                Achievement.achievement_score,
-                Course.id.label("course_id"),
-                Course.title,
-                StudentAchievement.awarded_at
-            )
-            .join(StudentAchievement, StudentAchievement.achievement_id == Achievement.id)
-            .join(Course, StudentAchievement.course_id == Course.id)
-            .filter(StudentAchievement.student_id == student_id)
+            .order_by(Student.last_name.asc(), Student.first_name.asc())
+            .limit(limit)
             .all()
         )
 
-        return [
-            {
-                "achievement_id": r.id,
-                "description": r.achievement_description,
-                "score": r.achievement_score,
-                "course_id": r.course_id,
-                "course_title": r.title,
-                "awarded_at": r.awarded_at
-            }
-            for r in results
-        ]
-    def get_by_student_and_course(
-        self,
-        student_id: int,
-        course_id: int
-    ):
+    def search_students_in_course(self, course_id: int, query_value: str, limit: int = 50) -> list[Student]:
+        like_query = f"%{query_value}%"
         return (
-            self.db.query(
-                Achievement.achievement_description,
-                Achievement.achievement_score,
-                StudentAchievement.awarded_at
-            )
-            .join(StudentAchievement)
+            self.db.query(Student)
+            .join(Enrollment, Enrollment.student_id == Student.id)
             .filter(
-                StudentAchievement.student_id == student_id,
-                StudentAchievement.course_id == course_id
+                Enrollment.course_id == course_id,
+                Enrollment.enrollment_status != "Dropped",
+                or_(
+                    Student.first_name.ilike(like_query),
+                    Student.last_name.ilike(like_query),
+                    Student.email.ilike(like_query),
+                ),
             )
+            .order_by(Student.last_name.asc(), Student.first_name.asc())
+            .limit(limit)
             .all()
         )
-        
-    def exists(
-        self,
-        student_id: int,
-        achievement_id: int,
-        course_id: int
-    ) -> bool:
+
+    def search_students_for_teacher(self, teacher_staff_id: int, query_value: str, limit: int = 50) -> list[Student]:
+        like_query = f"%{query_value}%"
         return (
-            self.db.query(StudentAchievement.id)
+            self.db.query(Student)
+            .join(Enrollment, Enrollment.student_id == Student.id)
+            .join(Course, Course.id == Enrollment.course_id)
             .filter(
-                StudentAchievement.student_id == student_id,
-                StudentAchievement.achievement_id == achievement_id,
-                StudentAchievement.course_id == course_id
+                Course.staff_id == teacher_staff_id,
+                Enrollment.enrollment_status != "Dropped",
+                or_(
+                    Student.first_name.ilike(like_query),
+                    Student.last_name.ilike(like_query),
+                    Student.email.ilike(like_query),
+                ),
             )
-            .first()
-            is not None
-        )
-        
-    def delete(
-        self,
-        student_id: int,
-        achievement_id: int,
-        course_id: int
-    ):
-        obj = (
-            self.db.query(StudentAchievement)
-            .filter(
-                StudentAchievement.student_id == student_id,
-                StudentAchievement.achievement_id == achievement_id,
-                StudentAchievement.course_id == course_id
-            )
-            .first()
+            .distinct(Student.id)
+            .order_by(Student.last_name.asc(), Student.first_name.asc())
+            .limit(limit)
+            .all()
         )
 
-        if not obj:
-            return False
+    def list_student_courses(self, student_id: int) -> list[Course]:
+        return (
+            self.db.query(Course)
+            .join(Enrollment, Enrollment.course_id == Course.id)
+            .filter(
+                Enrollment.student_id == student_id,
+                Enrollment.enrollment_status != "Dropped",
+            )
+            .order_by(Course.id.asc())
+            .all()
+        )
 
-        self.db.delete(obj)
+    def count_student_attended_total(self, student_id: int) -> int:
+        return (
+            self.db.query(Attendance.id)
+            .filter(
+                Attendance.student_id == student_id,
+                Attendance.attendance_status.is_(True),
+            )
+            .count()
+        )
+
+    def get_gamification(self, student_id: int) -> Gamification | None:
+        return self.db.query(Gamification).filter(Gamification.student_id == student_id).first()
+
+    def upsert_gamification_attendance_score(self, student_id: int, attendance_score: int) -> Gamification:
+        gamification = self.get_gamification(student_id=student_id)
+
+        if gamification is None:
+            gamification = Gamification(
+                student_id=student_id,
+                attendance_score=attendance_score,
+                achievement_score=0,
+                extracurricular_score=0,
+                total_score=attendance_score,
+                level=0,
+            )
+            self.db.add(gamification)
+        else:
+            gamification.attendance_score = attendance_score
+            gamification.total_score = (
+                attendance_score
+                + (gamification.achievement_score or 0)
+                + (gamification.extracurricular_score or 0)
+            )
+
         self.db.commit()
-        return True
-    
-    def get_students_by_achievement(self, achievement_id: int):
-        return (
-            self.db.query(
-                Students.id,
-                Students.first_name,
-                Students.last_name,
-                Course.title
-            )
-            .join(StudentAchievement, StudentAchievement.student_id == Students.id)
-            .join(Course, StudentAchievement.course_id == Course.id)
-            .filter(StudentAchievement.achievement_id == achievement_id)
-            .all()
-        )
-        
-class StudentCertificateRepository:
-
-    def __init__(self, db: Session):
-        self.db = db
-
-    def create(
-        self,
-        student_id: int,
-        course_id: int,
-        issued_by: int | None = None,
-        certificate_url: str | None = None,
-        certificate_status: CertificateStatuses = CertificateStatuses.IN_PROGRESS
-    ):
-        certificate = StudentCertificate(
-            student_id=student_id,
-            course_id=course_id,
-            issued_by=issued_by,
-            certificate_url=certificate_url,
-            certificate_status=certificate_status
-        )
-
-        self.db.add(certificate)
-
-        try:
-            self.db.commit()
-            self.db.refresh(certificate)
-            return certificate
-
-        except IntegrityError:
-            self.db.rollback()
-            raise ValueError(
-                "Сертификат для этого студента по этому курсу уже существует"
-            )
-
-        except DBAPIError as e:
-            self.db.rollback()
-            raise ValueError(
-                f"Ошибка базы данных при создании сертификата: {str(e)}"
-            )
-
-    def get_by_id(self, certificate_id: int):
-        return (
-            self.db.query(StudentCertificate)
-            .filter(StudentCertificate.id == certificate_id)
-            .first()
-        )
-
-    def get_by_student(self, student_id: int):
-        results = (
-            self.db.query(
-                StudentCertificate.id,
-                StudentCertificate.student_id,
-                StudentCertificate.course_id,
-                Course.title,
-                StudentCertificate.certificate_url,
-                StudentCertificate.certificate_status,
-                StudentCertificate.issued_at
-            )
-            .join(Course, StudentCertificate.course_id == Course.id)
-            .filter(StudentCertificate.student_id == student_id)
-            .all()
-        )
-
-        return [
-            {
-                "certificate_id": r.id,
-                "student_id": r.student_id,
-                "course_id": r.course_id,
-                "course_title": r.title,
-                "certificate_url": r.certificate_url,
-                "certificate_status": r.certificate_status,
-                "issued_at": r.issued_at
-            }
-            for r in results
-        ]
-
-    def get_by_student_and_course(self, student_id: int, course_id: int):
-        return (
-            self.db.query(StudentCertificate)
-            .filter(
-                StudentCertificate.student_id == student_id,
-                StudentCertificate.course_id == course_id
-            )
-            .first()
-        )
-
-    def exists(self, student_id: int, course_id: int) -> bool:
-        return (
-            self.db.query(StudentCertificate.id)
-            .filter(
-                StudentCertificate.student_id == student_id,
-                StudentCertificate.course_id == course_id
-            )
-            .first()
-            is not None
-        )
-
-    def update_status(
-        self,
-        student_id: int,
-        course_id: int,
-        new_status: CertificateStatuses
-    ):
-        certificate = self.get_by_student_and_course(student_id, course_id)
-
-        if not certificate:
-            return None
-
-        certificate.certificate_status = new_status
-
-        try:
-            self.db.commit()
-            self.db.refresh(certificate)
-            return certificate
-
-        except DBAPIError as e:
-            self.db.rollback()
-            raise ValueError(
-                f"Не удалось изменить статус сертификата: {str(e)}"
-            )
-
-    def update_url(
-        self,
-        student_id: int,
-        course_id: int,
-        new_url: str
-    ):
-        certificate = self.get_by_student_and_course(student_id, course_id)
-
-        if not certificate:
-            return None
-
-        certificate.certificate_url = new_url
-
-        try:
-            self.db.commit()
-            self.db.refresh(certificate)
-            return certificate
-
-        except DBAPIError as e:
-            self.db.rollback()
-            raise ValueError(
-                f"Не удалось изменить URL сертификата: {str(e)}"
-            )
-
-    def delete(self, student_id: int, course_id: int):
-        certificate = self.get_by_student_and_course(student_id, course_id)
-
-        if not certificate:
-            return False
-
-        self.db.delete(certificate)
-        self.db.commit()
-        return True
+        self.db.refresh(gamification)
+        return gamification
