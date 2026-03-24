@@ -1,7 +1,7 @@
 from sqlalchemy import func, or_
 from sqlalchemy.orm import Session
 
-from app.modules.attendance.models import Attendance
+from app.modules.attendance.models import Attendance, Achievement, StudentAchievement
 from app.modules.courses.models import Course, CourseClass
 from app.modules.enrollment.models import Enrollment
 from app.modules.gamification.models import Gamification
@@ -282,3 +282,20 @@ class AttendanceRepository:
         self.db.commit()
         self.db.refresh(gamification)
         return gamification
+    
+class AchievementRepository:
+    def __init__(self, db: Session):
+        self.db = db
+
+    def assign_to_student(self, student_id: int, achievement_id: int) -> StudentAchievement:
+        obj = StudentAchievement(
+            student_id=student_id,
+            achievement_id=achievement_id,
+        )
+        self.db.add(obj)
+        self.db.commit()
+        self.db.refresh(obj)
+        return obj
+
+    def get_achievement(self, achievement_id: int) -> Achievement | None:
+        return self.db.query(Achievement).filter(Achievement.id == achievement_id).first()

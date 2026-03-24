@@ -49,7 +49,7 @@ class ExtracurricularTeam(Base):
 class ExtracurricularTeamMember(Base): #добавить мб опциональное название команды??
     __tablename__ = "extracurricular_team_members"
     
-    __table_args__ = (UniqueConstraint("team_id", "student_id"))
+    __table_args__ = (UniqueConstraint("team_id", "student_id"),)
 
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     team_id = Column(Integer, ForeignKey("extracurricular_team.id"), nullable=False)  # Идентификатор команды
@@ -65,7 +65,7 @@ class ExtracurricularTeamMember(Base): #добавить мб опциональ
 class ExtracurricularScore(Base):
     __tablename__ = "extracurricular_score"
     
-    __table_args__ = (UniqueConstraint("team_id", "ex_course_id"))
+    __table_args__ = (UniqueConstraint("team_id", "ex_course_id"),)
 
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     team_id = Column(Integer, ForeignKey("extracurricular_team.id"), nullable=False)

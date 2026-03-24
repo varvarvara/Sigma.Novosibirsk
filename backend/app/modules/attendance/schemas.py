@@ -93,3 +93,16 @@ class StudentAttendanceDashboardOut(BaseModel):
     total_attended_lessons: int
     total_lessons: int
     courses: list[StudentCourseAttendanceOut]
+
+class AchievementAssign(BaseModel):
+    student_id: int
+    achievement_id: int
+
+
+class StudentAchievementOut(BaseModel):
+    id: int
+    student_id: int
+    achievement_id: int
+
+    class Config:
+        from_attributes = True

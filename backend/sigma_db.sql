@@ -284,7 +284,7 @@ BEGIN
 END;
 $$;
 
-CREATE OR REPLACE FUNCTION recalc_gamification(p_student_id BIGINT) --проверить считаемость ф-и и написать под всех
+CREATE OR REPLACE FUNCTION recalc_gamification(p_student_id BIGINT)
 RETURNS VOID
 LANGUAGE plpgsql
 AS $$
@@ -296,41 +296,35 @@ DECLARE
     v_level INT;
 BEGIN
 
--- attendance (например 3 балла за посещение)
-
+-- attendance
 SELECT COUNT(*) * 3
 INTO v_attendance_score
 FROM attendance
 WHERE student_id = p_student_id
 AND attendance_status = TRUE;
 
--- achievement
-
-SELECT COALESCE(SUM(achievement_score),0)
+-- achievement (FIX)
+SELECT COALESCE(SUM(a.achievement_score), 0)
 INTO v_achievement_score
-FROM achievement
-WHERE student_id = p_student_id;
+FROM student_achievement sa
+JOIN achievement a ON sa.achievement_id = a.id
+WHERE sa.student_id = p_student_id;
 
 -- extracurricular
-
 SELECT COALESCE(SUM(a.ex_course_score),0)
 INTO v_extracurricular_score
 FROM extracurricular_team_members m
-JOIN extracurricular_score s
-ON m.team_id = s.team_id
-JOIN extracurricular_activity a
-ON s.ex_course_id = a.id
+JOIN extracurricular_score s ON m.team_id = s.team_id
+JOIN extracurricular_activity a ON s.ex_course_id = a.id
 WHERE m.student_id = p_student_id;
 
 -- total
-
 v_total_score :=
 v_attendance_score +
 v_achievement_score +
 v_extracurricular_score;
 
 -- level
-
 SELECT gamification_level
 INTO v_level
 FROM gamification_level
@@ -338,35 +332,44 @@ WHERE gamification_level_score <= v_total_score
 ORDER BY gamification_level_score DESC
 LIMIT 1;
 
--- update gamification
+-- UPSERT
+IF NOT EXISTS (
+    SELECT 1 FROM gamification WHERE student_id = p_student_id
+) THEN
+    INSERT INTO gamification (
+        student_id,
+        attendance_score,
+        achievement_score,
+        extracurricular_score,
+        total_score,
+        level
+    )
+    VALUES (
+        p_student_id,
+        v_attendance_score,
+        v_achievement_score,
+        v_extracurricular_score,
+        v_total_score,
+        COALESCE(v_level,0)
+    );
+ELSE
+    UPDATE gamification
+    SET
+        attendance_score = v_attendance_score,
+        achievement_score = v_achievement_score,
+        extracurricular_score = v_extracurricular_score,
+        total_score = v_total_score,
+        level = COALESCE(v_level,0)
+    WHERE student_id = p_student_id;
+END IF;
 
-UPDATE gamification
-SET
-attendance_score = v_attendance_score,
-achievement_score = v_achievement_score,
-extracurricular_score = v_extracurricular_score,
-level = COALESCE(v_level,0)
-WHERE student_id = p_student_id;
 END;
 $$;
 
-CREATE OR REPLACE FUNCTION recalc_gamification_all()
-RETURNS VOID
-LANGUAGE plpgsql
-AS $$
-DECLARE
-    r RECORD;
-BEGIN
-
-FOR r IN
-    SELECT student_id FROM gamification
-LOOP
-    PERFORM recalc_gamification(r.student_id);
-END LOOP;
-
-END;
-$$;
-
+CREATE TRIGGER trg_recalc_achievement
+AFTER INSERT ON student_achievement
+FOR EACH ROW
+EXECUTE FUNCTION recalc_gamification(NEW.student_id);docker exec -i sigma-db psql -U sigma -d sigma < sigma_db.sql
 
 CREATE OR REPLACE FUNCTION trg_attendance_gamification()
 RETURNS TRIGGER

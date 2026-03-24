@@ -1,8 +1,9 @@
-from sqlalchemy import Session, desc, text
+from sqlalchemy.orm import Session
+from sqlalchemy import desc, text
 from sqlalchemy.exc import IntegrityError
 from typing import Optional, List
 from app.modules.gamification.models import Gamification, GamificationLevel, ExtracurricularActivity, ExtracurricularTeam, ExtracurricularTeamMember, ExtracurricularScore
-from app.modules.gamification.schemas import GamificationSchema, GamificationLevelSchema, ExtracurricularActivitySchema, ExtracurricularTeamSchema, ExtracurricularTeamMemberSchema, ExtracurricularScoreSchema, ExtracurricularActivityUpdate
+from app.modules.gamification.schemas import GamificationLevelCreate, ExtracurricularActivityUpdate
 
 class GamificationRepository:
 
@@ -60,39 +61,60 @@ class GamificationRepository:
             self.session.delete(obj)
             self.session.commit()
             
-class GamificationLevelRepository():
+class GamificationLevelRepository:
+
     def __init__(self, session: Session):
         self.session = session
-        
-    def create_gamification_level(self, new_gamification_level: GamificationLevelSchema) -> GamificationLevel:
-        existing_level = self.session.query(GamificationLevel).filter_by(gamification_level=new_gamification_level.gamification_level).first()
-        if existing_level:
-            raise ValueError(f"Уровень {new_gamification_level.gamification_level} уже существует.")
-        
-        gamification_level = GamificationLevel(**new_gamification_level.model_dump())
-        self.session.add(gamification_level)
+
+    def create(self, data: GamificationLevelCreate) -> GamificationLevel:
+        existing = (
+            self.session.query(GamificationLevel)
+            .filter(GamificationLevel.gamification_level == data.gamification_level)
+            .first()
+        )
+
+        if existing:
+            raise ValueError(f"Level {data.gamification_level} already exists")
+
+        obj = GamificationLevel(**data.model_dump())
+        self.session.add(obj)
         self.session.commit()
-        self.session.refresh(gamification_level)
-        return gamification_level
-    
-    def get_all_gamification_levels(self) -> list[GamificationLevel]:
-        return self.session.query(GamificationLevel).all()
-    
-    def get_gamification_level_score_by_level(self, level: int) -> int:
-        gamification_level = self.session.query(GamificationLevel).filter_by(gamification_level=level).first()
-        if not gamification_level:
-            raise ValueError(f"Уровень {level} не найден.")
-        return gamification_level.gamification_level_score
-    
-    def update_gamification_level_score(self, level: int, new_score: int) -> GamificationLevel:
-        gamification_level = self.session.query(GamificationLevel).filter_by(gamification_level=level).first()
-        if not gamification_level:
-            raise ValueError(f"Уровень {level} не найден.")
-        
-        gamification_level.gamification_level_score = new_score
+        self.session.refresh(obj)
+        return obj
+
+    def get_all(self) -> list[GamificationLevel]:
+        return (
+            self.session.query(GamificationLevel)
+            .order_by(GamificationLevel.gamification_level_score)
+            .all()
+        )
+
+    def get_by_level(self, level: int) -> GamificationLevel | None:
+        return (
+            self.session.query(GamificationLevel)
+            .filter(GamificationLevel.gamification_level == level)
+            .first()
+        )
+
+    def update(self, level: int, new_score: int) -> GamificationLevel:
+        obj = self.get_by_level(level)
+
+        if not obj:
+            raise ValueError(f"Level {level} not found")
+
+        obj.gamification_level_score = new_score
         self.session.commit()
-        self.session.refresh(gamification_level)
-        return gamification_level
+        self.session.refresh(obj)
+        return obj
+
+    def delete(self, level: int) -> None:
+        obj = self.get_by_level(level)
+
+        if not obj:
+            raise ValueError(f"Level {level} not found")
+
+        self.session.delete(obj)
+        self.session.commit()
     
 class ExtracurricularActivityRepository():
     def __init__(self, session: Session):
@@ -132,10 +154,10 @@ class ExtracurricularActivityRepository():
         .all()
     )
            
-    def change_extracurricular_score(self, ex_course_name: str, new_score: int) -> ExtracurricularActivity:
+    def change_extracurricular_score(self, id: str, new_score: int) -> ExtracurricularActivity:
         activity = (
             self.session.query(ExtracurricularActivity)
-            .filter(ExtracurricularActivity.ex_course_name == ex_course_name)
+            .filter(ExtracurricularActivity.id == id)
             .first()
         )
 

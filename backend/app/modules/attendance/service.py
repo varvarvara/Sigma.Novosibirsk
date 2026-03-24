@@ -1,7 +1,7 @@
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
-from app.modules.attendance.repository import AttendanceRepository
+from app.modules.attendance.repository import AttendanceRepository, AchievementRepository
 from app.modules.attendance.schemas import (
     AttendanceBulkMarkIn,
     AttendanceBulkMarkOut,
@@ -14,6 +14,7 @@ from app.modules.attendance.schemas import (
     StudentAttendanceDashboardOut,
     StudentCourseAttendanceOut,
     StudentSearchItemOut,
+    
 )
 
 
@@ -294,3 +295,25 @@ class AttendanceService:
             total_lessons=total_lessons,
             courses=courses_out,
         )
+        
+class AchievementService:
+    def __init__(self, db: Session):
+        self.repo = AchievementRepository(db)
+        self.db = db
+
+    def assign_achievement(self, data, current_user):
+        if current_user["user_type"] != "staff":
+            raise HTTPException(status_code=403, detail="Only staff allowed")
+
+        achievement = self.repo.get_achievement(data.achievement_id)
+        if not achievement:
+            raise HTTPException(status_code=404, detail="Achievement not found")
+
+        student_achievement = self.repo.assign_to_student(
+            student_id=data.student_id,
+            achievement_id=data.achievement_id,
+        )
+
+        self._recalc_achievement_score(data.student_id)
+
+        return student_achievement

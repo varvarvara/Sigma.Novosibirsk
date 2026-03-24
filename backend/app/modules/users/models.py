@@ -61,8 +61,6 @@ class Student(Base):
 
     student_achievements = relationship("StudentAchievement", back_populates="student")
     student_certificates = relationship("StudentCertificate", back_populates="student")
-
-    extracurricular_teams = relationship("ExtracurricularTeam", back_populates="student")
     team_members = relationship("ExtracurricularTeamMember", back_populates="student")
 
 

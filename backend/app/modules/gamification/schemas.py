@@ -1,7 +1,10 @@
-from pydantic import BaseModel, EmailStr, Field, field_validator
+from pydantic import BaseModel, Field, ConfigDict
 
-class GamificationSchema(BaseModel):
-    id: int 
+
+class GamificationRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
     student_id: int
     attendance_score: int = Field(ge=0)
     achievement_score: int = Field(ge=0)
@@ -10,42 +13,80 @@ class GamificationSchema(BaseModel):
     level: int = Field(ge=0)
 
 
-class GamificationLevelSchema(BaseModel):
-    id: int 
-    gamification_level: int = Field(ge=0, le=5) #уточнить границы уровней
+class GamificationLevelCreate(BaseModel):
+    gamification_level: int = Field(ge=0)
     gamification_level_score: int = Field(ge=0)
 
-class ExtracurricularActivitySchema(BaseModel):
-    id: int 
-    ex_course_name: str =  Field (min_length=2,max_length=100)
-    staff_id: int
-    ex_course_score: int = Field(ge=0)  
-    
+
+class GamificationLevelRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    gamification_level: int = Field(ge=0)
+    gamification_level_score: int = Field(ge=0)
+
+
 class ExtracurricularActivityCreate(BaseModel):
+    ex_course_name: str = Field(min_length=2, max_length=100)
+    staff_id: int
+    ex_course_score: int = Field(ge=0)
+
+
+class ExtracurricularActivityUpdate(BaseModel):
+    ex_course_name: str | None = Field(default=None, min_length=2, max_length=100)
+    staff_id: int | None = None
+    ex_course_score: int | None = Field(default=None, ge=0)
+
+
+class ExtracurricularActivityRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
     ex_course_name: str
     staff_id: int
-    ex_course_score: int
-    
-class ExtracurricularActivityUpdate(BaseModel):
-    ex_course_name: str | None = None
-    staff_id: int | None = None
-    ex_course_score: int | None = None
-  
-class ExtracurricularTeamSchema(BaseModel):
-    id: int
+    ex_course_score: int = Field(ge=0)
+
+
+class ExtracurricularTeamCreate(BaseModel):
     ex_team_number: int = Field(ge=1)
     ex_team_name: str = Field(min_length=1, max_length=50)
 
-    
-class ExtracurricularTeamMemberSchema(BaseModel):
+
+class ExtracurricularTeamRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    ex_team_number: int
+    ex_team_name: str
+
+
+class ExtracurricularTeamMemberCreate(BaseModel):
+    team_id: int
+    student_id: int
+
+
+class ExtracurricularTeamMemberRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
     team_id: int
     student_id: int
-    
-    
-class ExtracurricularScoreSchema(BaseModel):
+
+
+class ExtracurricularScoreCreate(BaseModel):
+    team_id: int
+    ex_course_id: int
+    ex_team_score: int = Field(ge=0)
+
+
+class ExtracurricularScoreUpdate(BaseModel):
+    ex_team_score: int = Field(ge=0)
+
+
+class ExtracurricularScoreRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
     team_id: int
     ex_course_id: int
     ex_team_score: int = Field(ge=0)
-    
