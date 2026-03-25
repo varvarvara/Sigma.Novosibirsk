@@ -10,8 +10,6 @@ from app.modules.gamification.repository import (
     GamificationLevelCreate
 )
 
-
-
 class GamificationService:
 
     def __init__(self, repo: GamificationRepository):

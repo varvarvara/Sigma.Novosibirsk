@@ -7,7 +7,6 @@ from app.modules.gamification.service import *
 from app.modules.gamification.schemas import *
 
 gamificationRouter = APIRouter(prefix="/gamification", tags=["gamification"])
-# ------------------ DI ------------------
 
 def get_gam_service(db: Session = Depends(get_db)):
     return GamificationService(GamificationRepository(db))
@@ -27,8 +26,6 @@ def get_score_service(db: Session = Depends(get_db)):
 def get_level_service(db: Session = Depends(get_db)):
     return GamificationLevelService(GamificationLevelRepository(db))
 
-
-# ------------------ GAMIFICATION ------------------
 
 @gamificationRouter.get("/gamification/{student_id}", response_model=GamificationRead)
 def get_gam(student_id: int, service: GamificationService = Depends(get_gam_service)):
@@ -50,8 +47,6 @@ def leaderboard(service: GamificationService = Depends(get_gam_service)):
     return service.leaderboard()
 
 
-# ------------------ ACTIVITY ------------------
-
 @gamificationRouter.post("/activity", response_model=ExtracurricularActivityRead)
 def create_activity(
     data: ExtracurricularActivityCreate,
@@ -65,8 +60,6 @@ def get_activities(service: ActivityService = Depends(get_activity_service)):
     return service.get_all()
 
 
-# ------------------ TEAM ------------------
-
 @gamificationRouter.post("/team", response_model=ExtracurricularTeamRead)
 def create_team(data: ExtracurricularTeamCreate, service: TeamService = Depends(get_team_service)):
     return service.create(data)
@@ -77,8 +70,6 @@ def get_teams(service: TeamService = Depends(get_team_service)):
     return service.get_all()
 
 
-# ------------------ SCORE ------------------
-
 @gamificationRouter.post("/score", response_model=ExtracurricularScoreRead)
 def create_score(data: ExtracurricularScoreCreate, service: ScoreService = Depends(get_score_service)):
     return service.create(data)
@@ -87,8 +78,6 @@ def create_score(data: ExtracurricularScoreCreate, service: ScoreService = Depen
 @gamificationRouter.get("/score")
 def get_scores(service: ScoreService = Depends(get_score_service)):
     return service.get_all()
-
-# ------------------ GAMIFICATION LEVEL ------------------
 
 @gamificationRouter.post("/level", response_model=GamificationLevelRead)
 def create_level(
@@ -104,7 +93,6 @@ def get_levels(
 ):
     return service.get_all()
 
-
 @gamificationRouter.patch("/level/{level}", response_model=GamificationLevelRead)
 def update_level(
     level: int,
@@ -112,7 +100,6 @@ def update_level(
     service: GamificationLevelService = Depends(get_level_service),
 ):
     return service.update(level, new_score)
-
 
 @gamificationRouter.delete("/level/{level}")
 def delete_level(

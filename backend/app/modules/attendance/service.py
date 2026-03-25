@@ -2,6 +2,7 @@ from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.modules.attendance.repository import AttendanceRepository, AchievementRepository
+from app.modules.gamification.repository import GamificationRepository
 from app.modules.attendance.schemas import (
     AttendanceBulkMarkIn,
     AttendanceBulkMarkOut,
@@ -21,6 +22,7 @@ from app.modules.attendance.schemas import (
 class AttendanceService:
     def __init__(self, db: Session):
         self.repository = AttendanceRepository(db=db)
+        self.gam_repo = GamificationRepository(db)
 
     @staticmethod
     def _is_admin(current_user: dict) -> bool:
@@ -87,20 +89,25 @@ class AttendanceService:
                 status_code=status.HTTP_409_CONFLICT,
                 detail="Student is not enrolled in this course",
             )
-
+        
         attendance, created = self.repository.upsert_attendance(
             student_id=data.student_id,
             schedule_id=data.schedule_id,
             attendance_status=data.attendance_status,
-        )
-        points = self._recalculate_attendance_points(student_id=data.student_id)
+    )
+
+        self.gam_repo.get_or_create(data.student_id)
+        self.gam_repo.recalculate(data.student_id)
+
+        gamification = self.gam_repo.get_by_student_id(data.student_id)
+
 
         return AttendanceMarkOut(
             attendance_id=attendance.id,
             student_id=attendance.student_id,
             schedule_id=attendance.schedule_id,
             attendance_status=attendance.attendance_status,
-            attendance_points=points,
+            attendance_points=gamification.attendance_score if gamification else 0,
             created=created,
         )
 
@@ -298,8 +305,8 @@ class AttendanceService:
         
 class AchievementService:
     def __init__(self, db: Session):
-        self.repo = AchievementRepository(db)
-        self.db = db
+        self.repository = AttendanceRepository(db=db)
+        self.gam_repo = GamificationRepository(db)
 
     def assign_achievement(self, data, current_user):
         if current_user["user_type"] != "staff":
@@ -313,7 +320,5 @@ class AchievementService:
             student_id=data.student_id,
             achievement_id=data.achievement_id,
         )
-
-        self._recalc_achievement_score(data.student_id)
 
         return student_achievement

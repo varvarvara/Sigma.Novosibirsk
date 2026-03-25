@@ -99,6 +99,11 @@ class AchievementAssign(BaseModel):
     achievement_id: int
 
 
+class AchievementCreate(BaseModel):
+    achievement_description: str = Field(min_length=1, max_length=100)
+    course_id: int = Field(gt=0)
+    achievement_score: int = Field(ge=0)
+
 class StudentAchievementOut(BaseModel):
     id: int
     student_id: int

@@ -39,26 +39,23 @@ class ExtracurricularTeam(Base):
     __tablename__ = "extracurricular_team"
 
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
-    ex_team_number = Column(Integer, unique=True, nullable=False)  # Уникальный номер команды
+    ex_team_number = Column(Integer, unique=True, nullable=False)  
     ex_team_name = Column(String, nullable=False)
 
     members = relationship("ExtracurricularTeamMember", back_populates="team")
     scores = relationship("ExtracurricularScore", back_populates="team")
     
     
-class ExtracurricularTeamMember(Base): #добавить мб опциональное название команды??
+class ExtracurricularTeamMember(Base): 
     __tablename__ = "extracurricular_team_members"
     
     __table_args__ = (UniqueConstraint("team_id", "student_id"),)
 
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
-    team_id = Column(Integer, ForeignKey("extracurricular_team.id"), nullable=False)  # Идентификатор команды
-    student_id = Column(Integer, ForeignKey("students.id"), nullable=False)  # Идентификатор студента
+    team_id = Column(Integer, ForeignKey("extracurricular_team.id"), nullable=False)
+    student_id = Column(Integer, ForeignKey("students.id"), nullable=False) 
 
-    # Связь с моделью ExtracurricularTeam
     team = relationship("ExtracurricularTeam", back_populates="members")
-    
-    # Связь с моделью Student
     student = relationship("Student", back_populates="team_members")
     
     

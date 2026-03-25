@@ -1,8 +1,6 @@
 from sqlalchemy import Boolean, Column, Enum, ForeignKey, Integer, String, TIMESTAMP, Text
 from sqlalchemy.orm import relationship
-
 from app.db.base import Base
-
 
 class Attendance(Base):
     __tablename__ = "attendance"

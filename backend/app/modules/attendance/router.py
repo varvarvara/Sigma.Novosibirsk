@@ -11,11 +11,12 @@ from app.modules.attendance.schemas import (
     CourseStudentAttendanceDetailOut,
     StudentAttendanceDashboardOut,
     StudentSearchItemOut,
+    StudentAchievementOut
 )
 from app.modules.attendance.service import AttendanceService
 from app.security.permissions import require_student, require_teacher_or_admin
 from app.security.permissions import require_teacher_or_admin
-from app.modules.attendance.schemas import AchievementCreate, AchievementOut
+from app.modules.attendance.schemas import AchievementCreate, StudentAchievementOut
 from app.modules.attendance.service import AchievementService
 
 attendanceRouter = APIRouter(prefix="/attendance", tags=["attendance"])
@@ -89,7 +90,7 @@ def get_my_attendance(
 ):
     return AttendanceService(db=db).get_my_attendance(current_user=current_user)
 
-@achievementRouter.post("/", response_model=AchievementOut)
+@attendanceRouter.post("/", response_model=StudentAchievementOut)
 def create_achievement(
     body: AchievementCreate,
     current_user: dict = Depends(require_teacher_or_admin),
@@ -97,7 +98,7 @@ def create_achievement(
 ):
     return AchievementService(db).create_achievement(body, current_user)
 
-@achievementRouter.get("/course/{course_id}", response_model=list[AchievementOut])
+@attendanceRouter.get("/course/{course_id}", response_model=list[StudentAchievementOut])
 def get_course_achievements(
     course_id: int,
     db: Session = Depends(get_db),
