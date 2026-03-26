@@ -1,5 +1,5 @@
 from fastapi import HTTPException
-
+from app.modules.gamification.models import ExtracurricularTeamMember, ExtracurricularTeam, ExtracurricularScore
 from app.modules.gamification.repository import (
     GamificationRepository,
     GamificationLevelRepository,
@@ -21,18 +21,44 @@ class GamificationService:
             raise HTTPException(404, "Gamification not found")
         return obj
 
-    def recalc(self, student_id: int):
-        self.repo.get_or_create(student_id)
-        self.repo.recalculate(student_id)
-        return self.repo.get_by_student_id(student_id)
-
-    def recalc_all(self):
-        self.repo.recalculate_all()
-        return {"status": "ok"}
-
     def leaderboard(self, limit: int = 10):
         return self.repo.get_leaderboard(limit)
 
+    def get_student_team(self, student_id: int):
+        result = (
+            self.repo.session.query(
+                ExtracurricularTeam.ex_team_number,
+                ExtracurricularTeam.ex_team_name
+            )
+            .join(
+                ExtracurricularTeamMember,
+                ExtracurricularTeam.id == ExtracurricularTeamMember.team_id
+            )
+            .filter(ExtracurricularTeamMember.student_id == student_id)
+            .first()
+        )
+
+        if not result:
+            return None
+
+        return {
+            "team_number": result[0],
+            "team_name": result[1]
+        }
+
+    def get_gamification_by_student(self, student_id: int):
+        gam = self.repo.get_by_student_id(student_id)
+
+        if not gam:
+            raise HTTPException(404, "Gamification not found")
+
+        return {
+            "student_id": gam.student_id,
+            "level": gam.level,
+            "achievement_score": gam.achievement_score,
+            "extracurricular_score": gam.extracurricular_score,
+            "total_score": gam.total_score
+        }
 
 class GamificationLevelService:
 
@@ -44,7 +70,6 @@ class GamificationLevelService:
 
     def get_all(self):
         return self.repo.get_all_gamification_levels()
-
 
 
 class ActivityService:
@@ -146,3 +171,34 @@ class GamificationLevelService:
             return {"status": "deleted"}
         except ValueError as e:
             raise HTTPException(status_code=404, detail=str(e))
+        
+    def get_full(self, student_id: int):
+        gam = self.repo.get_by_student_id(student_id)
+
+        if not gam:
+            raise HTTPException(404, "Gamification not found")
+        team_member = self.repo.session.query(ExtracurricularTeamMember).filter(
+            ExtracurricularTeamMember.student_id == student_id
+        ).first()
+
+        team = None
+        team_score = 0
+
+        if team_member:
+            team = self.repo.session.query(ExtracurricularTeam).filter(
+                ExtracurricularTeam.id == team_member.team_id
+            ).first()
+
+            scores = self.repo.session.query(ExtracurricularScore).filter(
+                ExtracurricularScore.team_id == team.id
+            ).all()
+
+            team_score = sum(s.ex_team_score for s in scores)
+
+        return {
+            "student_id": student_id,
+            "level": gam.level,
+            "total_score": gam.total_score,
+            "team": team.ex_team_name if team else None,
+            "team_score": team_score,
+        }

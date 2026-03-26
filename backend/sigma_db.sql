@@ -1,6 +1,3 @@
--- Sigma DB schema (aligned with current backend models/repositories)
-
--- Re-runnable cleanup
 DROP TABLE IF EXISTS teacher_certificate CASCADE;
 DROP TABLE IF EXISTS student_certificate CASCADE;
 DROP TABLE IF EXISTS student_achievement CASCADE;
@@ -30,7 +27,6 @@ DROP TYPE IF EXISTS pre_registration_statuses CASCADE;
 DROP TYPE IF EXISTS staff_roles CASCADE;
 DROP TYPE IF EXISTS student_statuses CASCADE;
 
--- Enums
 CREATE TYPE student_statuses AS ENUM ('Registered', 'Enrolled', 'Blocked');
 CREATE TYPE staff_roles AS ENUM ('Teacher', 'Admin');
 CREATE TYPE pre_registration_statuses AS ENUM ('PendingApproval', 'Approved');
@@ -39,7 +35,6 @@ CREATE TYPE course_types AS ENUM ('ThreeDays', 'SixDays');
 CREATE TYPE enrollment_statuses AS ENUM ('Active', 'Dropped', 'Completed');
 CREATE TYPE certificate_statuses AS ENUM ('In progress', 'Issued');
 
--- Core users
 CREATE TABLE staff (
     id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     first_name VARCHAR(50) NOT NULL,
@@ -88,7 +83,6 @@ CREATE TABLE pre_registration (
     pre_registration_status pre_registration_statuses NOT NULL DEFAULT 'PendingApproval'
 );
 
--- Scheduling/courses
 CREATE TABLE slots (
     id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     staff_id BIGINT NOT NULL REFERENCES staff(id) ON DELETE CASCADE,
@@ -145,7 +139,6 @@ CREATE TABLE enrollment (
     CONSTRAINT cn_enrollment UNIQUE (student_id, course_id)
 );
 
--- Gamification
 CREATE TABLE gamification (
     id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     student_id BIGINT UNIQUE NOT NULL REFERENCES students(id) ON DELETE CASCADE,
@@ -162,7 +155,6 @@ CREATE TABLE gamification_level (
     gamification_level_score INT NOT NULL
 );
 
--- Extracurricular
 CREATE TABLE extracurricular_activity (
     id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     ex_course_name VARCHAR(100) UNIQUE NOT NULL,
@@ -191,9 +183,9 @@ CREATE TABLE extracurricular_score (
     CONSTRAINT cn_extracurricular_score UNIQUE (team_id, ex_course_id)
 );
 
--- Achievements/certificates
 CREATE TABLE achievement (
     id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    achievement_name VARCHAR(50) NOT NULL,
     achievement_description VARCHAR(100) NOT NULL,
     course_id BIGINT NOT NULL REFERENCES course(id) ON DELETE CASCADE,
     achievement_score INT NOT NULL,
@@ -228,7 +220,6 @@ CREATE TABLE teacher_certificate (
     certificate_status certificate_statuses NOT NULL DEFAULT 'In progress'
 );
 
--- Trigger: auto-update updated_at on course
 CREATE OR REPLACE FUNCTION set_updated_at()
 RETURNS TRIGGER
 LANGUAGE plpgsql
@@ -296,21 +287,18 @@ DECLARE
     v_level INT;
 BEGIN
 
--- attendance
 SELECT COUNT(*) * 3
 INTO v_attendance_score
 FROM attendance
 WHERE student_id = p_student_id
 AND attendance_status = TRUE;
 
--- achievement (FIX)
 SELECT COALESCE(SUM(a.achievement_score), 0)
 INTO v_achievement_score
 FROM student_achievement sa
 JOIN achievement a ON sa.achievement_id = a.id
 WHERE sa.student_id = p_student_id;
 
--- extracurricular
 SELECT COALESCE(SUM(a.ex_course_score),0)
 INTO v_extracurricular_score
 FROM extracurricular_team_members m
@@ -318,13 +306,11 @@ JOIN extracurricular_score s ON m.team_id = s.team_id
 JOIN extracurricular_activity a ON s.ex_course_id = a.id
 WHERE m.student_id = p_student_id;
 
--- total
 v_total_score :=
 v_attendance_score +
 v_achievement_score +
 v_extracurricular_score;
 
--- level
 SELECT gamification_level
 INTO v_level
 FROM gamification_level
@@ -332,7 +318,6 @@ WHERE gamification_level_score <= v_total_score
 ORDER BY gamification_level_score DESC
 LIMIT 1;
 
--- UPSERT
 IF NOT EXISTS (
     SELECT 1 FROM gamification WHERE student_id = p_student_id
 ) THEN

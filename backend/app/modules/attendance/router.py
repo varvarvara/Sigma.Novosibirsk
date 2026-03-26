@@ -11,16 +11,18 @@ from app.modules.attendance.schemas import (
     CourseStudentAttendanceDetailOut,
     StudentAttendanceDashboardOut,
     StudentSearchItemOut,
-    StudentAchievementOut
+    StudentCourseAchievementOut,
+    AchievementOut,
+    AchievementAssign,
+    StudentAchievementOut 
 )
 from app.modules.attendance.service import AttendanceService
 from app.security.permissions import require_student, require_teacher_or_admin
 from app.security.permissions import require_teacher_or_admin
-from app.modules.attendance.schemas import AchievementCreate, StudentAchievementOut
+from app.modules.attendance.schemas import AchievementCreate
 from app.modules.attendance.service import AchievementService
 
 attendanceRouter = APIRouter(prefix="/attendance", tags=["attendance"])
-achievementRouter = APIRouter(prefix="/achievements", tags=["achievements"])
 
 @attendanceRouter.post("/mark", response_model=AttendanceMarkOut)
 def mark_attendance(
@@ -90,7 +92,19 @@ def get_my_attendance(
 ):
     return AttendanceService(db=db).get_my_attendance(current_user=current_user)
 
-@attendanceRouter.post("/", response_model=StudentAchievementOut)
+
+@attendanceRouter.get(
+    "/student/{student_id}/course/{course_id}",
+    response_model=list[StudentCourseAchievementOut],
+)
+def get_student_course_achievements(
+    student_id: int,
+    course_id: int,
+    db: Session = Depends(get_db),
+):
+    return AchievementService(db).get_student_course_achievements(student_id, course_id)
+
+@attendanceRouter.post("/", response_model=AchievementOut)
 def create_achievement(
     body: AchievementCreate,
     current_user: dict = Depends(require_teacher_or_admin),
@@ -98,11 +112,10 @@ def create_achievement(
 ):
     return AchievementService(db).create_achievement(body, current_user)
 
-@attendanceRouter.get("/course/{course_id}", response_model=list[StudentAchievementOut])
-def get_course_achievements(
-    course_id: int,
+@attendanceRouter.post("/assign", response_model=StudentAchievementOut)
+def assign_achievement(
+    body: AchievementAssign,
+    current_user: dict = Depends(require_teacher_or_admin),
     db: Session = Depends(get_db),
 ):
-    return AchievementService(db).get_course_achievements(course_id)
-
-
+    return AchievementService(db).assign_achievement(body, current_user)

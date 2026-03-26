@@ -30,23 +30,6 @@ class GamificationRepository:
             obj = self.create(student_id)
         return obj
 
-    def recalculate(self, student_id: int) -> None:
-        self.session.execute(
-            text("SELECT recalc_gamification(:student_id)"),
-            {"student_id": student_id}
-        )
-        self.session.commit()
-        
-    def recalculate_all(self):
-        self.session.execute(
-            text("SELECT recalc_gamification_all()")
-        )
-        self.session.commit()
-
-    def recalculate_and_get(self, student_id: int) -> Gamification:
-        self.recalculate(student_id)
-        return self.get_by_student_id(student_id)
-
     def get_leaderboard(self, limit: int = 10) -> List[Gamification]:
         return (
             self.session.query(Gamification)
@@ -60,6 +43,13 @@ class GamificationRepository:
         if obj:
             self.session.delete(obj)
             self.session.commit()
+            
+    def get_by_student_id(self, student_id: int):
+        return (
+            self.session.query(Gamification)
+            .filter(Gamification.student_id == student_id)
+            .first()
+        )
             
 class GamificationLevelRepository:
 

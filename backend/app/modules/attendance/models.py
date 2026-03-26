@@ -18,6 +18,7 @@ class Achievement(Base):
     __tablename__ = "achievement"
 
     id = Column(Integer, primary_key=True, index=True)
+    achievement_name = Column(String, nullable=False)
     achievement_description = Column(String(100), nullable=False)
     course_id = Column(Integer, ForeignKey("course.id"), nullable=False)
     achievement_score = Column(Integer, nullable=False)

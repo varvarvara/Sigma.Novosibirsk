@@ -1,5 +1,7 @@
 from sqlalchemy import func, or_
 from sqlalchemy.orm import Session
+from fastapi import HTTPException
+from sqlalchemy.exc import IntegrityError
 
 from app.modules.attendance.models import Attendance, Achievement, StudentAchievement
 from app.modules.courses.models import Course, CourseClass
@@ -287,15 +289,36 @@ class AchievementRepository:
     def __init__(self, db: Session):
         self.db = db
 
-    def assign_to_student(self, student_id: int, achievement_id: int) -> StudentAchievement:
+    def assign_to_student(self, student_id: int, achievement_id: int):
         obj = StudentAchievement(
             student_id=student_id,
             achievement_id=achievement_id,
         )
+
         self.db.add(obj)
-        self.db.commit()
-        self.db.refresh(obj)
+
+        try:
+            self.db.commit()
+            self.db.refresh(obj)
+        except IntegrityError:
+            self.db.rollback()
+            raise HTTPException(
+                status_code=400,
+                detail="This achievement is already assigned to the student"
+            )
+
         return obj
 
-    def get_achievement(self, achievement_id: int) -> Achievement | None:
-        return self.db.query(Achievement).filter(Achievement.id == achievement_id).first()
+    def get_student_course_achievements(self, student_id: int, course_id: int):
+        return (
+            self.db.query(
+                Achievement.course_id.label("course_id"),
+                Achievement.achievement_name.label("achievement_name"),
+            )
+            .join(StudentAchievement, StudentAchievement.achievement_id == Achievement.id)
+            .filter(
+                StudentAchievement.student_id == student_id,
+                Achievement.course_id == course_id,
+            )
+            .all()
+        )

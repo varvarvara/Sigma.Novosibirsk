@@ -77,3 +77,9 @@ class ExtracurricularScoreRead(BaseModel):
     team_id: int
     ex_course_id: int
     ex_team_score: int = Field(ge=0)
+      
+class StudentTeamRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    team_number: int
+    team_name: str

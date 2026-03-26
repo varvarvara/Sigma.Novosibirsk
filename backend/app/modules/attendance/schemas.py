@@ -100,14 +100,34 @@ class AchievementAssign(BaseModel):
 
 
 class AchievementCreate(BaseModel):
+    achievement_name: str = Field(min_length=1, max_length=50)
     achievement_description: str = Field(min_length=1, max_length=100)
     course_id: int = Field(gt=0)
     achievement_score: int = Field(ge=0)
+
+class StudentCourseAchievementOut(BaseModel):
+    course_id: int
+    achievement_name: str
+        
+class AchievementOut(BaseModel):
+    id: int
+    achievement_name: str
+    achievement_description: str
+    course_id: int
+    achievement_score: int
+
+    class Config:
+        from_attributes = True
+        
+from datetime import datetime
+from pydantic import BaseModel
+
 
 class StudentAchievementOut(BaseModel):
     id: int
     student_id: int
     achievement_id: int
+    awarded_at: datetime
 
     class Config:
         from_attributes = True

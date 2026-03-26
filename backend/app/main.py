@@ -3,7 +3,6 @@ from fastapi import FastAPI
 from app.db.base import Base, engine
 from app.modules.admin.router import adminRouter
 from app.modules.attendance.router import attendanceRouter
-from app.modules.attendance.router import achievementRouter
 from app.modules.auth.router import authRouter
 from app.modules.courses.router import courseRouter
 from app.modules.enrollment.router import enrollmentRouter
@@ -41,4 +40,3 @@ app.include_router(enrollmentRouter)
 app.include_router(schedulingRouter)
 app.include_router(attendanceRouter)
 app.include_router(gamificationRouter)
-app.include_router(achievementRouter)

@@ -1,6 +1,7 @@
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
+from app.modules.attendance.models import Achievement
 from app.modules.attendance.repository import AttendanceRepository, AchievementRepository
 from app.modules.gamification.repository import GamificationRepository
 from app.modules.attendance.schemas import (
@@ -14,7 +15,7 @@ from app.modules.attendance.schemas import (
     LessonAttendanceItemOut,
     StudentAttendanceDashboardOut,
     StudentCourseAttendanceOut,
-    StudentSearchItemOut,
+    StudentSearchItemOut
     
 )
 
@@ -305,20 +306,52 @@ class AttendanceService:
         
 class AchievementService:
     def __init__(self, db: Session):
-        self.repository = AttendanceRepository(db=db)
+        self.repository = AchievementRepository(db=db)
         self.gam_repo = GamificationRepository(db)
 
     def assign_achievement(self, data, current_user):
-        if current_user["user_type"] != "staff":
-            raise HTTPException(status_code=403, detail="Only staff allowed")
+        if current_user["user_type"] not in ["staff", "teacher"]:
+            raise HTTPException(status_code=403, detail="Only staff or teachers are allowed")
 
-        achievement = self.repo.get_achievement(data.achievement_id)
+        achievement = self.repository.db.query(Achievement).filter(
+            Achievement.id == data.achievement_id
+        ).first()
+
         if not achievement:
             raise HTTPException(status_code=404, detail="Achievement not found")
 
-        student_achievement = self.repo.assign_to_student(
+        obj = self.repository.assign_to_student(
             student_id=data.student_id,
             achievement_id=data.achievement_id,
         )
 
-        return student_achievement
+        return obj
+    
+    def create_achievement(self, data, current_user):
+        if current_user["user_type"] != "staff":
+            raise HTTPException(status_code=403, detail="Only staff allowed")
+
+        achievement = Achievement(
+            achievement_name=data.achievement_name,
+            achievement_description=data.achievement_description,
+            course_id=data.course_id,
+            achievement_score=data.achievement_score,
+        )
+
+        self.repository.db.add(achievement)
+        self.repository.db.commit()
+        self.repository.db.refresh(achievement)
+
+        return achievement
+    
+    
+    def get_student_course_achievements(self, student_id: int, course_id: int):
+        rows = self.repository.get_student_course_achievements(student_id, course_id)
+
+        return [
+            {
+                "course_id": row.course_id,
+                "achievement_name": row.achievement_name,
+            }
+            for row in rows
+        ]
