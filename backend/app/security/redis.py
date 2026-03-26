@@ -1,16 +1,31 @@
 import json
-import os
 import time
-from pathlib import Path
+from urllib.parse import quote
 
-from dotenv import load_dotenv
 from redis import Redis
 from redis.exceptions import RedisError
 
-BASE_DIR = Path(__file__).resolve().parents[2]
-load_dotenv(BASE_DIR / ".env")
+from app.config import settings
 
-REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
+
+def _build_redis_url() -> str:
+    redis_url = settings.REDIS_URL
+    if redis_url:
+        return redis_url
+
+    host = settings.REDIS_HOST
+    port = str(settings.REDIS_PORT)
+    db = str(settings.REDIS_DB)
+    password = settings.REDIS_PASSWORD or ""
+
+    if password and password.lower() not in {"none", "null"}:
+        encoded_password = quote(password, safe="")
+        return f"redis://:{encoded_password}@{host}:{port}/{db}"
+
+    return f"redis://{host}:{port}/{db}"
+
+
+REDIS_URL = _build_redis_url()
 class TokenStore:
     def __init__(self):
         self._redis: Redis | None = None

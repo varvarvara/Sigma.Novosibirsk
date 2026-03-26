@@ -60,19 +60,23 @@ class EnrollmentRepository:
             .first()
         )
 
-    def list_enrollments_by_student(self, student_id: int) -> list[Enrollment]:
+    def list_enrollments_by_student(self, student_id: int, offset: int = 0, limit: int = 20) -> list[Enrollment]:
         return (
             self.db.query(Enrollment)
             .filter(Enrollment.student_id == student_id)
             .order_by(Enrollment.id.desc())
+            .offset(offset)
+            .limit(limit)
             .all()
         )
 
-    def list_enrollments_by_course(self, course_id: int) -> list[Enrollment]:
+    def list_enrollments_by_course(self, course_id: int, offset: int = 0, limit: int = 20) -> list[Enrollment]:
         return (
             self.db.query(Enrollment)
             .filter(Enrollment.course_id == course_id)
             .order_by(Enrollment.id.desc())
+            .offset(offset)
+            .limit(limit)
             .all()
         )
 

@@ -5,7 +5,7 @@ from pydantic import BaseModel, EmailStr, field_validator
 
 from enums import StaffRoles, StudentStatuses
 
-LETTER_MATCH_PATTERN = re.compile(r"^[а-яА-Яa-zA-Z\-]+$")
+LETTER_MATCH_PATTERN = re.compile(r"^[а-яА-ЯёЁa-zA-Z\-]+$")
 PHONE_MATCH_PATTERN = re.compile(r"^\+?[0-9]{10,20}$")
 MIN_PASSWORD_LENGTH = 8
 

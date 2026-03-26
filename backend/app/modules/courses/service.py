@@ -78,28 +78,36 @@ class CourseService:
             is_booked=is_booked,
         )
 
-    def list_courses(self, current_user: dict) -> list[CourseOutput]:
+    def list_courses(self, current_user: dict, offset: int = 0, limit: int = 20) -> list[CourseOutput]:
         if self._is_admin(current_user):
-            courses = self.repository.get_all()
+            courses = self.repository.get_all(offset=offset, limit=limit)
         elif self._is_teacher(current_user):
-            courses = self.repository.get_all_by_staff(staff_id=current_user["user"].id)
+            courses = self.repository.get_all_by_staff(
+                staff_id=current_user["user"].id,
+                offset=offset,
+                limit=limit,
+            )
         else:
-            courses = self.repository.get_all_published()
+            courses = self.repository.get_all_published(offset=offset, limit=limit)
 
         return [self._to_output(course) for course in courses]
 
-    def list_my_courses(self, current_user: dict) -> list[CourseOutput]:
+    def list_my_courses(self, current_user: dict, offset: int = 0, limit: int = 20) -> list[CourseOutput]:
         if not self._is_teacher(current_user):
             raise HTTPException(status_code=403, detail="Teacher access required")
 
-        courses = self.repository.get_all_by_staff(staff_id=current_user["user"].id)
+        courses = self.repository.get_all_by_staff(
+            staff_id=current_user["user"].id,
+            offset=offset,
+            limit=limit,
+        )
         return [self._to_output(course) for course in courses]
 
-    def list_all_courses_admin(self, current_user: dict) -> list[CourseOutput]:
+    def list_all_courses_admin(self, current_user: dict, offset: int = 0, limit: int = 20) -> list[CourseOutput]:
         if not self._is_admin(current_user):
             raise HTTPException(status_code=403, detail="Admin access required")
 
-        courses = self.repository.get_all()
+        courses = self.repository.get_all(offset=offset, limit=limit)
         return [self._to_output(course) for course in courses]
 
     def get_course(self, course_id: int, current_user: dict) -> CourseOutput:

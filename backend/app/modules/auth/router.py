@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, Response, status
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.orm import Session
 
 from app.db.session import get_db
@@ -13,6 +14,7 @@ from app.modules.auth.schemas import (
 from app.modules.auth.services import AuthService
 
 authRouter = APIRouter(prefix="/auth", tags=["auth"])
+bearer_scheme = HTTPBearer(auto_error=False)
 
 
 @authRouter.post("/login", response_model=UserWithToken)
@@ -26,8 +28,15 @@ def refresh(body: RefreshTokenRequest, session: Session = Depends(get_db)):
 
 
 @authRouter.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
-def logout(body: LogoutRequest, session: Session = Depends(get_db)) -> Response:
-    AuthService(session=session).logout(refresh_token=body.refresh_token)
+def logout(
+    body: LogoutRequest,
+    session: Session = Depends(get_db),
+    credentials: HTTPAuthorizationCredentials | None = Depends(bearer_scheme),
+) -> Response:
+    access_token = None
+    if credentials is not None and credentials.scheme.lower() == "bearer":
+        access_token = credentials.credentials
+    AuthService(session=session).logout(refresh_token=body.refresh_token, access_token=access_token)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 

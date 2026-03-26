@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
 from app.db.session import get_db
@@ -18,18 +18,33 @@ courseRouter = APIRouter(prefix="/courses", tags=["courses"])
 
 
 @courseRouter.get("", response_model=list[CourseOutput])
-def get_courses(current_user=Depends(get_current_user), db: Session = Depends(get_db)):
-    return CourseService(db=db).list_courses(current_user=current_user)
+def get_courses(
+    current_user=Depends(get_current_user),
+    db: Session = Depends(get_db),
+    offset: int = Query(default=0, ge=0),
+    limit: int = Query(default=20, ge=1, le=100),
+):
+    return CourseService(db=db).list_courses(current_user=current_user, offset=offset, limit=limit)
 
 
 @courseRouter.get("/my", response_model=list[CourseOutput])
-def get_my_courses(current_user: dict = Depends(require_teacher), db: Session = Depends(get_db)):
-    return CourseService(db=db).list_my_courses(current_user=current_user)
+def get_my_courses(
+    current_user: dict = Depends(require_teacher),
+    db: Session = Depends(get_db),
+    offset: int = Query(default=0, ge=0),
+    limit: int = Query(default=20, ge=1, le=100),
+):
+    return CourseService(db=db).list_my_courses(current_user=current_user, offset=offset, limit=limit)
 
 
 @courseRouter.get("/admin/all", response_model=list[CourseOutput])
-def get_all_courses_admin(current_user: dict = Depends(require_admin), db: Session = Depends(get_db)):
-    return CourseService(db=db).list_all_courses_admin(current_user=current_user)
+def get_all_courses_admin(
+    current_user: dict = Depends(require_admin),
+    db: Session = Depends(get_db),
+    offset: int = Query(default=0, ge=0),
+    limit: int = Query(default=20, ge=1, le=100),
+):
+    return CourseService(db=db).list_all_courses_admin(current_user=current_user, offset=offset, limit=limit)
 
 
 @courseRouter.get("/{course_id}", response_model=CourseOutput)

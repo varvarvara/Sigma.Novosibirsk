@@ -133,6 +133,12 @@ class EnrollmentService:
 
         courses = self.repository.list_published_courses_with_schedule()
         for course in courses:
+            slot_hours = self.repository.list_course_slot_hours(course_id=course.id)
+            # Enrollment model requires one stable hour per course across the season.
+            if len(slot_hours) != 1:
+                continue
+            stable_hour = slot_hours[0]
+
             teacher = self.repository.get_staff_by_id(course.staff_id)
             teacher_name = None
             if teacher is not None:
@@ -150,10 +156,8 @@ class EnrollmentService:
                 seats_left=seats_left,
             )
 
-            slot_hours = self.repository.list_course_slot_hours(course_id=course.id)
-            for slot_hour in slot_hours:
-                if slot_hour in by_hour:
-                    by_hour[slot_hour].append(option)
+            if stable_hour in by_hour:
+                by_hour[stable_hour].append(option)
 
         slots = [
             SlotOptionsItem(
@@ -202,7 +206,14 @@ class EnrollmentService:
                     detail=f"Course {course_id} is not published",
                 )
 
-            if not self.repository.course_has_slot_hour(course_id=course_id, slot_hour=slot_hour):
+            slot_hours = self.repository.list_course_slot_hours(course_id=course_id)
+            if len(slot_hours) != 1:
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail=f"Course {course_id} schedule is unstable across slot hours",
+                )
+
+            if slot_hours[0] != slot_hour:
                 raise HTTPException(
                     status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                     detail=f"Course {course_id} is not available in slot {slot_hour}:00",
@@ -244,11 +255,11 @@ class EnrollmentService:
             items=created_items,
         )
 
-    def get_my_enrollments(self, current_user: dict) -> list[EnrollmentOutput]:
+    def get_my_enrollments(self, current_user: dict, offset: int = 0, limit: int = 20) -> list[EnrollmentOutput]:
         self._ensure_student(current_user=current_user)
 
         student_id = current_user["user"].id
-        rows = self.repository.list_enrollments_by_student(student_id=student_id)
+        rows = self.repository.list_enrollments_by_student(student_id=student_id, offset=offset, limit=limit)
         return [self._to_output(row) for row in rows]
 
     def drop_my_enrollment(self, enrollment_id: int, current_user: dict) -> EnrollmentOutput:
@@ -273,7 +284,13 @@ class EnrollmentService:
         )
         return self._to_output(updated)
 
-    def get_course_enrollments(self, course_id: int, current_user: dict) -> list[EnrollmentOutput]:
+    def get_course_enrollments(
+        self,
+        course_id: int,
+        current_user: dict,
+        offset: int = 0,
+        limit: int = 20,
+    ) -> list[EnrollmentOutput]:
         course = self.repository.get_course_by_id(course_id=course_id)
         if course is None:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Course not found")
@@ -284,10 +301,16 @@ class EnrollmentService:
         elif not self._is_admin(current_user):
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Teacher/Admin access required")
 
-        rows = self.repository.list_enrollments_by_course(course_id=course_id)
+        rows = self.repository.list_enrollments_by_course(course_id=course_id, offset=offset, limit=limit)
         return [self._to_output(row) for row in rows]
 
-    def get_student_enrollments(self, student_id: int, current_user: dict) -> list[EnrollmentOutput]:
+    def get_student_enrollments(
+        self,
+        student_id: int,
+        current_user: dict,
+        offset: int = 0,
+        limit: int = 20,
+    ) -> list[EnrollmentOutput]:
         if not self._is_admin(current_user):
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin access required")
 
@@ -295,7 +318,7 @@ class EnrollmentService:
         if student is None:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Student not found")
 
-        rows = self.repository.list_enrollments_by_student(student_id=student_id)
+        rows = self.repository.list_enrollments_by_student(student_id=student_id, offset=offset, limit=limit)
         return [self._to_output(row) for row in rows]
 
     def set_enrollment_status(

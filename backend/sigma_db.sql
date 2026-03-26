@@ -16,6 +16,8 @@ DROP TABLE IF EXISTS course CASCADE;
 DROP TABLE IF EXISTS slots CASCADE;
 DROP TABLE IF EXISTS pre_registration CASCADE;
 DROP TABLE IF EXISTS intake_control CASCADE;
+DROP TABLE IF EXISTS course_feedback CASCADE;
+DROP TABLE IF EXISTS feedback_control CASCADE;
 DROP TABLE IF EXISTS students CASCADE;
 DROP TABLE IF EXISTS staff CASCADE;
 
@@ -53,6 +55,18 @@ CREATE TABLE intake_control (
 );
 
 INSERT INTO intake_control (id, intake_closed) VALUES (1, FALSE)
+ON CONFLICT (id) DO NOTHING;
+
+CREATE TABLE feedback_control (
+    id INT PRIMARY KEY DEFAULT 1,
+    feedback_open BOOLEAN NOT NULL DEFAULT FALSE,
+    opened_at TIMESTAMPTZ NULL,
+    opened_by BIGINT NULL REFERENCES staff(id) ON DELETE SET NULL,
+    closed_at TIMESTAMPTZ NULL,
+    closed_by BIGINT NULL REFERENCES staff(id) ON DELETE SET NULL
+);
+
+INSERT INTO feedback_control (id, feedback_open) VALUES (1, FALSE)
 ON CONFLICT (id) DO NOTHING;
 
 CREATE TABLE students (
@@ -137,6 +151,17 @@ CREATE TABLE enrollment (
     enrolled_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     enrollment_status enrollment_statuses NOT NULL DEFAULT 'Active',
     CONSTRAINT cn_enrollment UNIQUE (student_id, course_id)
+);
+
+CREATE TABLE course_feedback (
+    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    course_id BIGINT NOT NULL REFERENCES course(id) ON DELETE CASCADE,
+    student_id BIGINT NOT NULL REFERENCES students(id) ON DELETE CASCADE,
+    rating INT NOT NULL CHECK (rating BETWEEN 1 AND 10),
+    comment TEXT NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    CONSTRAINT uq_course_feedback_student_course UNIQUE (student_id, course_id)
 );
 
 CREATE TABLE gamification (
@@ -233,6 +258,12 @@ $$;
 DROP TRIGGER IF EXISTS trg_course_updated_at ON course;
 CREATE TRIGGER trg_course_updated_at
 BEFORE UPDATE ON course
+FOR EACH ROW
+EXECUTE FUNCTION set_updated_at();
+
+DROP TRIGGER IF EXISTS trg_course_feedback_updated_at ON course_feedback;
+CREATE TRIGGER trg_course_feedback_updated_at
+BEFORE UPDATE ON course_feedback
 FOR EACH ROW
 EXECUTE FUNCTION set_updated_at();
 
@@ -460,4 +491,3 @@ CREATE TRIGGER trg_check_full_attendance_for_certificate
 BEFORE INSERT OR UPDATE ON student_certificate
 FOR EACH ROW
 EXECUTE FUNCTION check_full_attendance_for_certificate();
-

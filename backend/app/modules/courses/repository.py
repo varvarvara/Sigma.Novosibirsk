@@ -14,22 +14,26 @@ class CourseRepository:
     def get_by_id(self, course_id: int) -> Course | None:
         return self.db.query(Course).filter(Course.id == course_id).first()
 
-    def get_all(self) -> list[Course]:
-        return self.db.query(Course).order_by(Course.id.desc()).all()
+    def get_all(self, offset: int = 0, limit: int = 20) -> list[Course]:
+        return self.db.query(Course).order_by(Course.id.desc()).offset(offset).limit(limit).all()
 
-    def get_all_published(self) -> list[Course]:
+    def get_all_published(self, offset: int = 0, limit: int = 20) -> list[Course]:
         return (
             self.db.query(Course)
             .filter(Course.course_status == "Published")
             .order_by(Course.id.desc())
+            .offset(offset)
+            .limit(limit)
             .all()
         )
 
-    def get_all_by_staff(self, staff_id: int) -> list[Course]:
+    def get_all_by_staff(self, staff_id: int, offset: int = 0, limit: int = 20) -> list[Course]:
         return (
             self.db.query(Course)
             .filter(Course.staff_id == staff_id)
             .order_by(Course.id.desc())
+            .offset(offset)
+            .limit(limit)
             .all()
         )
 

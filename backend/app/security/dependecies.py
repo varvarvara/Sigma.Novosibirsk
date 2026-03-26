@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 from app.db.session import get_db
 from app.modules.users.repository import UsersRepository
 from app.security.authHandler import AuthHandler
+from app.security.redis import token_store
 
 bearer_scheme = HTTPBearer(auto_error=False)
 
@@ -35,6 +36,13 @@ def get_current_user(
     try:
         payload = AuthHandler.decode_jwt(token)
     except JWTError:
+        raise credentials_exception
+
+    if payload.get("type") != "access":
+        raise credentials_exception
+
+    jti = payload.get("jti")
+    if not jti or token_store.is_blacklisted(str(jti)):
         raise credentials_exception
 
     user_id = payload.get("sub")

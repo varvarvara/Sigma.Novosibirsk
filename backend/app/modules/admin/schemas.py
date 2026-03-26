@@ -7,13 +7,12 @@ from pydantic import BaseModel, EmailStr, field_validator
 from enums import StaffRoles
 
 
-LETTER_MATCH_PATTERN = re.compile(r"^[а-яА-Яa-zA-Z\-]+$")
+LETTER_MATCH_PATTERN = re.compile(r"^[а-яА-ЯёЁa-zA-Z\-]+$")
 MIN_PASSWORD_LENGTH = 8
 
 
 class PreRegistrationApproveIn(BaseModel):
     password: str
-    staff_role: StaffRoles = StaffRoles.TEACHER
 
     @field_validator("password")
     def validate_password(cls, value):
@@ -21,15 +20,6 @@ class PreRegistrationApproveIn(BaseModel):
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                 detail=f"Password can not contain less than {MIN_PASSWORD_LENGTH} symbols",
-            )
-        return value
-
-    @field_validator("staff_role")
-    def validate_staff_role(cls, value):
-        if value != StaffRoles.TEACHER:
-            raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail="Approve flow can create only Teacher role",
             )
         return value
 

@@ -10,6 +10,7 @@ from app.modules.auth.schemas import (
 from app.modules.users.repository import UsersRepository
 from app.security.authHandler import AuthHandler
 from app.security.hashHelper import HashHelper
+from enums import PreRegistrationStatuses
 
 
 class AuthService:
@@ -59,6 +60,19 @@ class AuthService:
             role_value = staff.staff_role.value if hasattr(staff.staff_role, "value") else staff.staff_role
             return self._issue_tokens(user_id=staff.id, user_type="staff", staff_role=role_value)
 
+        pre_registration = self._users_repository.get_pre_registration_by_email(email=login_details.email)
+        if pre_registration is not None:
+            status_value = (
+                pre_registration.pre_registration_status.value
+                if hasattr(pre_registration.pre_registration_status, "value")
+                else pre_registration.pre_registration_status
+            )
+            if status_value == PreRegistrationStatuses.PENDING_APPROVAL.value:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="Заявка преподавателя еще не одобрена администратором",
+                )
+
         raise self._credentials_exception(detail="Пожалуйста, создайте аккаунт")
 
     def refresh_tokens(self, refresh_token: str) -> UserWithToken:
@@ -75,9 +89,11 @@ class AuthService:
             staff_role=token_data.get("staff_role"),
         )
 
-    def logout(self, refresh_token: str | None = None) -> None:
+    def logout(self, refresh_token: str | None = None, access_token: str | None = None) -> None:
         if refresh_token:
             AuthHandler.revoke_refresh_token(refresh_token)
+        if access_token:
+            AuthHandler.revoke_access_token(access_token)
 
     def staff_pre_registration(self, data: PreRegistrationCreateIn) -> PreRegistrationOut:
         if self._users_repository.user_exist_by_email(email=data.email):
