@@ -65,7 +65,6 @@ class ExtracurricularTeamMemberRead(BaseModel):
 class ExtracurricularScoreCreate(BaseModel):
     team_id: int
     ex_course_id: int
-    ex_team_score: int = Field(ge=0)
 
 class ExtracurricularScoreUpdate(BaseModel):
     ex_team_score: int = Field(ge=0)

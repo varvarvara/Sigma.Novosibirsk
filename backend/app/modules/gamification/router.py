@@ -68,7 +68,7 @@ def get_teams(current_user=Depends(require_staff), service: TeamService = Depend
 
 
 @gamificationRouter.post("/score", response_model=ExtracurricularScoreRead)
-def create_score(data: ExtracurricularScoreCreate, current_user=Depends(require_staff), service: ScoreService = Depends(get_score_service)):
+def mark_ex_team_attendance(data: ExtracurricularScoreCreate, current_user=Depends(require_staff), service: ScoreService = Depends(get_score_service)):
     return service.create(data)
 
 
@@ -101,3 +101,13 @@ def get_gamification(student_id: int, current_user=Depends(require_student_or_st
 @gamificationRouter.get("/team/{student_id}")
 def get_student_team(student_id: int, current_user=Depends(require_student_or_staff), service: GamificationService = Depends(get_gam_service)):
     return service.get_student_team(student_id)
+
+@gamificationRouter.get(
+    "/team/{team_id}/extracurricular-attendance",
+    summary="Get team score for extracurricular attendance")
+def get_team_scores(
+    team_id: int,
+    current_user=Depends(require_student_or_staff),
+    service: ScoreService = Depends(get_score_service)
+):
+    return service.get_by_team(team_id)

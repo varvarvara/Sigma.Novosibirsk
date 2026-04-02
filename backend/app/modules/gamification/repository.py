@@ -280,12 +280,20 @@ class ExtracurricularScoreRepository():
     def __init__(self, session: Session):
         self.session = session
 
-    def create_score(self, team_id: int, ex_course_id: int, score: int):
+    def mark_ex_team_attendance(self, team_id: int, ex_course_id: int):
+        activity = (
+            self.session.query(ExtracurricularActivity)
+            .filter(ExtracurricularActivity.id == ex_course_id)
+            .first()
+        )
+
+        if not activity:
+            raise ValueError("Activity not found")
+
         obj = ExtracurricularScore(
             team_id=team_id,
             ex_course_id=ex_course_id,
-            ex_team_score=score
-        )
+            ex_team_score=activity.ex_course_score)
 
         self.session.add(obj)
 
@@ -295,7 +303,7 @@ class ExtracurricularScoreRepository():
             return obj
         except IntegrityError:
             self.session.rollback()
-            raise ValueError("Score уже существует для этой команды и активности")
+            raise ValueError("Команда уже записана в эту активность!")
 
     def update_score(self, team_id: int, ex_course_id: int, new_score: int):
         obj = (
@@ -344,6 +352,30 @@ class ExtracurricularScoreRepository():
             "team_id": r.team_id,
             "ex_course_id": r.ex_course_id,
             "score": r.ex_team_score
+            }
+            for r in results
+        ]
+        
+    def get_team_activities(self, team_id: int):
+        results = (
+            self.session.query(
+                ExtracurricularScore.ex_course_id,
+                ExtracurricularActivity.ex_course_name,
+                ExtracurricularScore.ex_team_score
+            )
+            .join(
+                ExtracurricularActivity,
+                ExtracurricularScore.ex_course_id == ExtracurricularActivity.id
+            )
+            .filter(ExtracurricularScore.team_id == team_id)
+            .all()
+        )
+
+        return [
+            {
+                "ex_course_id": r.ex_course_id,
+                "activity_name": r.ex_course_name,
+                "score": r.ex_team_score
             }
             for r in results
         ]

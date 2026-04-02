@@ -131,7 +131,6 @@ class ScoreService:
         return self.repo.create_score(
             data.team_id,
             data.ex_course_id,
-            data.ex_team_score,
         )
 
     def update(self, team_id, course_id, data):
@@ -143,6 +142,9 @@ class ScoreService:
 
     def get_all(self):
         return self.repo.get_all_scores()
+    
+    def get_by_team(self, team_id: int):
+        return self.repo.get_team_activities(team_id)
     
     
 class GamificationLevelService:
@@ -199,6 +201,7 @@ class GamificationLevelService:
             "student_id": student_id,
             "level": gam.level,
             "total_score": gam.total_score,
+            "attendance_score": gam.attendance_score,
             "team": team.ex_team_name if team else None,
             "team_score": team_score,
         }
