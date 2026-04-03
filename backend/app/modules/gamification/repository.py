@@ -227,7 +227,30 @@ class ExtracurricularTeamMemberRepository():
     def __init__(self, session: Session):
         self.session = session
 
+    def get_student_by_id(self, student_id: int):
+        from app.modules.gamification.models import Gamification
+        return (
+            self.session.query(Gamification)
+            .filter(Gamification.student_id == student_id)
+            .first()
+        )
+
+    def get_team_by_id(self, team_id: int):
+        return (
+            self.session.query(ExtracurricularTeam)
+            .filter(ExtracurricularTeam.id == team_id)
+            .first()
+        )
+
     def add_member(self, team_id: int, student_id: int):
+        student = self.get_student_by_id(student_id)
+        if not student:
+            raise ValueError(f"Студент с id={student_id} не найден")
+
+        team = self.get_team_by_id(team_id)
+        if not team:
+            raise ValueError(f"Команда с id={team_id} не найден")
+
         member = ExtracurricularTeamMember(
             team_id=team_id,
             student_id=student_id

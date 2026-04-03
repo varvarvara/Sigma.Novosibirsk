@@ -78,7 +78,7 @@ CREATE OR REPLACE FUNCTION public.check_full_attendance_for_certificate() RETURN
     AS $$
 BEGIN
 
-    IF NEW.certificate_status = 'issued' THEN
+    IF NEW.certificate_status = 'Issued' THEN
 
         IF EXISTS (
             SELECT 1

@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 
 from app.db.session import get_db
 from app.security.dependecies import get_current_user
+from app.security.permissions import require_admin
 from app.modules.gamification.repository import *
 from app.modules.gamification.service import *
 from app.modules.gamification.schemas import *
@@ -38,11 +39,14 @@ def get_score_service(db: Session = Depends(get_db)):
 def get_level_service(db: Session = Depends(get_db)):
     return GamificationLevelService(GamificationLevelRepository(db))
 
+def get_team_member_service(db: Session = Depends(get_db)):
+    return TeamMemberService(ExtracurricularTeamMemberRepository(db))
+
 @gamificationRouter.get("/gamification/leaderboard", response_model=list[GamificationRead])
 def leaderboard(current_user=Depends(require_staff), service: GamificationService = Depends(get_gam_service)):
     return service.leaderboard()
 
-@gamificationRouter.get("/gamification/{student_id}", response_model=GamificationRead)
+@gamificationRouter.get("/gamification/{student_id}", response_model=GamificationRead, summary="Get full gamification for student")
 def get_gam(student_id: int, current_user=Depends(require_student_or_staff), service: GamificationService = Depends(get_gam_service)):
     return service.get(student_id)
 
@@ -65,6 +69,15 @@ def create_team(data: ExtracurricularTeamCreate,current_user=Depends(require_sta
 @gamificationRouter.get("/team", response_model=list[ExtracurricularTeamRead])
 def get_teams(current_user=Depends(require_staff), service: TeamService = Depends(get_team_service)):
     return service.get_all()
+
+
+@gamificationRouter.post("/team/member", response_model=ExtracurricularTeamMemberRead)
+def add_team_member(
+    data: ExtracurricularTeamMemberCreate,
+    current_user=Depends(require_admin),
+    service: TeamMemberService = Depends(get_team_member_service)
+):
+    return service.add(data)
 
 
 @gamificationRouter.post("/score", response_model=ExtracurricularScoreRead)
@@ -93,10 +106,6 @@ def update_level(level: int, new_score: int, current_user=Depends(require_staff)
 @gamificationRouter.delete("/level/{level}")
 def delete_level(level: int, current_user=Depends(require_staff), service: GamificationLevelService = Depends(get_level_service)):
     return service.delete(level)
-
-@gamificationRouter.get("/student/{student_id}")
-def get_gamification(student_id: int, current_user=Depends(require_student_or_staff), service: GamificationService = Depends(get_gam_service)):
-    return service.get_gamification_by_student(student_id)
 
 @gamificationRouter.get("/team/{student_id}")
 def get_student_team(student_id: int, current_user=Depends(require_student_or_staff), service: GamificationService = Depends(get_gam_service)):

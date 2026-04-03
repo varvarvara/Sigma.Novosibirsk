@@ -465,7 +465,7 @@ CREATE OR REPLACE FUNCTION check_full_attendance_for_certificate()
 RETURNS TRIGGER AS $$
 BEGIN
 
-    IF NEW.certificate_status = 'issued' THEN
+    IF NEW.certificate_status = 'Issued' THEN
 
         IF EXISTS (
             SELECT 1

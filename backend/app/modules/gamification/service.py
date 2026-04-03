@@ -39,7 +39,10 @@ class GamificationService:
         )
 
         if not result:
-            return None
+            raise HTTPException(
+                status_code=404,
+                detail="Студент не зачислен ни в одну из внеучебных команд"
+            )
 
         return {
             "team_number": result[0],
@@ -114,7 +117,10 @@ class TeamMemberService:
         self.repo = repo
 
     def add(self, data):
-        return self.repo.add_member(data.team_id, data.student_id)
+        try:
+            return self.repo.add_member(data.team_id, data.student_id)
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e))
 
     def remove(self, team_id, student_id):
         if not self.repo.remove_member(team_id, student_id):
@@ -128,7 +134,7 @@ class ScoreService:
         self.repo = repo
 
     def create(self, data):
-        return self.repo.create_score(
+        return self.repo.mark_ex_team_attendance(
             data.team_id,
             data.ex_course_id,
         )
