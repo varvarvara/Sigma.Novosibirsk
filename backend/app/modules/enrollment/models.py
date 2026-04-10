@@ -10,6 +10,8 @@ class Enrollment(Base):
     course_id = Column(Integer, ForeignKey("course.id"), nullable=False)
     enrolled_at = Column(TIMESTAMP, default="now()")
     enrollment_status = Column(Enum('Active', 'Dropped', 'Completed', name="enrollment_statuses"))
+    season_id = Column(Integer, ForeignKey("season.id"), nullable=False)
 
-    student = relationship("Student", back_populates="enrollments")  # Связь с моделью Student
-    course = relationship("Course", back_populates="enrollments")  # Связь с моделью Course
+    student = relationship("Student", back_populates="enrollments")
+    course = relationship("Course", back_populates="enrollments")
+    season = relationship("Season", back_populates="enrollments")

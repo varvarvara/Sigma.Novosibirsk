@@ -5,6 +5,7 @@ class CourseFeedbackCreateIn(BaseModel):
     course_id: int
     rating: int = Field(..., ge=1, le=10)
     comment: str = Field(..., min_length=5, max_length=2000)
+    season_id: int = Field(..., gt=0)
 
 class CourseFeedbackOut(BaseModel):
     id: int

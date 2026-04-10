@@ -14,6 +14,7 @@ class GamificationRead(BaseModel):
 class GamificationLevelCreate(BaseModel):
     gamification_level: int = Field(ge=0)
     gamification_level_score: int = Field(ge=0)
+    season_id: int = Field(gt=0)
 
 class GamificationLevelRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
@@ -26,6 +27,7 @@ class ExtracurricularActivityCreate(BaseModel):
     ex_course_name: str = Field(min_length=2, max_length=100)
     staff_id: int
     ex_course_score: int = Field(ge=0)
+    season_id: int = Field(gt=0)
 
 class ExtracurricularActivityUpdate(BaseModel):
     ex_course_name: str | None = Field(default=None, min_length=2, max_length=100)
@@ -43,6 +45,7 @@ class ExtracurricularActivityRead(BaseModel):
 class ExtracurricularTeamCreate(BaseModel):
     ex_team_number: int = Field(ge=1)
     ex_team_name: str = Field(min_length=1, max_length=50)
+    season_id: int = Field(gt=0)
 
 class ExtracurricularTeamRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
@@ -54,6 +57,7 @@ class ExtracurricularTeamRead(BaseModel):
 class ExtracurricularTeamMemberCreate(BaseModel):
     team_id: int
     student_id: int
+    season_id: int = Field(gt=0)
 
 class ExtracurricularTeamMemberRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
@@ -65,6 +69,7 @@ class ExtracurricularTeamMemberRead(BaseModel):
 class ExtracurricularScoreCreate(BaseModel):
     team_id: int
     ex_course_id: int
+    season_id: int = Field(gt=0)
 
 class ExtracurricularScoreUpdate(BaseModel):
     ex_team_score: int = Field(ge=0)

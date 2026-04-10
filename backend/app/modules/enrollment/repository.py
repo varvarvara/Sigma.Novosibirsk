@@ -12,6 +12,9 @@ class EnrollmentRepository:
     def __init__(self, db: Session):
         self.db = db
 
+    def get_enrollment_by_season(self, season_id: int) -> list[Enrollment]:
+        return self.db.query(Enrollment).filter(Enrollment.season_id == season_id).all()
+    
     def get_or_create_intake_control(self) -> IntakeControl:
         control = self.db.query(IntakeControl).filter(IntakeControl.id == 1).first()
         if control is None:

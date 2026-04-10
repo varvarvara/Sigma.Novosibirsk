@@ -44,7 +44,8 @@ CREATE TABLE staff (
     partonymic VARCHAR(50),
     email VARCHAR(254) UNIQUE NOT NULL,
     password VARCHAR(255) NOT NULL,
-    staff_role staff_roles NOT NULL
+    staff_role staff_roles NOT NULL,
+    season_id BIGINT NOT NULL REFERENCES season(id) ON DELETE CASCADE
 );
 
 CREATE TABLE intake_control (
@@ -63,7 +64,8 @@ CREATE TABLE feedback_control (
     opened_at TIMESTAMPTZ NULL,
     opened_by BIGINT NULL REFERENCES staff(id) ON DELETE SET NULL,
     closed_at TIMESTAMPTZ NULL,
-    closed_by BIGINT NULL REFERENCES staff(id) ON DELETE SET NULL
+    closed_by BIGINT NULL REFERENCES staff(id) ON DELETE SET NULL,
+    season_id BIGINT NOT NULL REFERENCES season(id) ON DELETE CASCADE
 );
 
 INSERT INTO feedback_control (id, feedback_open) VALUES (1, FALSE)
@@ -83,7 +85,8 @@ CREATE TABLE students (
     school VARCHAR(100),
     parent_name VARCHAR(150) NOT NULL,
     parent_phone VARCHAR(20) NOT NULL,
-    student_status student_statuses NOT NULL DEFAULT 'Registered'
+    student_status student_statuses NOT NULL DEFAULT 'Registered',
+    season_id BIGINT NOT NULL REFERENCES season(id) ON DELETE CASCADE
 );
 
 CREATE TABLE pre_registration (
@@ -94,7 +97,8 @@ CREATE TABLE pre_registration (
     phone VARCHAR(20) NOT NULL,
     email VARCHAR(254) UNIQUE NOT NULL,
     tg_nickname VARCHAR(50),
-    pre_registration_status pre_registration_statuses NOT NULL DEFAULT 'PendingApproval'
+    pre_registration_status pre_registration_statuses NOT NULL DEFAULT 'PendingApproval',
+    season_id BIGINT NOT NULL REFERENCES season(id) ON DELETE CASCADE
 );
 
 CREATE TABLE slots (
@@ -102,6 +106,7 @@ CREATE TABLE slots (
     staff_id BIGINT NOT NULL REFERENCES staff(id) ON DELETE CASCADE,
     slot_date DATE NOT NULL,
     slot_time TIME NOT NULL,
+    season_id BIGINT NOT NULL REFERENCES season(id) ON DELETE CASCADE,
     CONSTRAINT uq_slots_staff_datetime UNIQUE (staff_id, slot_date, slot_time)
 );
 
@@ -115,7 +120,8 @@ CREATE TABLE course (
     syllabus_url TEXT,
     capacity INT NULL CHECK (capacity >= 1),
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    season_id BIGINT NOT NULL REFERENCES season(id) ON DELETE CASCADE
 );
 
 CREATE TABLE course_class (
@@ -123,6 +129,7 @@ CREATE TABLE course_class (
     course_id BIGINT NOT NULL REFERENCES course(id) ON DELETE CASCADE,
     class_number INT NOT NULL,
     class_description VARCHAR(200) NOT NULL,
+    season_id BIGINT NOT NULL REFERENCES season(id) ON DELETE CASCADE,
     CONSTRAINT cn_course_class UNIQUE (course_id, class_number)
 );
 
@@ -133,6 +140,7 @@ CREATE TABLE schedule (
     slot_id BIGINT REFERENCES slots(id) ON DELETE SET NULL,
     lesson_date DATE NOT NULL DEFAULT CURRENT_DATE,
     lesson_time TIME NOT NULL DEFAULT CURRENT_TIME,
+    season_id BIGINT NOT NULL REFERENCES season(id) ON DELETE CASCADE,
     CONSTRAINT uq_schedule_staff_datetime UNIQUE (staff_id, lesson_date, lesson_time)
 );
 
@@ -141,6 +149,7 @@ CREATE TABLE attendance (
     student_id BIGINT NOT NULL REFERENCES students(id) ON DELETE CASCADE,
     schedule_id BIGINT NOT NULL REFERENCES schedule(id) ON DELETE CASCADE,
     attendance_status BOOLEAN NOT NULL,
+    season_id BIGINT NOT NULL REFERENCES season(id) ON DELETE CASCADE,
     CONSTRAINT cn_attendance UNIQUE (student_id, schedule_id)
 );
 
@@ -150,6 +159,7 @@ CREATE TABLE enrollment (
     course_id BIGINT NOT NULL REFERENCES course(id) ON DELETE CASCADE,
     enrolled_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     enrollment_status enrollment_statuses NOT NULL DEFAULT 'Active',
+    season_id BIGINT NOT NULL REFERENCES season(id) ON DELETE CASCADE,
     CONSTRAINT cn_enrollment UNIQUE (student_id, course_id)
 );
 
@@ -161,6 +171,7 @@ CREATE TABLE course_feedback (
     comment TEXT NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    season_id BIGINT NOT NULL REFERENCES season(id) ON DELETE CASCADE,
     CONSTRAINT uq_course_feedback_student_course UNIQUE (student_id, course_id)
 );
 
@@ -171,32 +182,37 @@ CREATE TABLE gamification (
     achievement_score INT NOT NULL DEFAULT 0,
     extracurricular_score INT NOT NULL DEFAULT 0,
     total_score INT NOT NULL DEFAULT 0,
-    level INT NOT NULL DEFAULT 0
+    level INT NOT NULL DEFAULT 0,
+    season_id BIGINT NOT NULL REFERENCES season(id) ON DELETE CASCADE
 );
 
 CREATE TABLE gamification_level (
     id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     gamification_level INT NOT NULL,
-    gamification_level_score INT NOT NULL
+    gamification_level_score INT NOT NULL,
+    season_id BIGINT NOT NULL REFERENCES season(id) ON DELETE CASCADE
 );
 
 CREATE TABLE extracurricular_activity (
     id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     ex_course_name VARCHAR(100) UNIQUE NOT NULL,
     staff_id BIGINT NOT NULL REFERENCES staff(id) ON DELETE CASCADE,
-    ex_course_score INT NOT NULL
+    ex_course_score INT NOT NULL,
+    season_id BIGINT NOT NULL REFERENCES season(id) ON DELETE CASCADE
 );
 
 CREATE TABLE extracurricular_team (
     id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     ex_team_number INT UNIQUE NOT NULL,
-    ex_team_name VARCHAR(50) NOT NULL
+    ex_team_name VARCHAR(50) NOT NULL,
+    season_id BIGINT NOT NULL REFERENCES season(id) ON DELETE CASCADE
 );
 
 CREATE TABLE extracurricular_team_members (
     id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     team_id BIGINT NOT NULL REFERENCES extracurricular_team(id) ON DELETE CASCADE,
     student_id BIGINT NOT NULL REFERENCES students(id) ON DELETE CASCADE,
+    season_id BIGINT NOT NULL REFERENCES season(id) ON DELETE CASCADE,
     CONSTRAINT cn_extracurricular_team_members UNIQUE (team_id, student_id)
 );
 
@@ -205,6 +221,7 @@ CREATE TABLE extracurricular_score (
     team_id BIGINT NOT NULL REFERENCES extracurricular_team(id) ON DELETE CASCADE,
     ex_course_id BIGINT NOT NULL REFERENCES extracurricular_activity(id) ON DELETE CASCADE,
     ex_team_score INT NOT NULL DEFAULT 0,
+    season_id BIGINT NOT NULL REFERENCES season(id) ON DELETE CASCADE,
     CONSTRAINT cn_extracurricular_score UNIQUE (team_id, ex_course_id)
 );
 
@@ -214,6 +231,7 @@ CREATE TABLE achievement (
     achievement_description VARCHAR(100) NOT NULL,
     course_id BIGINT NOT NULL REFERENCES course(id) ON DELETE CASCADE,
     achievement_score INT NOT NULL,
+    season_id BIGINT NOT NULL REFERENCES season(id) ON DELETE CASCADE,
     CONSTRAINT cn_achievement_unique UNIQUE (course_id, achievement_description)
 );
 
@@ -222,6 +240,7 @@ CREATE TABLE student_achievement (
     student_id BIGINT NOT NULL REFERENCES students(id) ON DELETE CASCADE,
     achievement_id BIGINT NOT NULL REFERENCES achievement(id) ON DELETE CASCADE,
     awarded_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    season_id BIGINT NOT NULL REFERENCES season(id) ON DELETE CASCADE,
     CONSTRAINT cn_student_achievement UNIQUE (student_id, achievement_id)
 );
 CREATE TABLE student_certificate (
@@ -232,6 +251,7 @@ CREATE TABLE student_certificate (
     issued_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     certificate_url VARCHAR(200),
     certificate_status certificate_statuses NOT NULL DEFAULT 'In progress',
+    season_id BIGINT NOT NULL REFERENCES season(id) ON DELETE CASCADE,
     CONSTRAINT cn_student_certificate_unique UNIQUE (student_id, course_id)
 );
 
@@ -242,7 +262,16 @@ CREATE TABLE teacher_certificate (
     issued_by BIGINT REFERENCES staff(id) ON DELETE SET NULL,
     issued_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     certificate_url VARCHAR(200) NOT NULL,
-    certificate_status certificate_statuses NOT NULL DEFAULT 'In progress'
+    certificate_status certificate_statuses NOT NULL DEFAULT 'In progress',
+    season_id BIGINT NOT NULL REFERENCES season(id) ON DELETE CASCADE
+);
+
+CREATE TABLE season (
+    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    season_year INT NOT NULL CHECK (season_year >= 2020 AND season_year <= 2100),
+    season_description VARCHAR(100) DEFAULT NULL,
+    start_date DATE NOT NULL,
+    end_date DATE NOT NULL
 );
 
 CREATE OR REPLACE FUNCTION set_updated_at()

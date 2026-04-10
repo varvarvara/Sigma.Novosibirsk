@@ -9,9 +9,11 @@ class Attendance(Base):
     student_id = Column(Integer, ForeignKey("students.id"), nullable=False)
     schedule_id = Column(Integer, ForeignKey("schedule.id"), nullable=False)
     attendance_status = Column(Boolean, nullable=False)
+    season_id = Column(Integer, ForeignKey("season.id"), nullable=False)
 
     student = relationship("Student", back_populates="attendance")
     schedule = relationship("Schedule", back_populates="attendances")
+    season = relationship("Season", back_populates="attendances")
 
 
 class Achievement(Base):
@@ -22,8 +24,10 @@ class Achievement(Base):
     achievement_description = Column(String(100), nullable=False)
     course_id = Column(Integer, ForeignKey("course.id"), nullable=False)
     achievement_score = Column(Integer, nullable=False)
+    season_id = Column(Integer, ForeignKey("season.id"), nullable=False)
 
     course = relationship("Course", back_populates="achievements")
+    season = relationship("Season", back_populates="achievements")
     student_achievements = relationship(
         "StudentAchievement",
         back_populates="achievement",
@@ -38,9 +42,11 @@ class StudentAchievement(Base):
     student_id = Column(Integer, ForeignKey("students.id"), nullable=False)
     achievement_id = Column(Integer, ForeignKey("achievement.id"), nullable=False)
     awarded_at = Column(TIMESTAMP, default="now()")
+    season_id = Column(Integer, ForeignKey("season.id"), nullable=False)
 
     student = relationship("Student", back_populates="student_achievements")
     achievement = relationship("Achievement", back_populates="student_achievements")
+    season = relationship("Season", back_populates="student_achievements")
 
 
 class StudentCertificate(Base):
@@ -57,7 +63,9 @@ class StudentCertificate(Base):
         nullable=False,
         default="In progress",
     )
+    season_id = Column(Integer, ForeignKey("season.id"), nullable=False)
 
     student = relationship("Student", back_populates="student_certificates")
     course = relationship("Course", back_populates="student_certificates")
     staff = relationship("Staff", back_populates="issued_student_certificates")
+    season = relationship("Season", back_populates="student_certificates")

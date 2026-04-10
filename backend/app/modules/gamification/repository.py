@@ -9,6 +9,9 @@ class GamificationRepository:
 
     def __init__(self, session: Session):
         self.session = session
+        
+    def get_gamification_by_season(self, season_id: int) -> list[Gamification]:
+        return self.session.query(Gamification).filter(Gamification.season_id == season_id).all()
 
     def get_by_student_id(self, student_id: int) -> Optional[Gamification]:
         return (
@@ -55,6 +58,9 @@ class GamificationLevelRepository:
 
     def __init__(self, session: Session):
         self.session = session
+        
+    def get_gamification_level_by_season(self, season_id: int) -> list[GamificationLevel]:
+        return self.session.query(GamificationLevel).filter(GamificationLevel.season_id == season_id).all()
 
     def create(self, data: GamificationLevelCreate) -> GamificationLevel:
         existing = (
@@ -109,6 +115,9 @@ class GamificationLevelRepository:
 class ExtracurricularActivityRepository():
     def __init__(self, session: Session):
         self.session = session
+    
+    def get_extracurricular_activity_by_season(self, season_id: int) -> list[ExtracurricularActivity]:
+        return self.session.query(ExtracurricularActivity).filter(ExtracurricularActivity.season_id == season_id).all()
 
     def create_extracurricular_activity(self, name: str, staff_id: int, score: int) -> ExtracurricularActivity:
 
@@ -152,7 +161,7 @@ class ExtracurricularActivityRepository():
         )
 
         if not activity:
-            raise ValueError(f"Внеучебная активность '{ex_course_name}' не найдена")
+            raise ValueError(f"Внеучебная активность не найдена")
         activity.ex_course_score = new_score
 
         self.session.commit()
@@ -182,6 +191,9 @@ class ExtracurricularTeamRepository():
 
     def __init__(self, session: Session):
         self.session = session
+        
+    def get_extracurricular_team_by_season(self, season_id: int) -> list[ExtracurricularTeam]:
+        return self.session.query(ExtracurricularTeam).filter(ExtracurricularTeam.season_id == season_id).all()
 
     def create_team(self, team_number: int, team_name: str) -> ExtracurricularTeam:
         team = ExtracurricularTeam(
@@ -226,6 +238,9 @@ class ExtracurricularTeamMemberRepository():
 
     def __init__(self, session: Session):
         self.session = session
+
+    def get_team_member_by_season(self, season_id: int) -> list[ExtracurricularTeamMember]:
+        return self.session.query(ExtracurricularTeamMember).filter(ExtracurricularTeamMember.season_id == season_id).all()
 
     def get_student_by_id(self, student_id: int):
         from app.modules.gamification.models import Gamification
@@ -302,6 +317,9 @@ class ExtracurricularScoreRepository():
 
     def __init__(self, session: Session):
         self.session = session
+        
+    def get_extracurricular_score_by_season(self, season_id: int) -> list[ExtracurricularScore]:
+        return self.session.query(ExtracurricularScore).filter(ExtracurricularScore.season_id == season_id).all()
 
     def mark_ex_team_attendance(self, team_id: int, ex_course_id: int):
         activity = (

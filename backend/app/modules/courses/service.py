@@ -206,6 +206,7 @@ class CourseService:
                 staff_id=course.staff_id,
                 slot_date=item.slot_date,
                 slot_time=time(hour=item.slot_hour, minute=0),
+                season_id=course.season_id,
             )
             if is_created:
                 created += 1

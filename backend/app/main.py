@@ -11,8 +11,8 @@ from app.modules.enrollment.router import enrollmentRouter
 from app.modules.scheduling.router import schedulingRouter
 from app.modules.users.router import usersRouter
 from app.modules.gamification.router import gamificationRouter
+from app.modules.season.router import seasonRouter
 
-# Import model modules so SQLAlchemy registers all tables before create_all
 from app.modules.attendance import models as attendance_models  # noqa: F401
 from app.modules.course_feedback import models as course_feedback_models  # noqa: F401
 from app.modules.courses import models as courses_models  # noqa: F401
@@ -20,18 +20,13 @@ from app.modules.enrollment import models as enrollment_models  # noqa: F401
 from app.modules.gamification import models as gamification_models  # noqa: F401
 from app.modules.scheduling import models as scheduling_models  # noqa: F401
 from app.modules.users import models as users_models  # noqa: F401
+from app.modules.season import models as season_models  # noqa: F401
 
 app = FastAPI(
     title="Sigma Platform API",
     version="1.0.0",
     description="Sigma.Novosibirsk",
 )
-
-
-@app.on_event("startup")
-def startup_create_tables() -> None:
-    # For local/dev launch without migrations.
-    Base.metadata.create_all(bind=engine)
 
 
 @app.get("/health")
@@ -49,3 +44,4 @@ app.include_router(attendanceRouter)
 app.include_router(gamificationRouter)
 app.include_router(courseFeedbackRouter)
 app.include_router(certificatesRouter)
+app.include_router(seasonRouter)

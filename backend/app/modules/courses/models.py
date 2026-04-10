@@ -17,6 +17,7 @@ class Course(Base):
     capacity = Column(Integer, nullable=True)  # NULL means unlimited seats
     created_at = Column(TIMESTAMP, default="now()")
     updated_at = Column(TIMESTAMP, default="now()")
+    season_id = Column(Integer, ForeignKey("season.id"), nullable=False)
 
     staff = relationship("Staff", back_populates="courses")
     course_classes = relationship("CourseClass", back_populates="course")
@@ -24,6 +25,7 @@ class Course(Base):
     teacher_certificates = relationship("TeacherCertificate", back_populates="course")
     achievements = relationship("Achievement", back_populates="course")
     student_certificates = relationship("StudentCertificate", back_populates="course")
+    season = relationship("Season", back_populates="courses")
 
 
 class CourseClass(Base):
@@ -33,6 +35,8 @@ class CourseClass(Base):
     course_id = Column(Integer, ForeignKey("course.id"), nullable=False)
     class_number = Column(Integer, nullable=False)
     class_description = Column(String(200), nullable=False)
+    season_id = Column(Integer, ForeignKey("season.id"), nullable=False)
 
     course = relationship("Course", back_populates="course_classes")
     schedules = relationship("Schedule", back_populates="course_class")
+    season = relationship("Season", back_populates="course_classes")

@@ -14,13 +14,13 @@ class Staff(Base):
     email = Column(String(254), unique=True, nullable=False)
     password = Column(String(255), nullable=False)
     staff_role = Column(Enum("Teacher", "Admin", name="staff_roles"), nullable=False)
+    season_id = Column(Integer, ForeignKey("season.id"), nullable=False)
 
     courses = relationship("Course", back_populates="staff")
     slots = relationship("Slot", back_populates="staff")
     schedules = relationship("Schedule", back_populates="staff")
     extracurricular_activities = relationship("ExtracurricularActivity", back_populates="staff")
 
-    # Certificates
     teacher_certificates = relationship(
         "TeacherCertificate",
         foreign_keys="TeacherCertificate.user_id",
@@ -32,6 +32,7 @@ class Staff(Base):
         back_populates="issuer",
     )
     issued_student_certificates = relationship("StudentCertificate", back_populates="staff")
+    season = relationship("Season", back_populates="staff_members")
 
 
 class Student(Base):
@@ -54,6 +55,7 @@ class Student(Base):
         Enum("Registered", "Enrolled", "Blocked", name="student_statuses"),
         nullable=False,
     )
+    season_id = Column(Integer, ForeignKey("season.id"), nullable=False)
 
     enrollments = relationship("Enrollment", back_populates="student")
     attendance = relationship("Attendance", back_populates="student")
@@ -62,6 +64,7 @@ class Student(Base):
     student_achievements = relationship("StudentAchievement", back_populates="student")
     student_certificates = relationship("StudentCertificate", back_populates="student")
     team_members = relationship("ExtracurricularTeamMember", back_populates="student")
+    season = relationship("Season", back_populates="students")
 
 
 class PreRegistration(Base):
@@ -78,6 +81,9 @@ class PreRegistration(Base):
     phone = Column(String(20), nullable=False)
     email = Column(String(254), unique=True, nullable=False)
     tg_nickname = Column(String(50))
+    season_id = Column(Integer, ForeignKey("season.id"), nullable=False)
+    
+    season = relationship("Season", back_populates="pre_registrations")
 
 
 class IntakeControl(Base):
@@ -103,7 +109,9 @@ class TeacherCertificate(Base):
         nullable=False,
         default="In progress",
     )
-
+    season_id = Column(Integer, ForeignKey("season.id"), nullable=False)
+    
     user = relationship("Staff", foreign_keys=[user_id], back_populates="teacher_certificates")
     course = relationship("Course", back_populates="teacher_certificates")
     issuer = relationship("Staff", foreign_keys=[issued_by], back_populates="issued_certificates")
+    season = relationship("Season", back_populates="teacher_certificates")

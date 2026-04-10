@@ -1,9 +1,10 @@
 from sqlalchemy import Boolean, CheckConstraint, Column, Float, ForeignKey, Integer, Text, TIMESTAMP
+from sqlalchemy.orm import relationship
 from app.db.base import Base
 
 
 class Feedback(Base):
-    __tablename__ = "reviews"
+    __tablename__ = "course_feedback"
 
     __table_args__ = (
         CheckConstraint("rating >= 1.0 AND rating <= 10.0", name="check_rating_range"),
@@ -18,6 +19,9 @@ class Feedback(Base):
     
     created_at = Column(TIMESTAMP, server_default="now()")
     updated_at = Column(TIMESTAMP, server_default="now()", onupdate="now()")
+    season_id = Column(Integer, ForeignKey("season.id"), nullable=False)
+    
+    season = relationship("Season", back_populates="course_feedbacks")
 
 
 class FeedbackControl(Base):

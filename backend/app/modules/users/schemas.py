@@ -23,6 +23,7 @@ class StudentInCreate(BaseModel):
     parent_name: str
     parent_phone: str
     password: str
+    season_id: int
 
     @field_validator("first_name", "last_name", "partonymic", "parent_name")
     def validate_name_fields(cls, value):
@@ -70,6 +71,7 @@ class StaffInCreate(BaseModel):
     email: EmailStr
     staff_role: StaffRoles
     password: str
+    season_id: int
 
     @field_validator("first_name", "last_name", "partonymic")
     def validate_name_fields(cls, value):

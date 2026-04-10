@@ -13,11 +13,13 @@ class Schedule(Base):
     slot_id = Column(Integer, ForeignKey("slots.id"), nullable=True)
     lesson_date = Column(Date, nullable=False)
     lesson_time = Column(Time, nullable=False)
+    season_id = Column(Integer, ForeignKey("season.id"), nullable=False)
 
     staff = relationship("Staff", back_populates="schedules")
     course_class = relationship("CourseClass", back_populates="schedules")
     slot = relationship("Slot", back_populates="schedules")
     attendances = relationship("Attendance", back_populates="schedule")
+    season = relationship("Season", back_populates="schedules")
 
     __table_args__ = (
         UniqueConstraint("staff_id", "lesson_date", "lesson_time", name="uq_schedule_staff_datetime"),
@@ -31,9 +33,11 @@ class Slot(Base):
     staff_id = Column(Integer, ForeignKey("staff.id"), nullable=False)
     slot_date = Column(Date, nullable=False)
     slot_time = Column(Time, nullable=False)
+    season_id = Column(Integer, ForeignKey("season.id"), nullable=False)
 
     staff = relationship("Staff", back_populates="slots")
     schedules = relationship("Schedule", back_populates="slot")
+    season = relationship("Season", back_populates="slots")
 
     __table_args__ = (
         UniqueConstraint("staff_id", "slot_date", "slot_time", name="uq_slots_staff_datetime"),

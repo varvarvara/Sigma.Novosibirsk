@@ -10,6 +10,9 @@ from app.modules.users.models import IntakeControl, Staff
 class CourseRepository:
     def __init__(self, db: Session):
         self.db = db
+        
+    def get_course_by_season(self, season_id: int) -> list[Course]:
+        return self.db.query(Course).filter(Course.season_id == season_id).all()
 
     def get_by_id(self, course_id: int) -> Course | None:
         return self.db.query(Course).filter(Course.id == course_id).first()
@@ -90,12 +93,12 @@ class CourseRepository:
             .first()
         )
 
-    def create_slot_if_not_exists(self, staff_id: int, slot_date: date, slot_time: time) -> tuple[Slot, bool]:
+    def create_slot_if_not_exists(self, staff_id: int, slot_date: date, slot_time: time, season_id: int) -> tuple[Slot, bool]:
         existing = self.get_slot(staff_id=staff_id, slot_date=slot_date, slot_time=slot_time)
         if existing is not None:
             return existing, False
 
-        slot = Slot(staff_id=staff_id, slot_date=slot_date, slot_time=slot_time)
+        slot = Slot(staff_id=staff_id, slot_date=slot_date, slot_time=slot_time, season_id=season_id)
         self.db.add(slot)
         self.db.commit()
         self.db.refresh(slot)

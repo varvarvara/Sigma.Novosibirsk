@@ -10,6 +10,38 @@ from enums import PreRegistrationStatuses, StaffRoles, StudentStatuses
 class UsersRepository:
     def __init__(self, session: Session):
         self.session = session
+        
+    def get_students_by_season(self, season_id: int) -> list[Student]:
+        return (
+            self.session.query(Student)
+            .filter(Student.season_id == season_id)
+            .order_by(Student.id.desc())
+            .all()
+        )
+
+    def get_teachers_by_season(self, season_id: int) -> list[Staff]:
+        return (
+            self.session.query(Staff)
+            .filter(
+                Staff.season_id == season_id,
+                Staff.staff_role == StaffRoles.TEACHER.value,
+            )
+            .order_by(Staff.id.desc())
+            .all()
+        )
+
+    def get_all_staff_by_season(self, season_id: int) -> list[Staff]:
+        return (
+            self.session.query(Staff)
+            .filter(Staff.season_id == season_id)
+            .order_by(Staff.id.desc())
+            .all()
+        )
+
+    def get_all_participants_by_season(self, season_id: int) -> list[Student | Staff]:
+        students = self.get_students_by_season(season_id)
+        staff = self.get_all_staff_by_season(season_id)
+        return students + staff
 
     def create_student_user(self, user_data: StudentInCreate, password: str) -> Student:
         new_student = Student(

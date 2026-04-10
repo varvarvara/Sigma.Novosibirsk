@@ -14,6 +14,9 @@ from app.modules.users.models import Staff, Student
 class AttendanceRepository:
     def __init__(self, db: Session):
         self.db = db
+        
+    def get_attendance_by_season(self, season_id: int) -> list[Attendance]:
+        return self.db.query(Attendance).filter(Attendance.season_id == season_id).all()
 
     def get_schedule_with_course(self, schedule_id: int):
         return (
@@ -288,6 +291,9 @@ class AttendanceRepository:
 class AchievementRepository:
     def __init__(self, db: Session):
         self.db = db
+        
+    def get_achievement_by_season(self, season_id: int) -> list[Achievement]:
+        return self.db.query(Achievement).filter(Achievement.season_id == season_id).all()
 
     def assign_to_student(self, student_id: int, achievement_id: int):
         obj = StudentAchievement(

@@ -7,6 +7,7 @@ class AttendanceMarkIn(BaseModel):
     student_id: int = Field(gt=0)
     schedule_id: int = Field(gt=0)
     attendance_status: bool
+    season_id: int = Field(gt=0)
 
 
 class AttendanceBulkMarkItemIn(BaseModel):
@@ -104,6 +105,7 @@ class AchievementCreate(BaseModel):
     achievement_description: str = Field(min_length=1, max_length=100)
     course_id: int = Field(gt=0)
     achievement_score: int = Field(ge=0)
+    season_id: int = Field(gt=0)
 
 class StudentCourseAchievementOut(BaseModel):
     course_id: int
@@ -115,10 +117,11 @@ class AchievementOut(BaseModel):
     achievement_description: str
     course_id: int
     achievement_score: int
+    season_id: int
 
     class Config:
         from_attributes = True
-        
+
 from datetime import datetime
 from pydantic import BaseModel
 
@@ -128,6 +131,7 @@ class StudentAchievementOut(BaseModel):
     student_id: int
     achievement_id: int
     awarded_at: datetime
+    season_id: int
 
     class Config:
         from_attributes = True

@@ -13,6 +13,9 @@ class CourseFeedbackRepository:
     def __init__(self, db: Session):
         self.db = db
 
+    def get_course_feedback_by_season(self, season_id: int) -> list[Feedback]:
+        return self.db.query(Feedback).filter(Feedback.season_id == season_id).all()
+    
     def get_or_create_feedback_control(self) -> FeedbackControl:
         control = self.db.query(FeedbackControl).filter(FeedbackControl.id == 1).first()
         if control is not None:

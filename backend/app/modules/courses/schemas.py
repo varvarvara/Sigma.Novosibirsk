@@ -26,6 +26,7 @@ class CourseCreate(BaseModel):
     course_type: CourseType = CourseType.THREE_DAYS
     staff_id: int | None = None  # only admin can set explicitly
     capacity: int | None = Field(default=None, ge=1)
+    season_id: int = Field(gt=0)
 
 
 class CourseUpdate(BaseModel):

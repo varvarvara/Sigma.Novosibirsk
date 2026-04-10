@@ -14,6 +14,7 @@ class EnrollmentStatus(str, Enum):
 
 class EnrollmentInCreate(BaseModel):
     course_id: int
+    season_id: int
 
 
 class EnrollmentInUpdateStatus(BaseModel):
