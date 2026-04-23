@@ -93,29 +93,3 @@ def get_my_attendance(
     return AttendanceService(db=db).get_my_attendance(current_user=current_user)
 
 
-@attendanceRouter.get(
-    "/student/{student_id}/course/{course_id}",
-    response_model=list[StudentCourseAchievementOut],
-)
-def get_student_course_achievements(
-    student_id: int,
-    course_id: int,
-    db: Session = Depends(get_db),
-):
-    return AchievementService(db).get_student_course_achievements(student_id, course_id)
-
-@attendanceRouter.post("/", response_model=AchievementOut)
-def create_achievement(
-    body: AchievementCreate,
-    current_user: dict = Depends(require_teacher_or_admin),
-    db: Session = Depends(get_db),
-):
-    return AchievementService(db).create_achievement(body, current_user)
-
-@attendanceRouter.post("/assign", response_model=StudentAchievementOut)
-def assign_achievement(
-    body: AchievementAssign,
-    current_user: dict = Depends(require_teacher_or_admin),
-    db: Session = Depends(get_db),
-):
-    return AchievementService(db).assign_achievement(body, current_user)

@@ -1,8 +1,8 @@
 from datetime import date, datetime, time
 
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 
-from app.modules.courses.models import Course
+from app.modules.courses.models import Course, CourseClass
 from app.modules.scheduling.models import Schedule, Slot
 from app.modules.users.models import IntakeControl, Staff
 
@@ -13,6 +13,9 @@ class CourseRepository:
         
     def get_course_by_season(self, season_id: int) -> list[Course]:
         return self.db.query(Course).filter(Course.season_id == season_id).all()
+    
+    def get_course_classes(self):
+        return (self.db.query(CourseClass).options(joinedload(CourseClass.course)).all())
 
     def get_by_id(self, course_id: int) -> Course | None:
         return self.db.query(Course).filter(Course.id == course_id).first()
