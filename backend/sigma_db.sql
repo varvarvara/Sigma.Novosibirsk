@@ -274,6 +274,35 @@ CREATE TABLE season (
     end_date DATE NOT NULL
 );
 
+CREATE TABLE schedule_generation (
+    id SERIAL PRIMARY KEY,
+    season_id INTEGER NOT NULL REFERENCES season(id),
+    status VARCHAR(30) NOT NULL DEFAULT 'Draft',
+    solver_status VARCHAR(30) NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
+    approved_at TIMESTAMP WITH TIME ZONE
+);
+
+CREATE INDEX ix_schedule_generation_id
+ON schedule_generation(id);
+
+CREATE TABLE schedule_generation_item (
+    id SERIAL PRIMARY KEY,
+    generation_id INTEGER NOT NULL REFERENCES schedule_generation(id) ON DELETE CASCADE,
+    staff_id INTEGER NOT NULL REFERENCES staff(id),
+    course_class_id INTEGER NOT NULL REFERENCES course_class(id),
+    slot_id INTEGER REFERENCES slots(id),
+    lesson_date DATE NOT NULL,
+    lesson_time TIME NOT NULL,
+    season_id INTEGER NOT NULL REFERENCES season(id),
+
+    CONSTRAINT uq_schedule_generation_staff_datetime
+    UNIQUE (generation_id, staff_id, lesson_date, lesson_time)
+);
+
+CREATE INDEX ix_schedule_generation_item_id
+ON schedule_generation_item(id);
+
 CREATE OR REPLACE FUNCTION set_updated_at()
 RETURNS TRIGGER
 LANGUAGE plpgsql

@@ -3,7 +3,7 @@ import re
 
 from sqlalchemy import func
 from sqlalchemy.orm import Session
-
+from app.modules.scheduling.models import ScheduleGeneration
 from app.modules.courses.models import Course, CourseClass
 from app.modules.scheduling.models import Schedule, Slot
 from app.modules.users.models import IntakeControl, Staff
@@ -218,15 +218,145 @@ class SchedulingRepository:
         slot_id: int | None,
         lesson_date: date,
         lesson_time: time,
+        season_id: int | None = None,
     ) -> Schedule:
+        if season_id is None and slot_id is not None:
+            slot = self.db.query(Slot).filter(Slot.id == slot_id).first()
+            if slot is not None:
+                season_id = slot.season_id
+
+        if season_id is None:
+            raise ValueError("season_id is required to create schedule")
+
         schedule = Schedule(
             staff_id=staff_id,
             course_class_id=course_class_id,
             slot_id=slot_id,
             lesson_date=lesson_date,
             lesson_time=lesson_time,
+            season_id=season_id,
         )
         self.db.add(schedule)
         self.db.commit()
         self.db.refresh(schedule)
         return schedule
+
+    def create_schedule_generation(self, season_id: int, solver_status: str):
+        from app.modules.scheduling.models import ScheduleGeneration
+
+        generation = ScheduleGeneration(
+            season_id=season_id,
+            status="Draft",
+            solver_status=solver_status,
+        )
+        self.db.add(generation)
+        self.db.flush()
+        return generation
+
+    def create_schedule_generation_item(
+        self,
+        generation_id: int,
+        staff_id: int,
+        course_class_id: int,
+        slot_id: int | None,
+        lesson_date,
+        lesson_time,
+        season_id: int,
+    ):
+        from app.modules.scheduling.models import ScheduleGenerationItem
+
+        item = ScheduleGenerationItem(
+            generation_id=generation_id,
+            staff_id=staff_id,
+            course_class_id=course_class_id,
+            slot_id=slot_id,
+            lesson_date=lesson_date,
+            lesson_time=lesson_time,
+            season_id=season_id,
+        )
+        self.db.add(item)
+        return item
+
+    def get_schedule_generation(self, generation_id: int):
+        from app.modules.scheduling.models import ScheduleGeneration
+
+        return (
+            self.db.query(ScheduleGeneration)
+            .filter(ScheduleGeneration.id == generation_id)
+            .first()
+        )
+
+    def list_schedule_generation_items(self, generation_id: int):
+        from app.modules.scheduling.models import ScheduleGenerationItem
+
+        return (
+            self.db.query(ScheduleGenerationItem)
+            .filter(ScheduleGenerationItem.generation_id == generation_id)
+            .order_by(
+                ScheduleGenerationItem.lesson_date.asc(),
+                ScheduleGenerationItem.lesson_time.asc(),
+            )
+            .all()
+        )
+
+    def clear_schedule_by_season(self, season_id: int) -> None:
+        self.db.query(Schedule).filter(Schedule.season_id == season_id).delete()
+
+    def create_approved_schedule_from_generation_item(self, item):
+        schedule = Schedule(
+            staff_id=item.staff_id,
+            course_class_id=item.course_class_id,
+            slot_id=item.slot_id,
+            lesson_date=item.lesson_date,
+            lesson_time=item.lesson_time,
+            season_id=item.season_id,
+        )
+        self.db.add(schedule)
+        return schedule
+
+    def list_schedule_events(
+        self,
+        season_id: int,
+        teacher_id: int | None = None,
+        course_id: int | None = None,
+        student_id: int | None = None,
+    ):
+        from app.modules.enrollment.models import Enrollment
+
+        query = (
+            self.db.query(Schedule, CourseClass, Course, Staff)
+            .join(CourseClass, Schedule.course_class_id == CourseClass.id)
+            .join(Course, CourseClass.course_id == Course.id)
+            .join(Staff, Schedule.staff_id == Staff.id)
+            .filter(Schedule.season_id == season_id)
+        )
+
+        if teacher_id is not None:
+            query = query.filter(Schedule.staff_id == teacher_id)
+
+        if course_id is not None:
+            query = query.filter(Course.id == course_id)
+
+        if student_id is not None:
+            student_course_rows = (
+                self.db.query(Enrollment.course_id)
+                .filter(
+                    Enrollment.student_id == student_id,
+                    Enrollment.enrollment_status == "Active",
+                    Enrollment.season_id == season_id,
+                )
+                .all()
+            )
+
+            student_course_ids = [row[0] for row in student_course_rows]
+
+            if not student_course_ids:
+                return []
+
+            query = query.filter(Course.id.in_(student_course_ids))
+
+        return (
+            query
+            .order_by(Schedule.lesson_date.asc(), Schedule.lesson_time.asc(), Course.id.asc())
+            .all()
+        )
