@@ -1,0 +1,31 @@
+.navbar {
+    position: fixed;
+    left: 50%;
+    transform: translateX(-50%);
+    bottom: 0;
+    display: flex;
+    justify-content: space-evenly;
+    padding: 12px 12px 25px;
+    border-radius: 20px 20px 0 0;
+    background: #FFFFFF;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.22);
+}
+
+.nav-link {
+    color: #6b6b6b;
+    font-size: 12px;
+    text-decoration: none;
+    min-width: 109.33px;
+    text-align: center;
+    padding: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    flex-shrink: 0;
+}
+
+.nav-link-active {
+    background-color: #E9E1FF;
+    color: #7949FF;
+    border-radius: 8px;
+}
+

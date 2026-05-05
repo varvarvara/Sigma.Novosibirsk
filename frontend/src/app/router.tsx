@@ -1,0 +1,70 @@
+import { createRootRoute, createRoute, createRouter, Outlet } from '@tanstack/react-router'
+import HomePage from '../pages/HomePage'
+import LoginPage from '../pages/LoginPage'
+import RegistrationPage from '../pages/RegistrationPage'
+import SelectRolePage from '../pages/SelectRolePage'
+import ForgotPasswordPage from '../pages/ForgotPasswordPage'
+import { ProfilePage } from '../pages/profile_page/profile-page'
+
+
+// корневой роут
+const rootRoute = createRootRoute({
+    component: () => <Outlet />,
+})
+
+// стартовая страница
+const ProfileRootRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: '/',
+    component: ProfilePage,
+})
+
+const HomeRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: '/home',
+    component: HomePage,
+})
+
+const ProfileRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: '/profile',
+    component: ProfilePage,
+})
+
+const RegistrationRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: '/registration',
+    component: RegistrationPage,
+})
+
+const LoginRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: '/login',
+    component: LoginPage,
+})
+
+const SelectRoleRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: '/select-role',
+    component: SelectRolePage,
+})
+
+const ForgotPasswordRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: '/forgot-password',
+    component: ForgotPasswordPage,
+})
+
+const routeTree = rootRoute.addChildren([
+    ProfileRootRoute,
+    HomeRoute,
+    ProfileRoute,
+    RegistrationRoute,
+    LoginRoute,
+    SelectRoleRoute,
+    ForgotPasswordRoute,
+])
+
+export const router = createRouter({
+    routeTree,
+})
