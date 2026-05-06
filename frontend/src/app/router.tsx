@@ -1,9 +1,9 @@
 import { createRootRoute, createRoute, createRouter, Outlet } from '@tanstack/react-router'
-import HomePage from '../pages/HomePage'
-import LoginPage from '../pages/LoginPage'
-import RegistrationPage from '../pages/RegistrationPage'
-import SelectRolePage from '../pages/SelectRolePage'
-import ForgotPasswordPage from '../pages/ForgotPasswordPage'
+//import HomePage from '../pages/HomePage'
+//import LoginPage from '../pages/LoginPage'
+//import RegistrationPage from '../pages/RegistrationPage'
+//import SelectRolePage from '../pages/SelectRolePage'
+//import ForgotPasswordPage from '../pages/ForgotPasswordPage'
 import { ProfilePage } from '../pages/profile_page/profile-page'
 
 
@@ -19,11 +19,11 @@ const ProfileRootRoute = createRoute({
     component: ProfilePage,
 })
 
-const HomeRoute = createRoute({
-    getParentRoute: () => rootRoute,
-    path: '/home',
-    component: HomePage,
-})
+// const HomeRoute = createRoute({
+//     getParentRoute: () => rootRoute,
+//     path: '/home',
+//     component: HomePage,
+// })
 
 const ProfileRoute = createRoute({
     getParentRoute: () => rootRoute,
@@ -31,38 +31,38 @@ const ProfileRoute = createRoute({
     component: ProfilePage,
 })
 
-const RegistrationRoute = createRoute({
-    getParentRoute: () => rootRoute,
-    path: '/registration',
-    component: RegistrationPage,
-})
+// const RegistrationRoute = createRoute({
+//     getParentRoute: () => rootRoute,
+//     path: '/registration',
+//     component: RegistrationPage,
+// })
 
-const LoginRoute = createRoute({
-    getParentRoute: () => rootRoute,
-    path: '/login',
-    component: LoginPage,
-})
+// const LoginRoute = createRoute({
+//     getParentRoute: () => rootRoute,
+//     path: '/login',
+//     component: LoginPage,
+// })
 
-const SelectRoleRoute = createRoute({
-    getParentRoute: () => rootRoute,
-    path: '/select-role',
-    component: SelectRolePage,
-})
+// const SelectRoleRoute = createRoute({
+//     getParentRoute: () => rootRoute,
+//     path: '/select-role',
+//     component: SelectRolePage,
+// })
 
-const ForgotPasswordRoute = createRoute({
-    getParentRoute: () => rootRoute,
-    path: '/forgot-password',
-    component: ForgotPasswordPage,
-})
+// const ForgotPasswordRoute = createRoute({
+//     getParentRoute: () => rootRoute,
+//     path: '/forgot-password',
+//     component: ForgotPasswordPage,
+// })
 
 const routeTree = rootRoute.addChildren([
     ProfileRootRoute,
-    HomeRoute,
     ProfileRoute,
-    RegistrationRoute,
-    LoginRoute,
-    SelectRoleRoute,
-    ForgotPasswordRoute,
+    // HomeRoute,
+    // RegistrationRoute,
+    // LoginRoute,
+    // SelectRoleRoute,
+    // ForgotPasswordRoute,
 ])
 
 export const router = createRouter({
