@@ -11,13 +11,13 @@ LESSON_START_TIMES = {
 }
 
 
-def _course_type_value(course_type):
-    return course_type.value if hasattr(course_type, "value") else str(course_type)
+def _course_duration_value(course_duration):
+    return course_duration.value if hasattr(course_duration, "value") else str(course_duration)
 
 
 def _required_lessons(course) -> int:
-    course_type = _course_type_value(course.course_type)
-    if course_type == "SixDays":
+    course_duration = _course_duration_value(course.course_duration)
+    if course_duration == "SixDays":
         return 6
     return 3
 

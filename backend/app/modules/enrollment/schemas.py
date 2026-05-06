@@ -60,6 +60,7 @@ class EnrollmentOutput(BaseModel):
     course_title: str | None = None
     course_description: str | None = None
     course_status: str | None = None
+    course_duration: str | None = None
     course_type: str | None = None
 
     teacher_id: int | None = None

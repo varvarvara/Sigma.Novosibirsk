@@ -62,6 +62,7 @@ class CourseService:
             description=course.descriptions,
             syllabus_url=course.syllabus_url,
             course_status=course.course_status,
+            course_duration=course.course_duration,
             course_type=course.course_type,
             staff_id=course.staff_id,
             teacher_name=teacher_name,
@@ -146,9 +147,11 @@ class CourseService:
             description=data.description,
             staff_id=staff_id,
             course_status=data.course_status.value,
+            course_duration=data.course_duration.value,
             course_type=data.course_type.value,
             syllabus_url=str(data.syllabus_url),
             capacity=data.capacity,
+            season_id=data.season_id,
         )
 
         return self._to_output(course)
@@ -169,6 +172,8 @@ class CourseService:
             update_fields["syllabus_url"] = str(data.syllabus_url)
         if data.course_status is not None:
             update_fields["course_status"] = data.course_status.value
+        if data.course_duration is not None:
+            update_fields["course_duration"] = data.course_duration.value
         if data.course_type is not None:
             update_fields["course_type"] = data.course_type.value
         if "capacity" in data.model_fields_set:

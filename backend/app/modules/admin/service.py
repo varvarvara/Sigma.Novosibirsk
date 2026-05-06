@@ -1,3 +1,5 @@
+import logging
+
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
@@ -12,7 +14,11 @@ from app.modules.auth.schemas import PreRegistrationOut
 from app.modules.users.repository import UsersRepository
 from app.modules.users.schemas import StaffOutput
 from app.security.hashHelper import HashHelper
+from app.tasks import send_teacher_credentials_email_task
 from enums import PreRegistrationStatuses, StaffRoles
+
+
+logger = logging.getLogger(__name__)
 
 
 class AdminService:
@@ -67,16 +73,28 @@ class AdminService:
         if self._users_repository.get_student_by_email(email=pre_registration.email) is not None:
             raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Student with this email already exists")
 
-        password = HashHelper.get_password_hash(plain_password=data.password)
+        password_hash = HashHelper.get_password_hash(plain_password=data.password)
         staff = self._users_repository.create_staff_from_pre_registration(
             pre_registration=pre_registration,
-            password=password,
+            password_hash=password_hash,
             staff_role=StaffRoles.TEACHER.value,
         )
         self._users_repository.update_pre_registration_status(
             pre_registration=pre_registration,
             new_status=PreRegistrationStatuses.APPROVED.value,
         )
+
+        try:
+            send_teacher_credentials_email_task.delay(
+                email=pre_registration.email,
+                first_name=pre_registration.first_name,
+                password=data.password,
+            )
+        except Exception:
+            logger.exception(
+                "Failed to enqueue teacher credentials email",
+                extra={"pre_registration_id": pre_registration_id, "email": pre_registration.email},
+            )
 
         return StaffOutput.model_validate(staff)
 

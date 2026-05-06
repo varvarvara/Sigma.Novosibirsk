@@ -77,7 +77,7 @@ class UsersRepository:
     def create_staff_from_pre_registration(
         self,
         pre_registration: PreRegistration,
-        password: str,
+        password_hash: str,
         staff_role: str,
     ) -> Staff:
         new_staff = Staff(
@@ -85,8 +85,13 @@ class UsersRepository:
             last_name=pre_registration.last_name,
             partonymic=pre_registration.partonymic,
             email=pre_registration.email,
-            password=password,
+            password=password_hash,
             staff_role=staff_role,
+            season_id=pre_registration.season_id,
+            birth_date=pre_registration.birth_date,
+            university=pre_registration.university,
+            study_direction=pre_registration.study_direction,
+            study_year=pre_registration.study_year,
         )
         self.session.add(new_staff)
         self.session.commit()

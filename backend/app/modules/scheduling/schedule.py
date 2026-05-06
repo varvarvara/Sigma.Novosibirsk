@@ -6,7 +6,7 @@ from app.modules.scheduling.repository import SchedulingRepository
 from app.modules.scheduling.schemas import CourseScheduleGenerateIn
 
 
-COURSE_TYPE_TO_DAYS = {
+COURSE_DURATION_TO_DAYS = {
     "ThreeDays": 3,
     "SixDays": 6,
 }
@@ -24,9 +24,9 @@ WEEKDAY_TO_INT = {
 ALLOWED_SLOT_HOURS = {9, 10, 11, 12}
 
 
-def required_lessons_for_course(course_type) -> int:
-    course_type_value = course_type.value if hasattr(course_type, "value") else str(course_type)
-    return COURSE_TYPE_TO_DAYS.get(course_type_value, 3)
+def required_lessons_for_course(course_duration) -> int:
+    course_duration_value = course_duration.value if hasattr(course_duration, "value") else str(course_duration)
+    return COURSE_DURATION_TO_DAYS.get(course_duration_value, 3)
 
 
 def generate_schedule_by_weekdays(

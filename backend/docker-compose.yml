@@ -24,10 +24,24 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      redis:
+        condition: service_healthy
     env_file:
       - .env
     ports:
       - "8000:8000"
+
+  celery-worker:
+    build: .
+    container_name: sigma-celery-worker
+    command: celery -A app.celery_app.celery_app worker --loglevel=info
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    env_file:
+      - .env
 
   redis:
     container_name: sigma-redis

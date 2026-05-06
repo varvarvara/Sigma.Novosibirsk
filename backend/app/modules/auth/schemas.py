@@ -1,13 +1,21 @@
 import re
+from datetime import date, datetime
+from enum import Enum
 
 from fastapi import HTTPException, status
-from pydantic import BaseModel, EmailStr, field_validator
+from pydantic import BaseModel, EmailStr, Field, field_validator
 
 from enums import PreRegistrationStatuses
 
 
 LETTER_MATCH_PATTERN = re.compile(r"^[а-яА-ЯёЁa-zA-Z\-]+$")
 PHONE_MATCH_PATTERN = re.compile(r"^\+?[0-9]{10,20}$")
+MAX_PROPOSED_DESCRIPTION_LENGTH = 500
+
+
+class TeacherCourseType(str, Enum):
+    OLYMPIAD = "Olympiad"
+    AUTHOR = "Author"
 
 
 class LoginRequest(BaseModel):
@@ -36,6 +44,14 @@ class PreRegistrationCreateIn(BaseModel):
     phone: str
     email: EmailStr
     tg_nickname: str | None = None
+    season_id: int = Field(..., gt=0)
+    birth_date: date
+    university: str = Field(..., min_length=2, max_length=150)
+    study_direction: str = Field(..., min_length=2, max_length=150)
+    study_year: int = Field(..., ge=1, le=6)
+    proposed_course_title: str = Field(..., min_length=2, max_length=150)
+    proposed_course_type: TeacherCourseType
+    proposed_course_description: str = Field(..., min_length=1, max_length=MAX_PROPOSED_DESCRIPTION_LENGTH)
 
     @field_validator("first_name", "last_name", "partonymic")
     def validate_name_fields(cls, value):
@@ -57,6 +73,25 @@ class PreRegistrationCreateIn(BaseModel):
             )
         return value
 
+    @field_validator("birth_date", mode="before")
+    def validate_birth_date(cls, value):
+        if isinstance(value, date):
+            return value
+        if isinstance(value, str):
+            stripped = value.strip()
+            if re.fullmatch(r"\d{2}\.\d{2}\.\d{4}", stripped):
+                try:
+                    return datetime.strptime(stripped, "%d.%m.%Y").date()
+                except ValueError:
+                    raise HTTPException(
+                        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                        detail="birth_date has invalid value",
+                    )
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="birth_date must be in DD.MM.YYYY format",
+        )
+
 
 class PreRegistrationOut(BaseModel):
     id: int
@@ -66,6 +101,14 @@ class PreRegistrationOut(BaseModel):
     phone: str
     email: EmailStr
     tg_nickname: str | None = None
+    season_id: int
+    birth_date: date
+    university: str
+    study_direction: str
+    study_year: int
+    proposed_course_title: str
+    proposed_course_type: TeacherCourseType
+    proposed_course_description: str
     pre_registration_status: PreRegistrationStatuses
 
     model_config = {"from_attributes": True}

@@ -13,9 +13,14 @@ class CourseStatus(str, Enum):
     PUBLISHED = "Published"
 
 
-class CourseType(str, Enum):
+class CourseDuration(str, Enum):
     THREE_DAYS = "ThreeDays"
     SIX_DAYS = "SixDays"
+
+
+class CourseType(str, Enum):
+    OLYMPIAD = "Olympiad"
+    AUTHOR = "Author"
 
 
 class CourseCreate(BaseModel):
@@ -23,7 +28,8 @@ class CourseCreate(BaseModel):
     description: str
     syllabus_url: HttpUrl
     course_status: CourseStatus = CourseStatus.DRAFT
-    course_type: CourseType = CourseType.THREE_DAYS
+    course_duration: CourseDuration = CourseDuration.THREE_DAYS
+    course_type: CourseType = CourseType.AUTHOR
     staff_id: int | None = None  # only admin can set explicitly
     capacity: int | None = Field(default=None, ge=1)
     season_id: int = Field(gt=0)
@@ -34,6 +40,7 @@ class CourseUpdate(BaseModel):
     description: str | None = None
     syllabus_url: HttpUrl | None = None
     course_status: CourseStatus | None = None
+    course_duration: CourseDuration | None = None
     course_type: CourseType | None = None
     capacity: int | None = Field(default=None, ge=1)
 
@@ -44,6 +51,7 @@ class CourseOutput(BaseModel):
     description: str | None = None
     syllabus_url: str | None = None
     course_status: CourseStatus
+    course_duration: CourseDuration
     course_type: CourseType
     staff_id: int
     teacher_name: str | None = None

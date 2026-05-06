@@ -34,6 +34,15 @@ class Settings(BaseSettings):
     REDIS_PASSWORD: str | None = None
     REDIS_URL: str | None = None
 
+    # SMTP
+    SMTP_HOST: str | None = None
+    SMTP_PORT: int = 587
+    SMTP_USERNAME: str | None = None
+    SMTP_PASSWORD: str | None = None
+    SMTP_FROM: str | None = None
+    SMTP_USE_STARTTLS: bool = True
+    SMTP_USE_SSL: bool = False
+
     # S3
     S3_ENDPOINT_URL: str | None = None
     S3_REGION: str = "ru-central-1"

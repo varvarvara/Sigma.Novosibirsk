@@ -1,4 +1,4 @@
-from sqlalchemy import Boolean, Column, Enum, ForeignKey, Integer, String, TIMESTAMP
+from sqlalchemy import Boolean, Column, Date, Enum, ForeignKey, Integer, String, TIMESTAMP
 from sqlalchemy.orm import relationship
 
 from app.db.base import Base
@@ -15,6 +15,10 @@ class Staff(Base):
     password = Column(String(255), nullable=False)
     staff_role = Column(Enum("Teacher", "Admin", name="staff_roles"), nullable=False)
     season_id = Column(Integer, ForeignKey("season.id"), nullable=False)
+    birth_date = Column(Date, nullable=True)
+    university = Column(String(150), nullable=True)
+    study_direction = Column(String(150), nullable=True)
+    study_year = Column(Integer, nullable=True)
 
     courses = relationship("Course", back_populates="staff")
     slots = relationship("Slot", back_populates="staff")
@@ -82,6 +86,13 @@ class PreRegistration(Base):
     email = Column(String(254), unique=True, nullable=False)
     tg_nickname = Column(String(50))
     season_id = Column(Integer, ForeignKey("season.id"), nullable=False)
+    birth_date = Column(Date, nullable=False)
+    university = Column(String(150), nullable=False)
+    study_direction = Column(String(150), nullable=False)
+    study_year = Column(Integer, nullable=False)
+    proposed_course_title = Column(String(150), nullable=False)
+    proposed_course_type = Column(Enum("Olympiad", "Author", name="teacher_course_types"), nullable=False)
+    proposed_course_description = Column(String(500), nullable=False)
     
     season = relationship("Season", back_populates="pre_registrations")
 

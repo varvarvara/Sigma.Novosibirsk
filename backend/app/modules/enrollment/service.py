@@ -47,6 +47,7 @@ class EnrollmentService:
         course_title = None
         course_description = None
         course_status = None
+        course_duration = None
         course_type = None
 
         if course is not None:
@@ -54,6 +55,7 @@ class EnrollmentService:
             course_title = course.title
             course_description = course.descriptions
             course_status = course.course_status
+            course_duration = course.course_duration
             course_type = course.course_type
 
             staff = self.repository.get_staff_by_id(course.staff_id)
@@ -69,6 +71,7 @@ class EnrollmentService:
             course_title=course_title,
             course_description=course_description,
             course_status=course_status,
+            course_duration=course_duration,
             course_type=course_type,
             teacher_id=teacher_id,
             teacher_name=teacher_name,

@@ -24,6 +24,7 @@ DROP TABLE IF EXISTS staff CASCADE;
 DROP TYPE IF EXISTS certificate_statuses CASCADE;
 DROP TYPE IF EXISTS course_statuses CASCADE;
 DROP TYPE IF EXISTS course_types CASCADE;
+DROP TYPE IF EXISTS teacher_course_types CASCADE;
 DROP TYPE IF EXISTS enrollment_statuses CASCADE;
 DROP TYPE IF EXISTS pre_registration_statuses CASCADE;
 DROP TYPE IF EXISTS staff_roles CASCADE;
@@ -34,8 +35,20 @@ CREATE TYPE staff_roles AS ENUM ('Teacher', 'Admin');
 CREATE TYPE pre_registration_statuses AS ENUM ('PendingApproval', 'Approved');
 CREATE TYPE course_statuses AS ENUM ('Draft', 'Archived', 'Published');
 CREATE TYPE course_types AS ENUM ('ThreeDays', 'SixDays');
+CREATE TYPE teacher_course_types AS ENUM ('Olympiad', 'Author');
 CREATE TYPE enrollment_statuses AS ENUM ('Active', 'Dropped', 'Completed');
 CREATE TYPE certificate_statuses AS ENUM ('In progress', 'Issued');
+
+CREATE TABLE season (
+    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    season_year INT NOT NULL CHECK (season_year >= 2020 AND season_year <= 2100),
+    season_description VARCHAR(100) DEFAULT NULL,
+    start_date DATE NOT NULL,
+    end_date DATE NOT NULL
+);
+
+INSERT INTO season (season_year, season_description, start_date, end_date)
+VALUES (2026, 'Default season', DATE '2026-09-01', DATE '2027-06-01');
 
 CREATE TABLE staff (
     id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
@@ -45,7 +58,11 @@ CREATE TABLE staff (
     email VARCHAR(254) UNIQUE NOT NULL,
     password VARCHAR(255) NOT NULL,
     staff_role staff_roles NOT NULL,
-    season_id BIGINT NOT NULL REFERENCES season(id) ON DELETE CASCADE
+    season_id BIGINT NOT NULL REFERENCES season(id) ON DELETE CASCADE,
+    birth_date DATE,
+    university VARCHAR(150),
+    study_direction VARCHAR(150),
+    study_year INT CHECK (study_year BETWEEN 1 AND 6)
 );
 
 CREATE TABLE intake_control (
@@ -68,7 +85,8 @@ CREATE TABLE feedback_control (
     season_id BIGINT NOT NULL REFERENCES season(id) ON DELETE CASCADE
 );
 
-INSERT INTO feedback_control (id, feedback_open) VALUES (1, FALSE)
+INSERT INTO feedback_control (id, feedback_open, season_id)
+VALUES (1, FALSE, (SELECT id FROM season ORDER BY id LIMIT 1))
 ON CONFLICT (id) DO NOTHING;
 
 CREATE TABLE students (
@@ -98,7 +116,14 @@ CREATE TABLE pre_registration (
     email VARCHAR(254) UNIQUE NOT NULL,
     tg_nickname VARCHAR(50),
     pre_registration_status pre_registration_statuses NOT NULL DEFAULT 'PendingApproval',
-    season_id BIGINT NOT NULL REFERENCES season(id) ON DELETE CASCADE
+    season_id BIGINT NOT NULL REFERENCES season(id) ON DELETE CASCADE,
+    birth_date DATE NOT NULL,
+    university VARCHAR(150) NOT NULL,
+    study_direction VARCHAR(150) NOT NULL,
+    study_year INT NOT NULL CHECK (study_year BETWEEN 1 AND 6),
+    proposed_course_title VARCHAR(150) NOT NULL,
+    proposed_course_type teacher_course_types NOT NULL,
+    proposed_course_description VARCHAR(500) NOT NULL
 );
 
 CREATE TABLE slots (
@@ -116,7 +141,8 @@ CREATE TABLE course (
     descriptions VARCHAR(200),
     staff_id BIGINT NOT NULL REFERENCES staff(id) ON DELETE CASCADE,
     course_status course_statuses NOT NULL DEFAULT 'Draft',
-    course_type course_types NOT NULL DEFAULT 'ThreeDays',
+    course_duration course_types NOT NULL DEFAULT 'ThreeDays',
+    course_type teacher_course_types NOT NULL DEFAULT 'Author',
     syllabus_url TEXT,
     capacity INT NULL CHECK (capacity >= 1),
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -266,13 +292,6 @@ CREATE TABLE teacher_certificate (
     season_id BIGINT NOT NULL REFERENCES season(id) ON DELETE CASCADE
 );
 
-CREATE TABLE season (
-    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    season_year INT NOT NULL CHECK (season_year >= 2020 AND season_year <= 2100),
-    season_description VARCHAR(100) DEFAULT NULL,
-    start_date DATE NOT NULL,
-    end_date DATE NOT NULL
-);
 
 CREATE TABLE schedule_generation (
     id SERIAL PRIMARY KEY,
@@ -440,10 +459,20 @@ END IF;
 END;
 $$;
 
+CREATE OR REPLACE FUNCTION trg_student_achievement_gamification()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+AS $$
+BEGIN
+PERFORM recalc_gamification(NEW.student_id);
+RETURN NEW;
+END;
+$$;
+
 CREATE TRIGGER trg_recalc_achievement
 AFTER INSERT ON student_achievement
 FOR EACH ROW
-EXECUTE FUNCTION recalc_gamification(NEW.student_id);docker exec -i sigma-db psql -U sigma -d sigma < sigma_db.sql
+EXECUTE FUNCTION trg_student_achievement_gamification();
 
 CREATE OR REPLACE FUNCTION trg_attendance_gamification()
 RETURNS TRIGGER

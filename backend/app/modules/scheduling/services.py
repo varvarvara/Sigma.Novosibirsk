@@ -258,7 +258,7 @@ class SchedulingService:
         courses_with_conflict_overrides = 0
 
         for course in courses:
-            required_lessons = required_lessons_for_course(course.course_type)
+            required_lessons = required_lessons_for_course(course.course_duration)
             existing_schedules = self.repository.list_schedule_by_course(course.id)
             existing_lessons = len(existing_schedules)
 

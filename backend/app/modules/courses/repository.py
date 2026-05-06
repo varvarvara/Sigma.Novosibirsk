@@ -52,18 +52,22 @@ class CourseRepository:
         description: str,
         staff_id: int,
         course_status: str,
+        course_duration: str,
         course_type: str,
         syllabus_url: str,
         capacity: int | None,
+        season_id: int,
     ) -> Course:
         db_course = Course(
             title=title,
             descriptions=description,
             staff_id=staff_id,
             course_status=course_status,
+            course_duration=course_duration,
             course_type=course_type,
             syllabus_url=syllabus_url,
             capacity=capacity,
+            season_id=season_id,
         )
         self.db.add(db_course)
         self.db.commit()

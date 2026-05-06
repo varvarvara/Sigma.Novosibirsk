@@ -12,7 +12,8 @@ class Course(Base):
     descriptions = Column(String(200))
     staff_id = Column(Integer, ForeignKey("staff.id"), nullable=False)
     course_status = Column(Enum("Draft", "Archived", "Published", name="course_statuses"), nullable=False)
-    course_type = Column(Enum("ThreeDays", "SixDays", name="course_types"), nullable=False, default="ThreeDays")
+    course_duration = Column(Enum("ThreeDays", "SixDays", name="course_types"), nullable=False, default="ThreeDays")
+    course_type = Column(Enum("Olympiad", "Author", name="teacher_course_types"), nullable=False, default="Author")
     syllabus_url = Column(Text)
     capacity = Column(Integer, nullable=True)  # NULL means unlimited seats
     created_at = Column(TIMESTAMP, default="now()")

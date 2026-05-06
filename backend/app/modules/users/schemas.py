@@ -1,4 +1,5 @@
 import re
+from datetime import date
 
 from fastapi import HTTPException, status
 from pydantic import BaseModel, EmailStr, field_validator
@@ -72,6 +73,10 @@ class StaffInCreate(BaseModel):
     staff_role: StaffRoles
     password: str
     season_id: int
+    birth_date: date | None = None
+    university: str | None = None
+    study_direction: str | None = None
+    study_year: int | None = None
 
     @field_validator("first_name", "last_name", "partonymic")
     def validate_name_fields(cls, value):
@@ -90,6 +95,17 @@ class StaffInCreate(BaseModel):
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                 detail=f"Password can not contain less than {MIN_PASSWORD_LENGTH} symbols",
+            )
+        return value
+
+    @field_validator("study_year")
+    def validate_study_year(cls, value):
+        if value is None:
+            return value
+        if value < 1 or value > 6:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="study_year must be between 1 and 6",
             )
         return value
 
@@ -119,5 +135,9 @@ class StaffOutput(BaseModel):
     partonymic: str | None = None
     email: EmailStr
     staff_role: StaffRoles
+    birth_date: date | None = None
+    university: str | None = None
+    study_direction: str | None = None
+    study_year: int | None = None
 
     model_config = {"from_attributes": True}
