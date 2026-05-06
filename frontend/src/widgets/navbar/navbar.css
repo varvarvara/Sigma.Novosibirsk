@@ -3,6 +3,7 @@
     left: 50%;
     transform: translateX(-50%);
     bottom: 0;
+    width: min(100vw, 360px);
     display: flex;
     justify-content: space-evenly;
     padding: 12px 12px 25px;
@@ -12,14 +13,17 @@
 }
 
 .nav-link {
+    border: 0;
+    background: transparent;
     color: #6b6b6b;
-    font-size: 12px;
+    font-family: inherit;
     text-decoration: none;
-    min-width: 109.33px;
+    min-width: 0;
     text-align: center;
     padding: 8px;
     font-size: 14px;
     font-weight: 500;
+    flex: 1;
     flex-shrink: 0;
 }
 
@@ -28,4 +32,3 @@
     color: #7949FF;
     border-radius: 8px;
 }
-

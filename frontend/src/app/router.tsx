@@ -4,6 +4,8 @@ import { createRootRoute, createRoute, createRouter, Outlet } from '@tanstack/re
 //import RegistrationPage from '../pages/RegistrationPage'
 //import SelectRolePage from '../pages/SelectRolePage'
 //import ForgotPasswordPage from '../pages/ForgotPasswordPage'
+import { CurricularPage } from '../pages/curricular/curricular-page'
+import { ExtracurricularPage } from '../pages/extracurricular_page/extracurricular-page'
 import { ProfilePage } from '../pages/profile_page/profile-page'
 
 
@@ -29,6 +31,18 @@ const ProfileRoute = createRoute({
     getParentRoute: () => rootRoute,
     path: '/profile',
     component: ProfilePage,
+})
+
+const ExtracurricularRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: '/extracurricular',
+    component: ExtracurricularPage,
+})
+
+const CurricularRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: '/curricular',
+    component: CurricularPage,
 })
 
 // const RegistrationRoute = createRoute({
@@ -58,6 +72,8 @@ const ProfileRoute = createRoute({
 const routeTree = rootRoute.addChildren([
     ProfileRootRoute,
     ProfileRoute,
+    ExtracurricularRoute,
+    CurricularRoute,
     // HomeRoute,
     // RegistrationRoute,
     // LoginRoute,

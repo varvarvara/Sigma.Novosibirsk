@@ -1,8 +1,21 @@
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { Navbar } from "../../widgets/navbar/navbar";
 import "./profile-page.css";
 
 export function ProfilePage() {
+    const navigate = useNavigate();
+    const openCurricularCharges = (event: React.MouseEvent<HTMLAnchorElement>) => {
+        event.preventDefault();
+        event.stopPropagation();
+        navigate({ to: "/curricular", hash: "charges" });
+    };
+
+    const openCharges = (event: React.MouseEvent<HTMLAnchorElement>) => {
+        event.preventDefault();
+        event.stopPropagation();
+        navigate({ to: "/extracurricular", hash: "charges" });
+    };
+
     return (
         <main className="profile-page">
             <section className="user-info-section">
@@ -12,7 +25,7 @@ export function ProfilePage() {
                     </svg>
                 </button>
 
-                <img className="profile-image" src="/sigmacoins.png" alt="Аватар пользователя" />
+                <img className="profile-image" src="/sigmacoins.svg" alt="Аватар пользователя" />
 
                 <h1 className="user-fullname semi-bold-text">
                     Фамилия<br />
@@ -20,11 +33,10 @@ export function ProfilePage() {
                 </h1>
 
                 <p className="user-role semi-bold-text">Студент</p>
-
                 <div className="user-stats">
                     <div className="stats-item">
                         <div className="stats-value">
-                            <img src="/star.png" alt="" />
+                            <img src="/star.svg" alt="" />
                             <p>20</p>
                         </div>
                         <p className="stats-label">ачивок</p>
@@ -32,7 +44,7 @@ export function ProfilePage() {
 
                     <div className="stats-item">
                         <div className="stats-value">
-                            <img src="/flash.png" alt="" />
+                            <img src="/flash.svg" alt="" />
                             <p>400</p>
                         </div>
                         <p className="stats-label">баллов</p>
@@ -40,7 +52,7 @@ export function ProfilePage() {
 
                     <div className="stats-item">
                         <div className="stats-value">
-                            <img src="/sigmacoins.png" alt="" />
+                            <img src="/sigmacoins.svg" alt="" />
                             <p>500</p>
                         </div>
                         <p className="stats-label">сигмакойнов</p>
@@ -52,23 +64,43 @@ export function ProfilePage() {
                 <h2 className="activities-title">Мои активности</h2>
 
                 <div className="activities-list">
-                    <div className="activity-card">
-                        <img className="activity-image" src="/star.png" alt="" />
+                    <div
+                        className="activity-card"
+                        role="link"
+                        tabIndex={0}
+                        onClick={() => navigate({ to: "/curricular" })}
+                        onKeyDown={(event) => {
+                            if (event.key === "Enter" || event.key === " ") {
+                                navigate({ to: "/curricular" });
+                            }
+                        }}
+                    >
+                        <img className="activity-image" src="/star.svg" alt="" />
 
                         <div className="activity-info">
                             <h3>Учебная активность</h3>
-                            <Link to="/scores">Посмотреть начисления</Link>
+                            <Link to="/curricular" hash="charges" onClick={openCurricularCharges}>Посмотреть начисления</Link>
                             <Link to="/achievements">Посмотреть ачивки</Link>
                         </div>
                     </div>
 
-                    <div className="activity-card">
-                        <img className="activity-image" src="/flash.png" alt="" />
+                    <div
+                        className="activity-card"
+                        role="link"
+                        tabIndex={0}
+                        onClick={() => navigate({ to: "/extracurricular" })}
+                        onKeyDown={(event) => {
+                            if (event.key === "Enter" || event.key === " ") {
+                                navigate({ to: "/extracurricular" });
+                            }
+                        }}
+                    >
+                        <img className="activity-image" src="/flash.svg" alt="" />
 
                         <div className="activity-info">
                             <h3>Внеучебка</h3>
                             <p className="team-name">Название команды</p>
-                            <Link to="/scores">Посмотреть начисления</Link>
+                            <Link to="/extracurricular" hash="charges" onClick={openCharges}>Посмотреть начисления</Link>
                         </div>
                     </div>
                 </div>
