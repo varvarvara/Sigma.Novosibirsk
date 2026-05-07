@@ -5,7 +5,9 @@ import { createRootRoute, createRoute, createRouter, Outlet } from '@tanstack/re
 //import SelectRolePage from '../pages/SelectRolePage'
 //import ForgotPasswordPage from '../pages/ForgotPasswordPage'
 import { CurricularPage } from '../pages/curricular/curricular-page'
+import { CurricularAchievementsPage } from '../pages/curricular-achievements/curricular-achievements'
 import { ExtracurricularPage } from '../pages/extracurricular_page/extracurricular-page'
+import { FilterPage } from '../pages/filter-page/filter-page'
 import { ProfilePage } from '../pages/profile_page/profile-page'
 
 
@@ -45,6 +47,18 @@ const CurricularRoute = createRoute({
     component: CurricularPage,
 })
 
+const CurricularAchievementsRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: '/curricular-achievements',
+    component: CurricularAchievementsPage,
+})
+
+const CurricularFilterRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: '/curricular-filter',
+    component: FilterPage,
+})
+
 // const RegistrationRoute = createRoute({
 //     getParentRoute: () => rootRoute,
 //     path: '/registration',
@@ -74,6 +88,8 @@ const routeTree = rootRoute.addChildren([
     ProfileRoute,
     ExtracurricularRoute,
     CurricularRoute,
+    CurricularAchievementsRoute,
+    CurricularFilterRoute,
     // HomeRoute,
     // RegistrationRoute,
     // LoginRoute,

@@ -16,6 +16,12 @@ export function ProfilePage() {
         navigate({ to: "/extracurricular", hash: "charges" });
     };
 
+    const openCurricularAchievements = (event: React.MouseEvent<HTMLAnchorElement>) => {
+        event.preventDefault();
+        event.stopPropagation();
+        navigate({ to: "/curricular-achievements" });
+    };
+
     return (
         <main className="profile-page">
             <section className="user-info-section">
@@ -80,7 +86,7 @@ export function ProfilePage() {
                         <div className="activity-info">
                             <h3>Учебная активность</h3>
                             <Link to="/curricular" hash="charges" onClick={openCurricularCharges}>Посмотреть начисления</Link>
-                            <Link to="/achievements">Посмотреть ачивки</Link>
+                            <Link to="/curricular-achievements" onClick={openCurricularAchievements}>Посмотреть ачивки</Link>
                         </div>
                     </div>
 

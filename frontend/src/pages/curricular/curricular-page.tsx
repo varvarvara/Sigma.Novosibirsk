@@ -10,13 +10,13 @@ const charges = [
         items: [
             {
                 title: "Название начисления",
-                value: "+200 баллов",
+                value: "Курс, за который начисляется балл баллов",
                 icon: "/magic.svg",
                 large: false,
             },
             {
                 title: "Название начисления",
-                value: "+1 ачивка",
+                value: "Курс, за который начисляется балл",
                 icon: "/star.svg",
                 large: true,
             },
@@ -28,13 +28,13 @@ const charges = [
         items: [
             {
                 title: "Название начисления",
-                value: "+200 баллов",
+                value: "Курс, за который начисляется балл баллов",
                 icon: "/magic.svg",
                 large: false,
             },
             {
                 title: "Название начисления",
-                value: "+200 баллов",
+                value: "Курс, за который начисляется балл баллов",
                 icon: "/magic.svg",
                 large: false,
             },
@@ -111,7 +111,7 @@ export function CurricularPage() {
                                     <div className="curricular-charge-info">
                                         <h3>{item.title}</h3>
                                         <p>{item.value}</p>
-                                        {item.large && <span>Получено</span>}
+                                        {item.large && <span>Ачивка</span>}
                                     </div>
                                     <div className="curricular-charge-points">
                                         <span>+3</span>

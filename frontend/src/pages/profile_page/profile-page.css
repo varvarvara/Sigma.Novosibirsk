@@ -1,6 +1,6 @@
 .profile-page {
     width: 360px;
-    min-height: 663px;
+    min-height: 100vh;
     background: #2A2730;
     color: #2A282F;
     padding: 0 20px 96px;
@@ -10,7 +10,7 @@
 
 .user-info-section {
     width: calc(100% + 40px);
-    height: 216px;
+    height: 218px;
     margin: 0 -20px;
     background: #F7F6FA;
     border-radius: 0 0 20px 20px;
@@ -23,8 +23,8 @@
 
 .settings-button {
     position: absolute;
-    right: 20px;
-    top: 20px;
+    right: 12px;
+    top: 12px;
     display: grid;
     place-items: center;
     width: 36px;
@@ -68,12 +68,12 @@
     grid-template-columns: repeat(3, 1fr);
     gap: 28px;
     margin-top: 10px;
-    width: 279px;
+    width: 287px;
 }
 
 .stats-item {
     width: 74.33px;
-    height: 37px;
+    height: 39px;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -99,18 +99,17 @@
 .stats-value p {
     margin: 0;
     color: #2A282F;
+    font-family: 'Inter', sans-serif;
     font-size: 16px;
     line-height: 20px;
-    font-weight: 600;
+    font-weight: 700;
 }
 
 .stats-label {
-    padding-left: 0;
-}
-.stats-item p {
+    margin-top: -2px;
+    font-weight: 500;
     font-size: 12px;
     line-height: 15px;
-    font-weight: 500;
     color: #625F68;
 }
 
@@ -121,7 +120,7 @@
 .activities-title {
     color: white;
     margin-bottom: 20px;
-    font-size: 20px;
+    font-size: 16px;
     line-height: 24px;
 }
 
@@ -188,4 +187,8 @@
 .activity-info a {
     color:  #625F68;
     text-decoration: none;
+}
+
+.activity-info a:hover {
+    text-decoration: underline;
 }
