@@ -1,5 +1,5 @@
 from collections import defaultdict
-from datetime import time
+from datetime import date, time
 
 from ortools.sat.python import cp_model
 
@@ -9,6 +9,20 @@ LESSON_START_TIMES = {
     time(11, 20),
     time(12, 40),
 }
+
+MAX_LESSONS_PER_TIMESLOT = 9
+ACTIVE_STUDY_DATES = {
+    date(2026, 7, 23),
+    date(2026, 7, 24),
+    date(2026, 7, 25),
+    date(2026, 7, 27),
+    date(2026, 7, 28),
+    date(2026, 7, 29),
+}
+
+
+def _is_active_study_day(target_date: date) -> bool:
+    return target_date in ACTIVE_STUDY_DATES
 
 
 def _course_duration_value(course_duration):
@@ -23,12 +37,9 @@ def _required_lessons(course) -> int:
 
 
 def _consecutive_windows(days, length):
-    windows = []
-    for i in range(len(days) - length + 1):
-        window = days[i:i + length]
-        if (window[-1] - window[0]).days == length - 1:
-            windows.append(window)
-    return windows
+    # Consecutiveness is calculated over available study days list.
+    # This allows fixed blackout dates to be skipped globally.
+    return [days[i:i + length] for i in range(len(days) - length + 1)]
 
 
 def debug_analysis(courses, course_classes, slots, enrollments):
@@ -78,7 +89,7 @@ def generate_schedule(courses, course_classes, slots, enrollments):
 
     valid_slots = [
         slot for slot in slots
-        if slot.slot_time in LESSON_START_TIMES
+        if slot.slot_time in LESSON_START_TIMES and _is_active_study_day(slot.slot_date)
     ]
 
     if not valid_slots:
@@ -141,6 +152,24 @@ def generate_schedule(courses, course_classes, slots, enrollments):
     for vars_list in teacher_time.values():
         model.Add(sum(vars_list) <= 1)
 
+    # Global capacity: no more than N lessons in one shared timeslot (date + time).
+    timeslot_load = defaultdict(list)
+    for (cc_id, slot_id), var in x.items():
+        slot = slot_by_id[slot_id]
+        timeslot_load[(slot.slot_date, slot.slot_time)].append(var)
+
+    for vars_list in timeslot_load.values():
+        model.Add(sum(vars_list) <= MAX_LESSONS_PER_TIMESLOT)
+
+    # Each active day (except blocked ones) must have at least one lesson.
+    day_load = defaultdict(list)
+    for (cc_id, slot_id), var in x.items():
+        slot = slot_by_id[slot_id]
+        day_load[slot.slot_date].append(var)
+
+    for day, vars_list in day_load.items():
+        model.Add(sum(vars_list) >= 1)
+
     for student_id, course_ids in student_courses.items():
         for slot in valid_slots:
             vars_list = []
@@ -190,6 +219,49 @@ def generate_schedule(courses, course_classes, slots, enrollments):
                 "debug": debug_analysis(courses, course_classes, slots, enrollments),
             }
 
+        available_times = sorted({
+            slot.slot_time
+            for cc in classes
+            for slot in valid_slots
+            if (cc.id, slot.id) in x
+        })
+
+        if not available_times:
+            return {
+                "status": "INFEASIBLE",
+                "schedule": [],
+                "message": f"Для курса {course.title} нет доступных временных слотов.",
+                "debug": debug_analysis(courses, course_classes, slots, enrollments),
+            }
+
+        selected_time_vars = {
+            slot_time: model.NewBoolVar(
+                f"course{course.id}_time_{slot_time.hour:02d}{slot_time.minute:02d}"
+            )
+            for slot_time in available_times
+        }
+        model.Add(sum(selected_time_vars.values()) == 1)
+
+        for cc in classes:
+            per_time_vars = {
+                slot_time: [
+                    x[(cc.id, slot.id)]
+                    for slot in valid_slots
+                    if slot.slot_time == slot_time and (cc.id, slot.id) in x
+                ]
+                for slot_time in available_times
+            }
+
+            for slot_time, vars_for_time in per_time_vars.items():
+                if not vars_for_time:
+                    model.Add(selected_time_vars[slot_time] == 0)
+                    continue
+
+                # If a time is selected for a course, each lesson of this course
+                # must be assigned to that same time.
+                model.Add(sum(vars_for_time) == 1).OnlyEnforceIf(selected_time_vars[slot_time])
+                model.Add(sum(vars_for_time) == 0).OnlyEnforceIf(selected_time_vars[slot_time].Not())
+
         windows = _consecutive_windows(all_days, expected_lessons)
 
         if not windows:
@@ -207,6 +279,7 @@ def generate_schedule(courses, course_classes, slots, enrollments):
 
         model.Add(sum(window_var for window_var, _ in window_vars) == 1)
 
+        day_has_lesson = {}
         for day in all_days:
             day_vars = []
 
@@ -215,14 +288,25 @@ def generate_schedule(courses, course_classes, slots, enrollments):
                     if slot.slot_date == day and (cc.id, slot.id) in x:
                         day_vars.append(x[(cc.id, slot.id)])
 
+            day_var = model.NewBoolVar(f"course{course.id}_day_{day.isoformat()}")
+            day_has_lesson[day] = day_var
+
             if day_vars:
+                # Hard rule: at most one lesson of the same course per day.
                 model.Add(sum(day_vars) <= 1)
+                model.Add(sum(day_vars) == 1).OnlyEnforceIf(day_var)
+                model.Add(sum(day_vars) == 0).OnlyEnforceIf(day_var.Not())
+            else:
+                model.Add(day_var == 0)
 
             for window_var, window_days in window_vars:
                 if day in window_days:
-                    model.Add(sum(day_vars) == 1).OnlyEnforceIf(window_var)
-                elif day_vars:
-                    model.Add(sum(day_vars) == 0).OnlyEnforceIf(window_var)
+                    model.Add(day_var == 1).OnlyEnforceIf(window_var)
+                else:
+                    model.Add(day_var == 0).OnlyEnforceIf(window_var)
+
+        # Extra guard: the course must occupy exactly expected number of distinct days.
+        model.Add(sum(day_has_lesson.values()) == expected_lessons)
 
         class_positions = []
 

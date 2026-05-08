@@ -92,6 +92,26 @@ class SchedulingRepository:
             is not None
         )
 
+    def count_lessons_in_timeslot(self, lesson_date: date, lesson_time: time) -> int:
+        count = (
+            self.db.query(func.count(Schedule.id))
+            .filter(
+                Schedule.lesson_date == lesson_date,
+                Schedule.lesson_time == lesson_time,
+            )
+            .scalar()
+        )
+        return int(count or 0)
+
+    def count_lessons_on_date(self, lesson_date: date, season_id: int | None = None) -> int:
+        query = self.db.query(func.count(Schedule.id)).filter(
+            Schedule.lesson_date == lesson_date,
+        )
+        if season_id is not None:
+            query = query.filter(Schedule.season_id == season_id)
+        count = query.scalar()
+        return int(count or 0)
+
     def has_course_title_conflict(
         self,
         course_title: str,
@@ -200,11 +220,18 @@ class SchedulingRepository:
         current_max = self.db.query(func.max(CourseClass.class_number)).filter(CourseClass.course_id == course_id).scalar()
         return (current_max or 0) + 1
 
-    def create_course_class(self, course_id: int, class_number: int, class_description: str) -> CourseClass:
+    def create_course_class(
+        self,
+        course_id: int,
+        class_number: int,
+        class_description: str,
+        season_id: int,
+    ) -> CourseClass:
         course_class = CourseClass(
             course_id=course_id,
             class_number=class_number,
             class_description=class_description,
+            season_id=season_id,
         )
         self.db.add(course_class)
         self.db.commit()

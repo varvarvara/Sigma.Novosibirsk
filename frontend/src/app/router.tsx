@@ -8,6 +8,7 @@ import { CurricularPage } from '../pages/curricular/curricular-page'
 import { CurricularAchievementsPage } from '../pages/curricular_achievements/curricular-achievements'
 import { ExtracurricularPage } from '../pages/extracurricular_page/extracurricular-page'
 import { FilterPage } from '../pages/filter_page/filter-page'
+import { SchedulePage } from '../pages/schedule_page/schedule-page'
 import { SoonUpdatePage } from '../pages/courses_errors/soon_update_page/soon_update_page/soon-update'
 import { CourseChoicePage } from '../pages/courses_errors/soon_update_page/course_choice_page/course-choice'
 import { CourseNothingPage } from '../pages/courses_errors/soon_update_page/course_nothing_page/course-nothing'
@@ -76,6 +77,12 @@ const CurricularFilterRoute = createRoute({
   component: FilterPage,
 })
 
+const ScheduleRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/schedule',
+  component: SchedulePage,
+})
+
 const SoonUpdateRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/soon-update',
@@ -105,6 +112,7 @@ const routeTree = rootRoute.addChildren([
   CurricularRoute,
   CurricularAchievementsRoute,
   CurricularFilterRoute,
+  ScheduleRoute,
   SoonUpdateRoute,
   CourseChoiceRoute,
   CourseNothingRoute,

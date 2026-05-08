@@ -10,8 +10,14 @@ export function CourseChoicePage() {
     return (
         <main className="course-choice-page">
             <section className="course-choice-content">
-                <h1>Курсы не выбраны</h1>
-                <Button color="primary" size="md" className="course-choice-button" onClick={() => navigate({ to: "/course-registration" })}>
+                <button
+                    type="button"
+                    className="course-choice-title-button"
+                    onClick={() => navigate({ to: "/course-nothing" })}
+                >
+                    Курсы не выбраны
+                </button>
+                <Button color="primary" size="md" className="course-choice-button" onClick={() => navigate({ to: "/course-nothing" })}>
                     Выбрать
                 </Button>
             </section>

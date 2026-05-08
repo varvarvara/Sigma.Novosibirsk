@@ -362,8 +362,12 @@ class SchedulingService:
         course_repo = CourseRepository(self.db)
         enrollment_repo = EnrollmentRepository(self.db)
 
-        courses = course_repo.get_all()
-        course_classes = course_repo.get_course_classes()
+        courses = course_repo.get_course_by_season(season_id=season_id)
+        course_ids = {course.id for course in courses}
+        course_classes = [
+            item for item in course_repo.get_course_classes()
+            if item.course_id in course_ids
+        ]
         enrollments = enrollment_repo.get_enrollment_by_season(season_id=season_id)
         slots = self.db.query(Slot).filter(Slot.season_id == season_id).all()
 
