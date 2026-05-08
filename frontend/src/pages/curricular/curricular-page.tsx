@@ -1,5 +1,6 @@
 import { Link, useLocation } from "@tanstack/react-router";
 import { useEffect } from "react";
+import { ChevronLeft } from "@untitledui/icons/ChevronLeft";
 import { Navbar } from "../../widgets/navbar/navbar";
 import "./curricular.css";
 
@@ -19,6 +20,7 @@ const charges = [
                 value: "Курс, за который начисляется балл",
                 icon: "/star.svg",
                 large: true,
+                achievementId: "subject-1-achievement-6",
             },
         ],
     },
@@ -54,8 +56,8 @@ export function CurricularPage() {
     return (
         <main className="curricular-page">
             <header className="curricular-header">
-                <Link className="back-button" to="/profile" aria-label="Назад в профиль">
-                    <span />
+                <Link className="back-button app-back-button app-back-button--dark" to="/profile" aria-label="Назад в профиль">
+                    <ChevronLeft className="app-back-button__icon" size={24} color="#F7F6FA" />
                 </Link>
                 <h1>Учебная активность</h1>
             </header>
@@ -111,7 +113,16 @@ export function CurricularPage() {
                                     <div className="curricular-charge-info">
                                         <h3>{item.title}</h3>
                                         <p>{item.value}</p>
-                                        {item.large && <span>Ачивка</span>}
+                                        {item.large && item.achievementId ? (
+                                            <Link
+                                                className="curricular-achievement-link"
+                                                to="/curricular-achievements"
+                                                hash={item.achievementId}
+                                                aria-label="Открыть конкретную ачивку"
+                                            >
+                                                Ачивка
+                                            </Link>
+                                        ) : null}
                                     </div>
                                     <div className="curricular-charge-points">
                                         <span>+3</span>

@@ -1,5 +1,6 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
+import { ChevronLeft } from "@untitledui/icons/ChevronLeft";
 import { Button } from "../../components/base/buttons/button";
 import { Navbar } from "../../widgets/navbar/navbar";
 import "./filter-page.css";
@@ -15,14 +16,38 @@ const periods = ["01.08.2026", "02.08.2026", "03.08.2026", "04.08.2026", "05.08.
 
 export function FilterPage() {
     const navigate = useNavigate();
-    const [selectedCourseIndex, setSelectedCourseIndex] = useState<number | null>(null);
-    const [selectedPeriodIndex, setSelectedPeriodIndex] = useState<number | null>(null);
+    const [selectedCourseIndexes, setSelectedCourseIndexes] = useState<Set<number>>(new Set());
+    const [selectedPeriodIndexes, setSelectedPeriodIndexes] = useState<Set<number>>(new Set());
+
+    const toggleCourse = (index: number) => {
+        setSelectedCourseIndexes((previous) => {
+            const next = new Set(previous);
+            if (next.has(index)) {
+                next.delete(index);
+            } else {
+                next.add(index);
+            }
+            return next;
+        });
+    };
+
+    const togglePeriod = (index: number) => {
+        setSelectedPeriodIndexes((previous) => {
+            const next = new Set(previous);
+            if (next.has(index)) {
+                next.delete(index);
+            } else {
+                next.add(index);
+            }
+            return next;
+        });
+    };
 
     return (
         <main className="filter-page">
             <header className="filter-header">
-                <Link className="back-button" to="/curricular" aria-label="Назад">
-                    <span />
+                <Link className="back-button app-back-button app-back-button--dark" to="/curricular" aria-label="Назад">
+                    <ChevronLeft className="app-back-button__icon" size={24} color="#F7F6FA" />
                 </Link>
                 <h1>Фильтр</h1>
             </header>
@@ -33,10 +58,11 @@ export function FilterPage() {
                 <div className="course-list" aria-label="Преподаватель Имяы">
                     {courses.map((course, index) => (
                         <button
-                            className={`filter-row${selectedCourseIndex === index ? " filter-row-selected" : ""}`}
+                            className={`filter-row${selectedCourseIndexes.has(index) ? " filter-row-selected" : ""}`}
                             type="button"
                             key={`${course}-${index}`}
-                            onClick={() => setSelectedCourseIndex(index)}
+                            onClick={() => toggleCourse(index)}
+                            aria-pressed={selectedCourseIndexes.has(index)}
                         >
                             <span>{course}</span>
                             <span>Преподаватель Имя</span>
@@ -51,10 +77,11 @@ export function FilterPage() {
                 <div className="period-list" aria-label="Период">
                     {periods.map((period, index) => (
                         <button
-                            className={`period-chip${selectedPeriodIndex === index ? " period-chip-selected" : ""}`}
+                            className={`period-chip${selectedPeriodIndexes.has(index) ? " period-chip-selected" : ""}`}
                             type="button"
                             key={period}
-                            onClick={() => setSelectedPeriodIndex(index)}
+                            onClick={() => togglePeriod(index)}
+                            aria-pressed={selectedPeriodIndexes.has(index)}
                         >
                             {period}
                         </button>

@@ -1,3 +1,8 @@
+ :root {
+    --back-chevron-size: 24px;
+    --back-chevron-offset: 24px;
+}
+
 @font-face {
     font-family: 'Inter';
     src: url('./assets/Inter/static/Inter_24pt-Regular.ttf') format('truetype');
@@ -47,4 +52,26 @@ body {
 
 .regular-text {
     font-weight: 400;
+}
+
+.app-back-button {
+    display: grid;
+    place-items: center;
+    width: var(--back-chevron-size);
+    height: var(--back-chevron-size);
+    flex: 0 0 var(--back-chevron-size);
+    border: none;
+    padding: 0;
+    background: transparent;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.app-back-button--dark {
+    background: transparent;
+}
+
+.app-back-button__icon {
+    display: block;
+    flex-shrink: 0;
 }

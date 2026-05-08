@@ -105,8 +105,15 @@ export function ProfilePage() {
 
                         <div className="activity-info">
                             <h3>Внеучебка</h3>
-                            <p className="team-name">Название команды</p>
-                            <Link to="/extracurricular" hash="charges" onClick={openCharges}>Посмотреть начисления</Link>
+                            <div className="team-meta">
+                                <p
+                                    className="team-name"
+                                    onClick={(event) => event.stopPropagation()}
+                                >
+                                    Название команды
+                                </p>
+                                <Link to="/extracurricular" hash="charges" onClick={openCharges}>Посмотреть начисления</Link>
+                            </div>
                         </div>
                     </div>
                 </div>

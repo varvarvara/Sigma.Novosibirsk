@@ -10,11 +10,11 @@
 
 .user-info-section {
     width: calc(100% + 40px);
-    height: 218px;
+    min-height: 218px;
     margin: 0 -20px;
     background: #F7F6FA;
     border-radius: 0 0 20px 20px;
-    padding: 12px 20px 18px;
+    padding: 12px 20px 20px;
     position: relative;
     display: flex;
     flex-direction: column;
@@ -66,20 +66,31 @@
 .user-stats {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 28px;
-    margin-top: 10px;
-    width: 287px;
+    gap: 12px;
+    margin-top: 20px;
+    width: 320px;
 }
 
 .stats-item {
-    width: 74.33px;
-    height: 39px;
+    width: 100%;
+    min-height: 44px;
+    height: auto;
+    padding: 6px 8px 8px;
+    box-sizing: border-box;
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 2px;
     min-width: 0;
     text-align: center;
+    border-radius: 10px;
+    transition: background-color 0.2s ease, transform 0.2s ease;
+    user-select: none;
+}
+
+.stats-item:hover {
+    background: rgba(121, 73, 255, 0.12);
+    transform: translateY(-1px);
 }
 
 .stats-item img {
@@ -111,6 +122,16 @@
     font-size: 12px;
     line-height: 15px;
     color: #625F68;
+    white-space: nowrap;
+    transition: color 0.2s ease;
+}
+
+.stats-item:hover .stats-value p {
+    color: #7949FF;
+}
+
+.stats-item:hover .stats-label {
+    color: #4f3fb3;
 }
 
 .activities-section {
@@ -145,6 +166,15 @@
 
 .activity-card[role="link"] {
     cursor: pointer;
+    transition: background-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.activity-card[role="link"]:hover,
+.activity-card[role="link"]:focus-visible {
+    background: #ffffff;
+    box-shadow: 0 12px 28px rgba(42, 39, 48, 0.2);
+    transform: translateY(-2px);
+    outline: none;
 }
 
 .activity-image {
@@ -191,4 +221,17 @@
 
 .activity-info a:hover {
     text-decoration: underline;
+}
+
+.team-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.team-name {
+    font-size: 12px !important;
+    line-height: 15px !important;
+    font-weight: 500;
+    cursor: default;
 }

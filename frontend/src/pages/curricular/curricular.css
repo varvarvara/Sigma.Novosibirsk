@@ -2,7 +2,7 @@
     width: 360px;
     min-height: 100vh;
     margin: 0 auto;
-    padding: 48px 0 104px;
+    padding: 72px 0 104px;
     background: #2A2730;
     color: #2A282F;
     overflow-x: hidden;
@@ -14,13 +14,21 @@
     left: 50%;
     z-index: 10;
     width: 360px;
-    height: 48px;
-    padding: 20px;
+    height: 72px;
+    padding: 0 20px 0 var(--back-chevron-offset);
     transform: translateX(-50%);
     display: flex;
     align-items: center;
     gap: 8px;
     background: #2A2730;
+}
+
+.back-button {
+    color: #F7F6FA;
+}
+
+.back-button svg {
+    display: block;
 }
 
 .curricular-header h1 {
@@ -247,7 +255,7 @@
     font-weight: 600;
 }
 
-.curricular-charge-info span {
+.curricular-achievement-link {
     width: 85px;
     height: 28px;
     margin-top: 13px;
@@ -260,6 +268,22 @@
     font-weight: 600;
     display: grid;
     place-items: center;
+    text-decoration: none;
+    user-select: none;
+    transition: background-color 0.15s ease, transform 0.1s ease;
+}
+
+.curricular-achievement-link:hover {
+    background: #6d3ff5;
+}
+
+.curricular-achievement-link:active {
+    transform: translateY(1px);
+}
+
+.curricular-achievement-link:focus-visible {
+    outline: 2px solid rgba(121, 73, 255, 0.45);
+    outline-offset: 2px;
 }
 
 .curricular-charge-points {

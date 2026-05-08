@@ -1,5 +1,6 @@
 import { Link, useLocation } from "@tanstack/react-router";
 import { useEffect } from "react";
+import { ChevronLeft } from "@untitledui/icons/ChevronLeft";
 import { Navbar } from "../../widgets/navbar/navbar";
 import "./extracurricular-page.css";
 
@@ -40,8 +41,8 @@ export function ExtracurricularPage() {
     return (
         <main className="extracurricular-page">
             <header className="extracurricular-header">
-                <Link className="back-button" to="/profile" aria-label="Назад">
-                    <span />
+                <Link className="back-button app-back-button app-back-button--dark" to="/profile" aria-label="Назад">
+                    <ChevronLeft className="app-back-button__icon" size={24} color="#F7F6FA" />
                 </Link>
                 <h1>Внеучебка // Внеучебная активность</h1>
             </header>

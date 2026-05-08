@@ -2,7 +2,7 @@
     width: 360px;
     min-height: 100vh;
     margin: 0 auto;
-    padding: 48px 0 104px;
+    padding: 72px 0 104px;
     background: #2A2730;
     color: #F7F6FA;
     overflow-x: hidden;
@@ -14,8 +14,8 @@
     left: 50%;
     z-index: 10;
     width: 360px;
-    height: 48px;
-    padding: 20px;
+    height: 72px;
+    padding: 0 20px 0 var(--back-chevron-offset);
     transform: translateX(-50%);
     display: flex;
     align-items: center;
@@ -34,23 +34,11 @@
 }
 
 .back-button {
-    width: 24px;
-    height: 24px;
-    flex: 0 0 24px;
-    border-radius: 50%;
-    background: rgba(58, 54, 81, 0.5);
-    display: grid;
-    place-items: center;
-    text-decoration: none;
+    color: #F7F6FA;
 }
 
-.back-button span {
-    width: 7px;
-    height: 7px;
-    margin-left: 3px;
-    border-left: 2px solid #FFFFFF;
-    border-bottom: 2px solid #FFFFFF;
-    transform: rotate(45deg);
+.back-button svg {
+    display: block;
 }
 
 .curricular-achievements-content {
@@ -86,6 +74,13 @@
 .achievement-card {
     width: 96px;
     min-width: 0;
+    scroll-margin-top: 96px;
+    transition: transform 0.2s ease, filter 0.2s ease;
+}
+
+.achievement-card-highlighted {
+    transform: translateY(-2px);
+    filter: drop-shadow(0 0 10px rgba(121, 73, 255, 0.6));
 }
 
 .achievement-image {

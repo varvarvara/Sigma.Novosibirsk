@@ -2,7 +2,7 @@
     width: 349px;
     min-height: 669px;
     margin: 0 auto;
-    padding: 48px 14.5px 104px;
+    padding: 72px 14.5px 104px;
     background: #2A2730;
     color: #2A282F;
     overflow-x: hidden;
@@ -14,8 +14,8 @@
     left: 50%;
     z-index: 10;
     width: 349px;
-    height: 48px;
-    padding: 20px;
+    height: 72px;
+    padding: 0 20px 0 var(--back-chevron-offset);
     transform: translateX(-50%);
     display: flex;
     align-items: center;
@@ -34,23 +34,11 @@
 }
 
 .back-button {
-    width: 24px;
-    height: 24px;
-    flex: 0 0 24px;
-    border-radius: 50%;
-    background: rgba(58, 54, 81, 0.5);
-    display: grid;
-    place-items: center;
-    text-decoration: none;
+    color: #F7F6FA;
 }
 
-.back-button span {
-    width: 7px;
-    height: 7px;
-    border-left: 2px solid #FFFFFF;
-    border-bottom: 2px solid #FFFFFF;
-    transform: rotate(45deg);
-    margin-left: 3px;
+.back-button svg {
+    display: block;
 }
 
 .team-card {
