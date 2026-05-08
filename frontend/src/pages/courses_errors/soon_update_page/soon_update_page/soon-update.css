@@ -1,0 +1,29 @@
+.soon-update-page {
+    width: 360px;
+    min-height: 100vh;
+    margin: 0 auto;
+    padding: 0 20px 84px;
+    background: #2A2730;
+    color: #F7F6FA;
+    overflow-x: hidden;
+}
+
+.soon-update-content {
+    margin: 0;
+    position: relative;
+    min-height: 556px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #F7F6FA;
+    text-align: center;
+}
+
+.soon-update-content h1 {
+    width: 277px;
+    margin: 0;
+    font-family: 'Inter', sans-serif;
+    font-size: 20px;
+    line-height: 24px;
+    font-weight: 600;
+}

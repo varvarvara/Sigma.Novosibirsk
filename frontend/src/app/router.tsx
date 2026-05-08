@@ -1,15 +1,12 @@
 import { createRootRoute, createRoute, createRouter, Outlet } from '@tanstack/react-router'
-//import HomePage from '../pages/HomePage'
-//import LoginPage from '../pages/LoginPage'
-//import RegistrationPage from '../pages/RegistrationPage'
-//import SelectRolePage from '../pages/SelectRolePage'
-//import ForgotPasswordPage from '../pages/ForgotPasswordPage'
 import { CurricularPage } from '../pages/curricular/curricular-page'
-import { CurricularAchievementsPage } from '../pages/curricular-achievements/curricular-achievements'
+import { CurricularAchievementsPage } from '../pages/curricular_achievements/curricular-achievements'
 import { ExtracurricularPage } from '../pages/extracurricular_page/extracurricular-page'
-import { FilterPage } from '../pages/filter-page/filter-page'
+import { FilterPage } from '../pages/filter_page/filter-page'
 import { ProfilePage } from '../pages/profile_page/profile-page'
-
+import { SoonUpdatePage } from '../pages/courses_errors/soon_update_page/soon_update_page/soon-update'
+import { CourseChoicePage } from '../pages/courses_errors/soon_update_page/course_choice_page/course-choice'
+import { CourseNothingPage } from '../pages/courses_errors/soon_update_page/course_nothing_page/course-nothing'
 
 // корневой роут
 const rootRoute = createRootRoute({
@@ -22,12 +19,6 @@ const ProfileRootRoute = createRoute({
     path: '/',
     component: ProfilePage,
 })
-
-// const HomeRoute = createRoute({
-//     getParentRoute: () => rootRoute,
-//     path: '/home',
-//     component: HomePage,
-// })
 
 const ProfileRoute = createRoute({
     getParentRoute: () => rootRoute,
@@ -59,29 +50,23 @@ const CurricularFilterRoute = createRoute({
     component: FilterPage,
 })
 
-// const RegistrationRoute = createRoute({
-//     getParentRoute: () => rootRoute,
-//     path: '/registration',
-//     component: RegistrationPage,
-// })
+const SoonUpdateRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: '/soon-update',
+    component: SoonUpdatePage,
+})
 
-// const LoginRoute = createRoute({
-//     getParentRoute: () => rootRoute,
-//     path: '/login',
-//     component: LoginPage,
-// })
+const CourseChoiceRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: '/course-choice',
+    component: CourseChoicePage,
+})
 
-// const SelectRoleRoute = createRoute({
-//     getParentRoute: () => rootRoute,
-//     path: '/select-role',
-//     component: SelectRolePage,
-// })
-
-// const ForgotPasswordRoute = createRoute({
-//     getParentRoute: () => rootRoute,
-//     path: '/forgot-password',
-//     component: ForgotPasswordPage,
-// })
+const CourseNothingRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: '/course-nothing',
+    component: CourseNothingPage,
+})
 
 const routeTree = rootRoute.addChildren([
     ProfileRootRoute,
@@ -90,11 +75,9 @@ const routeTree = rootRoute.addChildren([
     CurricularRoute,
     CurricularAchievementsRoute,
     CurricularFilterRoute,
-    // HomeRoute,
-    // RegistrationRoute,
-    // LoginRoute,
-    // SelectRoleRoute,
-    // ForgotPasswordRoute,
+    SoonUpdateRoute,
+    CourseChoiceRoute,
+    CourseNothingRoute,
 ])
 
 export const router = createRouter({
