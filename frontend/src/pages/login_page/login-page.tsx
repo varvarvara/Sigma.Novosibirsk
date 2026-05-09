@@ -65,7 +65,11 @@ export function LoginPage() {
             Войти
           </button>
 
-          <button type="button" className="login-page__forgot">
+          <button
+            type="button"
+            className="login-page__forgot"
+            onClick={() => navigate({ to: '/password-reset' })}
+          >
             Забыли пароль?
           </button>
         </form>

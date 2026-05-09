@@ -2,7 +2,6 @@ import { useNavigate } from "@tanstack/react-router";
 import { Button } from "../../../../components/base/buttons/button";
 import { Navbar } from "../../../../widgets/navbar/navbar";
 import "./course-choice.css";
-//исправить навигацию кнопки  после того, как добавится выбор курсов 
 
 export function CourseChoicePage() {
     const navigate = useNavigate();

@@ -2,6 +2,8 @@ import { createRootRoute, createRoute, createRouter, Outlet } from '@tanstack/re
 import { EnterPage } from '../pages/enter_page/enter-page'
 import { RolePage } from '../pages/role_page/role-page'
 import { LoginPage } from '../pages/login_page/login-page'
+import { PasswordResetPage } from '../pages/password_reset_page/password-reset-page'
+import { PasswordResetSuccessPage } from '../pages/password_reset_success_page/password-reset-success-page'
 import { RegisterPage } from '../pages/register_page/register-page'
 import { ProfilePage } from '../pages/profile_page/profile-page'
 import { CurricularPage } from '../pages/curricular/curricular-page'
@@ -39,6 +41,18 @@ const LoginRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/login',
   component: LoginPage,
+})
+
+const PasswordResetRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/password-reset',
+  component: PasswordResetPage,
+})
+
+const PasswordResetSuccessRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/password-reset/success',
+  component: PasswordResetSuccessPage,
 })
 
 const RegisterRoute = createRoute({
@@ -106,6 +120,8 @@ const routeTree = rootRoute.addChildren([
   EnterRoute,
   RoleRoute,
   LoginRoute,
+  PasswordResetRoute,
+  PasswordResetSuccessRoute,
   RegisterRoute,
   ProfileRoute,
   ExtracurricularRoute,
