@@ -42,7 +42,7 @@
 }
 
 .curricular-summary {
-    width: 336px;
+    width: 302px;
     height: 123.4px;
     margin: 0 auto;
     transform: translateY(12px);
@@ -89,7 +89,7 @@
 
 .summary-details {
     height: 71.4px;
-    padding: 15px 36px 0;
+    padding: 15px 24px 0;
     display: grid;
     grid-template-columns: 1fr 1fr;
     align-items: start;

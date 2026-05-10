@@ -11,6 +11,9 @@ import { CurricularAchievementsPage } from '../pages/curricular_achievements/cur
 import { ExtracurricularPage } from '../pages/extracurricular_page/extracurricular-page'
 import { FilterPage } from '../pages/filter_page/filter-page'
 import { SchedulePage } from '../pages/schedule_page/schedule-page'
+import { CourseSelectionPage } from '../pages/course_selection_page/course-selection-page'
+import { CourseDetailPage } from '../pages/course_detail_page/course-detail-page'
+import { CourseCardPage } from '../pages/course_card_page/course-card-page'
 import { SoonUpdatePage } from '../pages/courses_errors/soon_update_page/soon_update_page/soon-update'
 import { CourseChoicePage } from '../pages/courses_errors/soon_update_page/course_choice_page/course-choice'
 import { CourseNothingPage } from '../pages/courses_errors/soon_update_page/course_nothing_page/course-nothing'
@@ -99,6 +102,50 @@ const ScheduleRoute = createRoute({
   component: SchedulePage,
 })
 
+const CoursesRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/courses',
+  component: CourseSelectionPage,
+})
+
+const CourseDetailRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/course-detail',
+  validateSearch: (search: Record<string, unknown>) => {
+    const parsedSlotId = Number(search.slotId ?? 1)
+    const normalizedSlotId = Number.isInteger(parsedSlotId) && parsedSlotId >= 1 && parsedSlotId <= 3
+      ? parsedSlotId
+      : 1
+
+    return {
+      slotId: normalizedSlotId,
+    }
+  },
+  component: CourseDetailPage,
+})
+
+const CourseCardRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/course-card',
+  validateSearch: (search: Record<string, unknown>) => {
+    const parsedSlotId = Number(search.slotId ?? 1)
+    const normalizedSlotId = Number.isInteger(parsedSlotId) && parsedSlotId >= 1 && parsedSlotId <= 3
+      ? parsedSlotId
+      : 1
+
+    const parsedCourseId = Number(search.courseId ?? 101)
+    const normalizedCourseId = Number.isInteger(parsedCourseId) && parsedCourseId > 0
+      ? parsedCourseId
+      : 101
+
+    return {
+      slotId: normalizedSlotId,
+      courseId: normalizedCourseId,
+    }
+  },
+  component: CourseCardPage,
+})
+
 const SoonUpdateRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/soon-update',
@@ -143,6 +190,9 @@ const routeTree = rootRoute.addChildren([
   CurricularAchievementsRoute,
   CurricularFilterRoute,
   ScheduleRoute,
+  CoursesRoute,
+  CourseDetailRoute,
+  CourseCardRoute,
   SoonUpdateRoute,
   CourseChoiceRoute,
   CourseNothingRoute,

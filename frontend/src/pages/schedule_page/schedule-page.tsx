@@ -226,12 +226,12 @@ export function SchedulePage() {
               <div className="schedule-card__bottom">
                 <div className="schedule-card__info">
                   <User01 />
-                  <p>{item.teacher}</p>
+                  <p className="schedule-card__teacher">{item.teacher}</p>
                 </div>
 
                 <div className="schedule-card__info">
                   <MarkerPin01 />
-                  <p>{item.room}</p>
+                  <p className="schedule-card__room">{item.room}</p>
                 </div>
               </div>
             </article>

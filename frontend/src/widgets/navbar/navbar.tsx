@@ -3,7 +3,15 @@ import "./navbar.css";
 
 export function Navbar() {
     const { pathname } = useLocation();
-    const coursesIsActive = pathname === "/courses" || pathname === "/soon-update" || pathname === "/course-choice" || pathname === "/course-nothing" || pathname === "/feedback" || pathname === "/my-courses";
+    const coursesIsActive =
+        pathname === "/courses" ||
+        pathname === "/course-detail" ||
+        pathname === "/course-card" ||
+        pathname === "/soon-update" ||
+        pathname === "/course-choice" ||
+        pathname === "/course-nothing" ||
+        pathname === "/feedback" ||
+        pathname === "/my-courses";
     const profileIsActive = pathname === "/" || pathname === "/profile" || pathname === "/extracurricular" || pathname === "/curricular" || pathname === "/curricular-achievements" || pathname === "/curricular-filter";
     const scheduleIsActive = pathname === "/schedule";
 

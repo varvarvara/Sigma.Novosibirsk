@@ -2,9 +2,7 @@ from pathlib import Path
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-
 BASE_DIR = Path(__file__).resolve().parents[1]
-
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
@@ -13,7 +11,6 @@ class Settings(BaseSettings):
         extra="ignore",
     )
 
-    # Postgres
     POSTGRES_DB: str = "sigma"
     POSTGRES_USER: str = "sigma"
     POSTGRES_PASSWORD: str = "sigma"
@@ -21,20 +18,17 @@ class Settings(BaseSettings):
     POSTGRES_PORT: int = 5432
     DATABASE_URL: str | None = None
 
-    # JWT
     JWT_SECRET: str = "change_me"
     JWT_ALGORITHM: str = "HS256"
     JWT_EXPIRE_MINUTES: int = 60
     REFRESH_EXPIRE_DAYS: int = 7
 
-    # Redis
     REDIS_HOST: str = "localhost"
     REDIS_PORT: int = 6379
     REDIS_DB: int = 0
     REDIS_PASSWORD: str | None = None
     REDIS_URL: str | None = None
 
-    # SMTP
     SMTP_HOST: str | None = None
     SMTP_PORT: int = 587
     SMTP_USERNAME: str | None = None
@@ -54,7 +48,6 @@ class Settings(BaseSettings):
     S3_KEY_ID: str | None = None
     S3_AUTO_CREATE_BUCKET: bool = False
 
-    # App
     APP_TIMEZONE: str = "Europe/Moscow"
     CERTIFICATES_FOLDER: str = "certificates"
 

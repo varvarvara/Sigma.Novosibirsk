@@ -144,10 +144,10 @@
 }
 
 .schedule-card__time {
-    color: #625F68;
+    color: #2A282F;
     font-size: 14px;
     line-height: 17px;
-    font-weight: 500;
+    font-weight: 600;
     white-space: nowrap;
 }
 
@@ -195,6 +195,14 @@
     color: #625F68;
     font-size: 14px;
     line-height: 17px;
+    font-weight: 400;
+}
+
+.schedule-card__info p.schedule-card__teacher,
+.schedule-card__info p.schedule-card__room {
+    color: #625F68;
+    font-size: 12px;
+    line-height: 15px;
     font-weight: 400;
 }
 
