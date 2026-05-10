@@ -17,14 +17,15 @@
 .nav-link {
     border: 0;
     background: transparent;
-    color: #6b6b6b;
-    font-family: inherit;
+    color: #98A2B3;
+    font-family: 'Inter Medium', sans-serif;
     text-decoration: none;
     min-width: 0;
     text-align: center;
     padding: 8px;
     font-size: 14px;
     font-weight: 500;
+    line-height: 20px;
     flex: 1;
     flex-shrink: 0;
 }

@@ -34,7 +34,7 @@
 .curricular-header h1 {
     margin: 0;
     color: #F7F6FA;
-    font-family: 'Inter', sans-serif;
+    font-family: 'Inter SemiBold';
     font-size: 14px;
     line-height: 17px;
     font-weight: 600;
@@ -71,7 +71,7 @@
 .summary-main p {
     margin: 0;
     color: #2A282F;
-    font-family: 'Inter', sans-serif;
+    font-family: 'Inter SemiBold';
     font-size: 14px;
     line-height: 17px;
     font-weight: 600;
@@ -106,7 +106,7 @@
 .summary-details h2 {
     margin: 0;
     color: #2A282F;
-    font-family: 'Inter', sans-serif;
+    font-family: 'Inter SemiBold';
     font-size: 14px;
     line-height: 17px;
     font-weight: 600;
@@ -120,7 +120,7 @@
     align-items: center;
     gap: 6px;
     color: #2A282F;
-    font-family: 'Inter', sans-serif;
+    font-family: 'Inter SemiBold';
     font-size: 14px;
     line-height: 17px;
     font-weight: 600;
@@ -141,7 +141,7 @@
 .curricular-charges-header h2 {
     margin: 0;
     color: #FFFFFF;
-    font-family: 'Inter', sans-serif;
+    font-family: 'Inter SemiBold';
     font-size: 14px;
     line-height: 24px;
     font-weight: 600;
@@ -189,7 +189,7 @@
 .curricular-date-row p,
 .curricular-date-bonus span {
     margin: 0;
-    font-family: 'Inter', sans-serif;
+    font-family: 'Inter SemiBold';
     font-size: 12px;
     line-height: 15px;
     font-weight: 600;
@@ -240,7 +240,7 @@
 .curricular-charge-info h3 {
     margin: 0;
     color: #2A282F;
-    font-family: 'Inter', sans-serif;
+    font-family: 'Inter SemiBold';
     font-size: 12px;
     line-height: 15px;
     font-weight: 600;
@@ -249,7 +249,7 @@
 .curricular-charge-info p {
     margin: 3px 0 0;
     color: #A8A6AC;
-    font-family: 'Inter', sans-serif;
+    font-family: 'Inter SemiBold';
     font-size: 10px;
     line-height: 12px;
     font-weight: 600;
@@ -262,7 +262,7 @@
     border-radius: 14px;
     background: #7949FF;
     color: #FFFFFF;
-    font-family: 'Inter', sans-serif;
+    font-family: 'Inter SemiBold';
     font-size: 12px;
     line-height: 15px;
     font-weight: 600;
@@ -291,7 +291,7 @@
     align-items: center;
     gap: 4px;
     color: #2A282F;
-    font-family: 'Inter', sans-serif;
+    font-family: 'Inter SemiBold';
     font-size: 12px;
     line-height: 15px;
     font-weight: 600;

@@ -26,7 +26,7 @@
 .filter-header h1 {
     margin: 0;
     color: #F7F6FA;
-    font-family: 'Inter', sans-serif;
+    font-family: 'Inter SemiBold';
     font-size: 14px;
     line-height: 17px;
     font-weight: 600;
@@ -44,7 +44,7 @@
 .filter-section h2 {
     margin: 0;
     color: #FFFFFF;
-    font-family: 'Inter', sans-serif;
+    font-family: 'Inter SemiBold';
     font-size: 14px;
     line-height: 17px;
     font-weight: 600;
@@ -81,7 +81,7 @@
     align-items: center;
     justify-content: space-between;
     color: #2A282F;
-    font-family: 'Inter', sans-serif;
+    font-family: 'Inter Regular';
     cursor: pointer;
 }
 
@@ -125,7 +125,7 @@
     border-radius: 18px;
     background: #F7F6FA;
     color: #2A282F;
-    font-family: 'Inter', sans-serif;
+    font-family: 'Inter SemiBold';
     font-size: 12px;
     line-height: 15px;
     font-weight: 600;
@@ -161,7 +161,7 @@
     background: #7949FF;
     color: #FFFFFF;
     box-shadow: 0 1px 2px rgba(27, 36, 44, 0.12);
-    font-family: 'Inter', sans-serif;
+    font-family: 'Inter SemiBold';
     font-size: 16px;
     line-height: 20px;
     font-weight: 600;

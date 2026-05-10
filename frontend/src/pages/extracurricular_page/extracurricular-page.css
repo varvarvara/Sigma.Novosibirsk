@@ -26,7 +26,7 @@
 .extracurricular-header h1 {
     margin: 0;
     color: #F7F6FA;
-    font-family: 'Inter', sans-serif;
+    font-family: 'Inter SemiBold';
     font-size: 14px;
     line-height: 17px;
     font-weight: 600;
@@ -79,7 +79,7 @@
     max-width: 145px;
     margin: 0 0 12px;
     color: #FFFFFF;
-    font-family: 'Inter', sans-serif;
+    font-family: 'Inter SemiBold';
     font-size: 16px;
     line-height: 20px;
     font-weight: 600;
@@ -94,7 +94,7 @@
 .team-members p {
     margin: 0;
     color: rgba(255, 255, 255, 0.5);
-    font-family: 'Roboto', sans-serif;
+    font-family: 'Inter Regular';
     font-size: 12px;
     line-height: 17px;
 }
@@ -124,7 +124,7 @@
 .team-stats p {
     margin: 0;
     color: #FFFFFF;
-    font-family: 'Inter', sans-serif;
+    font-family: 'Inter SemiBold';
     font-size: 12px;
     line-height: 15px;
     font-weight: 600;
@@ -133,7 +133,7 @@
 .team-stats span {
     display: block;
     color: #FFFFFF;
-    font-family: 'Inter', sans-serif;
+    font-family: 'Inter SemiBold';
     font-size: 16px;
     line-height: 20px;
     font-weight: 600;
@@ -147,7 +147,7 @@
 .charges-panel h2 {
     margin: 0;
     color: #FFFFFF;
-    font-family: 'Inter', sans-serif;
+    font-family: 'Inter SemiBold';
     font-size: 14px;
     line-height: 17px;
     font-weight: 600;
@@ -179,7 +179,7 @@
     align-items: center;
     gap: 4px;
     color: #2A282F;
-    font-family: 'Inter', sans-serif;
+    font-family: 'Inter SemiBold';
     font-size: 14px;
     line-height: 17px;
     font-weight: 600;
@@ -198,7 +198,7 @@
 .rating-info h3 {
     margin: 0;
     color: #2A282F;
-    font-family: 'Inter', sans-serif;
+    font-family: 'Inter SemiBold';
     font-size: 14px;
     line-height: 17px;
     font-weight: 600;
@@ -207,7 +207,7 @@
 .rating-info p {
     margin: 3px 0 0;
     color: #A8A6AC;
-    font-family: 'Inter', sans-serif;
+    font-family: 'Inter SemiBold';
     font-size: 10px;
     line-height: 12px;
     font-weight: 600;
@@ -240,7 +240,7 @@
 .charge-date {
     margin: 0;
     color: #FFFFFF;
-    font-family: 'Inter', sans-serif;
+    font-family: 'Inter SemiBold';
     font-size: 12px;
     line-height: 15px;
     font-weight: 600;
@@ -265,7 +265,7 @@
 .charge-info h3 {
     margin: 0;
     color: #2A282F;
-    font-family: 'Inter', sans-serif;
+    font-family: 'Inter SemiBold';
     font-size: 12px;
     line-height: 15px;
     font-weight: 600;
@@ -274,7 +274,7 @@
 .charge-info p {
     margin: 3px 0 0;
     color: #A8A6AC;
-    font-family: 'Inter', sans-serif;
+    font-family: 'Inter SemiBold';
     font-size: 10px;
     line-height: 12px;
     font-weight: 600;
@@ -288,7 +288,7 @@
 
 .charge-coins span {
     color: #2A282F;
-    font-family: 'Inter', sans-serif;
+    font-family: 'Inter SemiBold';
     font-size: 12px;
     line-height: 15px;
     font-weight: 600;

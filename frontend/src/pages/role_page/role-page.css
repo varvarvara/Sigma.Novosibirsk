@@ -18,9 +18,9 @@
   max-width: 390px;
   height: 100dvh;
   margin: 0 auto;
-  padding: 18px 14px 38px;
+  padding: 18px 14px 98px;
   background: var(--role-bg);
-  font-family: 'Inter', sans-serif;
+  font-family: 'Inter Semibold';
 }
 
 .role-page__back {
@@ -115,11 +115,14 @@
 }
 
 .role-page__confirm {
+  position: fixed;
+  left: 50%;
+  bottom: 38px;
+  z-index: 30;
+  transform: translateX(-50%);
   width: 320px;
   height: 40px;
-  margin-top: auto;
-  margin-left: auto;
-  margin-right: auto;
+  margin: 0;
   border: none;
   border-radius: 30px;
   color: #f5f4f8;
@@ -132,7 +135,7 @@
 }
 
 .role-page__confirm:active {
-  transform: translateY(1px);
+  transform: translateX(-50%) translateY(1px);
 }
 
 .role-page__confirm:disabled {

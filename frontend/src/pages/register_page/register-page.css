@@ -6,7 +6,7 @@
   margin: 0 auto;
   padding: 18px 35px 40px;
   background: #ffffff;
-  font-family: 'Inter', sans-serif;
+  font-family: 'Inter SemiBold';
   overflow-y: auto;
 }
 
@@ -36,7 +36,7 @@
   font-size: 14px;
   font-weight: 400;
   line-height: 1.35;
-  font-family: 'Inter Regular', sans-serif;
+  font-family: 'Inter Regular';
 }
 
 .register-page__link {
@@ -47,7 +47,7 @@
   font-size: 14px;
   font-weight: 400;
   line-height: 1.35;
-  font-family: 'Inter Regular', sans-serif;
+  font-family: 'Inter Regular';
   background: transparent;
   cursor: pointer;
 }
@@ -64,7 +64,7 @@
   font-size: 16px;
   font-weight: 600;
   line-height: 1.2;
-  font-family: 'Inter-SemiBold', sans-serif;
+  font-family: 'Inter SemiBold';
 }
 
 .register-page__section-title--spaced {
@@ -201,7 +201,7 @@
 
 .register-page__consent-text {
   color: #4a4753;
-  font-family: 'Inter Regular', sans-serif;
+  font-family: 'Inter Regular';
   font-size: 12px;
   font-weight: 400;
   line-height: 1.35;

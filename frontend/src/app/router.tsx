@@ -14,6 +14,8 @@ import { SchedulePage } from '../pages/schedule_page/schedule-page'
 import { SoonUpdatePage } from '../pages/courses_errors/soon_update_page/soon_update_page/soon-update'
 import { CourseChoicePage } from '../pages/courses_errors/soon_update_page/course_choice_page/course-choice'
 import { CourseNothingPage } from '../pages/courses_errors/soon_update_page/course_nothing_page/course-nothing'
+import { FeedbackPage } from '../pages/feedback_page/feedback'
+import { MyCoursesPage } from '../pages/my_courses_page/my-courses-page'
 
 const rootRoute = createRootRoute({
   component: () => <Outlet />,
@@ -115,6 +117,18 @@ const CourseNothingRoute = createRoute({
   component: CourseNothingPage,
 })
 
+const FeedbackRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/feedback',
+  component: FeedbackPage,
+})
+
+const MyCoursesRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/my-courses',
+  component: MyCoursesPage,
+})
+
 const routeTree = rootRoute.addChildren([
   EnterRootRoute,
   EnterRoute,
@@ -132,6 +146,8 @@ const routeTree = rootRoute.addChildren([
   SoonUpdateRoute,
   CourseChoiceRoute,
   CourseNothingRoute,
+  FeedbackRoute,
+  MyCoursesRoute,
 ])
 
 export const router = createRouter({

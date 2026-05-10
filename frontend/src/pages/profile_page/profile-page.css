@@ -47,6 +47,7 @@
 }
 
 .user-fullname {
+    font-family: "Inter SemiBold";
     text-align: center;
     font-size: 14px;
     line-height: 20px;
@@ -110,7 +111,7 @@
 .stats-value p {
     margin: 0;
     color: #2A282F;
-    font-family: 'Inter', sans-serif;
+    font-family: 'Inter SemiBold';
     font-size: 16px;
     line-height: 20px;
     font-weight: 700;
@@ -186,6 +187,7 @@
 }
 
 .activity-info {
+    font-family: "Inter SemiBold";
     display: flex;
     flex-direction: column;
     gap: 7px;
@@ -202,6 +204,7 @@
 
 .activity-info p,
 .activity-info a {
+    font-family: "Inter Medium";
     margin: 0;
     font-size: 12px;
     line-height: 15px;
