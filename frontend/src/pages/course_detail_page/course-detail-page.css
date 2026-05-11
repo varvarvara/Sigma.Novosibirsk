@@ -7,7 +7,7 @@
     flex-direction: column;
     background: #2A2730;
     color: #FFFFFF;
-    font-family: 'Inter', sans-serif;
+    font-family: 'Inter Semibold';
     overflow: hidden;
     padding: 0 20px;
     box-sizing: border-box;
@@ -35,7 +35,7 @@
     margin: 0;
     min-width: 0;
     color: #F7F6FA;
-    font-family: 'Inter', sans-serif;
+    font-family: 'Inter SemiBold';
     font-size: 14px;
     line-height: 17px;
     font-weight: 600;
@@ -52,7 +52,7 @@
 
 .course-detail-header__date {
     color: #F7F6FA;
-    font-family: 'Inter', sans-serif;
+    font-family: 'Inter SemiBold';
     font-size: 14px;
     line-height: 17px;
     font-weight: 600;
@@ -120,6 +120,7 @@
 }
 
 .course-detail-card__teacher {
+    font-family: "Inter Regular";
     font-size: 12px;
     line-height: 15px;
     color: #A8A6AC;
@@ -128,6 +129,7 @@
 }
 
 .course-detail-card__badge {
+    font-family: "Inter Medium";
     padding: 4px 8px;
     border-radius: 12px;
     font-size: 12px;
@@ -148,6 +150,7 @@
 }
 
 .course-detail-card__description {
+    font-family: "Inter Regular";
     grid-area: description;
     font-size: 12px;
     line-height: 15px;
@@ -159,6 +162,7 @@
     grid-area: details;
     font-size: 12px;
     color: #7949FF;
+    font-family: "Inter Regular";
     font-weight: 600;
     text-decoration: none;
     background: none;

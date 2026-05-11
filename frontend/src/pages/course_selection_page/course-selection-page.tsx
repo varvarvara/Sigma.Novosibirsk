@@ -1,4 +1,4 @@
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { ChevronLeft } from "@untitledui/icons/ChevronLeft";
 import { Navbar } from "../../widgets/navbar/navbar";
@@ -11,6 +11,7 @@ const lessons = [
 ];
 
 export function CourseSelectionPage() {
+    const navigate = useNavigate();
     const [selectedCourses, setSelectedCourses] = useState<Record<number, string>>({});
 
     useEffect(() => {
@@ -65,7 +66,9 @@ export function CourseSelectionPage() {
             </section>
 
             <footer className="page-footer">
-                <button className="register-btn">Зарегистрироваться</button>
+                <button className="register-btn" onClick={() => navigate({ to: "/my-courses" })}>
+                    Зарегистрироваться
+                </button>
                 <p className="footer-text">Выберите курс в каждом слоте</p>
             </footer>
 

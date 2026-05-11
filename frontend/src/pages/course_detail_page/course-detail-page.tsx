@@ -44,16 +44,20 @@ export function CourseDetailPage() {
     
     const [selectedCourseId, setSelectedCourseId] = useState<number | null>(null);
 
-    const handleSave = () => {
-        if (!selectedCourseId) return;
-
-        const course = availableCourses.find(c => c.id === selectedCourseId);
+    const saveCourse = (courseId: number) => {
+        const course = availableCourses.find(c => c.id === courseId);
         const currentSelections = JSON.parse(localStorage.getItem("selected_courses") || "{}");
         
         currentSelections[slotId] = course?.title || "Курс";
         localStorage.setItem("selected_courses", JSON.stringify(currentSelections));
 
         navigate({ to: "/courses" });
+    };
+
+    const handleSave = () => {
+        if (!selectedCourseId) return;
+
+        saveCourse(selectedCourseId);
     };
 
     return (
@@ -108,9 +112,7 @@ export function CourseDetailPage() {
                             
                             <button 
                                 className={`course-detail-card__select-btn ${isSelected ? "active" : ""}`}
-                                onClick={() => {
-                                    setSelectedCourseId((prevId) => (prevId === course.id ? null : course.id));
-                                }}
+                                onClick={() => saveCourse(course.id)}
                             >
                                 {isSelected ? "Убрать выбор" : "Выбрать курс"}
                             </button>

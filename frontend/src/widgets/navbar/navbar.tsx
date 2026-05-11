@@ -17,7 +17,7 @@ export function Navbar() {
 
     return (
         <nav className="navbar">
-            <Link className={`nav-link${coursesIsActive ? " nav-link-active" : ""}`} to="/my-courses">Курсы</Link>
+            <Link className={`nav-link${coursesIsActive ? " nav-link-active" : ""}`} to="/courses">Курсы</Link>
             <Link className={`nav-link${profileIsActive ? " nav-link-active" : ""}`} to="/profile">Профиль</Link>
             <Link className={`nav-link${scheduleIsActive ? " nav-link-active" : ""}`} to="/schedule">Расписание</Link>
         </nav>

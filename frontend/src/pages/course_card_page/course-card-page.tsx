@@ -1,4 +1,5 @@
-import { Link, useSearch } from "@tanstack/react-router";
+import { Link, useNavigate, useSearch } from "@tanstack/react-router";
+import { useState } from "react";
 import { ChevronLeft } from "@untitledui/icons/ChevronLeft";
 import { Navbar } from "../../widgets/navbar/navbar";
 import "./course-card-page.css";
@@ -39,9 +40,20 @@ const courses = [
 ];
 
 export function CourseCardPage() {
+    const navigate = useNavigate();
     const { slotId, courseId } = useSearch({ from: "/course-card" });
     const currentSlot = lessonSlots.find((slot) => slot.id === slotId) ?? lessonSlots[0];
     const currentCourse = courses.find((course) => course.id === courseId) ?? courses[0];
+    const [expanded, setExpanded] = useState(false);
+
+    const handleSelect = () => {
+        const currentSelections = JSON.parse(localStorage.getItem("selected_courses") || "{}");
+
+        currentSelections[slotId] = currentCourse.title;
+        localStorage.setItem("selected_courses", JSON.stringify(currentSelections));
+
+        navigate({ to: "/courses" });
+    };
 
     return (
         <main className="course-card-page">
@@ -64,7 +76,7 @@ export function CourseCardPage() {
             </header>
 
             <section className="course-card-content">
-                <article className="course-card-item">
+                <article className={`course-card-item${expanded ? " course-card-item--expanded" : ""}`}>
                     <div className="course-card-item__top">
                         <div className="course-card-item__title-group">
                             <h2>{currentCourse.title}</h2>
@@ -89,12 +101,16 @@ export function CourseCardPage() {
                         </p>
                     ))}
 
-                    <button className="course-card-item__details-link" type="button">
-                        Подробнее
+                    <button
+                        className={`course-card-item__details-link${expanded ? " course-card-item__details-link--active" : ""}`}
+                        type="button"
+                        onClick={() => setExpanded((current) => !current)}
+                    >
+                        {expanded ? "Скрыть" : "Подробнее"}
                     </button>
                 </article>
 
-                <button className="course-card-page__select-btn" type="button">
+                <button className="course-card-page__select-btn" type="button" onClick={handleSelect}>
                     Выбрать
                 </button>
             </section>
