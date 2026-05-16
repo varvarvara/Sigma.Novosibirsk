@@ -19,6 +19,8 @@ import { CourseChoicePage } from '../pages/courses_errors/soon_update_page/cours
 import { CourseNothingPage } from '../pages/courses_errors/soon_update_page/course_nothing_page/course-nothing'
 import { FeedbackPage } from '../pages/feedback_page/feedback'
 import { MyCoursesPage } from '../pages/my_courses_page/my-courses-page'
+import { AttendancePage } from '../pages/attendance_page/attendance'
+import { AchievementPage } from '../pages/achievement_page/achievement'
 import { OrgExtracurricularPage } from '../pages/organizators/org_extracurricular_creation/org-exrtacurricular-creation-page'
 import { OrgExtracurricularManagementPage } from '../pages/organizators/org_extracurricular/org-extracurricular'
 import { TeamCreationPage } from '../pages/organizators/team_creation/team-creation-page'
@@ -191,6 +193,12 @@ const MyCoursesRoute = createRoute({
   component: MyCoursesPage,
 })
 
+const AttendanceRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/attendance',
+  component: AttendancePage,
+})
+
 const OrgExtracurricularCreationRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/org-extracurricular-creation',
@@ -276,6 +284,18 @@ const TeacherCoursesCertificatesRoute = createRoute({
     component: TeacherCoursesCertificatesPage,
 })
 
+const TeacherAttendanceRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: '/teacher/attendance',
+    component: AttendancePage,
+})
+
+const TeacherAchievementRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: '/teacher/achievements',
+    component: AchievementPage,
+})
+
 const TeacherCourseEditRoute = createRoute({
     getParentRoute: () => rootRoute,
     path: '/teacher/courses/$courseId/edit',
@@ -304,6 +324,7 @@ const routeTree = rootRoute.addChildren([
   CourseNothingRoute,
   FeedbackRoute,
   MyCoursesRoute,
+  AttendanceRoute,
   OrgExtracurricularManagementRoute,
   OrgExtracurricularCreationRoute,
   TeamCreationRoute,
@@ -317,6 +338,8 @@ const routeTree = rootRoute.addChildren([
   TeacherCoursesRoute,
   TeacherCoursesApplyRoute,
   TeacherCoursesCertificatesRoute,
+  TeacherAttendanceRoute,
+  TeacherAchievementRoute,
   TeacherCourseEditRoute,
 ])
 
