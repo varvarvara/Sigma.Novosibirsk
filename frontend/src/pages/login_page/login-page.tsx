@@ -1,79 +1,65 @@
-import { useState } from 'react'
-import { useNavigate } from '@tanstack/react-router'
-import { ChevronLeft } from '@untitledui/icons/ChevronLeft'
-import './login-page.css'
+import { Link } from "@tanstack/react-router";
+import "./login-page.css";
 
 export function LoginPage() {
-  const navigate = useNavigate()
-  const [rememberMe, setRememberMe] = useState(false)
+    return (
+        <main className="login-page">
+            <div className="login-split">
+                <div className="login-left">
+                    <div className="login-card">
+                        <div className="login-header">
+                            <h1 className="login-title">Вход в аккаунт</h1>
+                            <p className="login-subtitle">Добро пожаловать! Пожалуйста, введите свои данные.</p>
+                        </div>
 
-  return (
-    <main className="login-page">
-      <button
-        type="button"
-        className="login-page__back app-back-button"
-        aria-label="Назад"
-        onClick={() => navigate({ to: '/role', state: { authIntent: 'login' } })}
-      >
-        <ChevronLeft className="app-back-button__icon" size={24} color="#2A2730" />
-      </button>
+                        <form className="login-form">
+                            <div className="form-group">
+                                <label htmlFor="email">Email</label>
+                                <input type="email" id="email" placeholder="Введите email..." required />
+                            </div>
 
-      <section className="login-page__content">
-        <h1 className="login-page__title">Войти в аккаунт</h1>
-        <p className="login-page__subtitle">
-          Нет аккаунта?
-          <button
-            type="button"
-            className="login-page__link"
-            onClick={() => navigate({ to: '/register' })}
-          >
-            Зарегистрироваться
-          </button>
-        </p>
+                            <div className="form-group">
+                                <label htmlFor="password">Пароль</label>
+                                <input type="password" id="password" placeholder="••••••••" required />
+                            </div>
 
-        <form className="login-page__form" onSubmit={(event) => event.preventDefault()}>
-          <div className="login-page__field">
-            <label className="login-page__label" htmlFor="login-email">
-              Логин
-            </label>
-            <input className="login-page__input" id="login-email" type="text" autoComplete="username" />
-          </div>
+                            <div className="form-actions">
+                                <label className="checkbox-container">
+                                    <input type="checkbox" />
+                                    <span>Запомнить меня</span>
+                                </label>
+                                
+                                <a href="/forgot-password" className="forgot-password">Забыли пароль?</a>
+                            </div>
 
-          <div className="login-page__field">
-            <label className="login-page__label" htmlFor="login-password">
-              Пароль
-            </label>
-            <input
-              className="login-page__input"
-              id="login-password"
-              type="password"
-              autoComplete="current-password"
-            />
-          </div>
+                            <button type="submit" className="login-button">Войти</button>
+                        </form>
 
-          <label className="login-page__remember">
-            <input
-              className="login-page__checkbox"
-              type="checkbox"
-              checked={rememberMe}
-              onChange={(event) => setRememberMe(event.target.checked)}
-            />
-            <span>Запомнить меня</span>
-          </label>
+                        <p className="login-footer">
+                            Нет аккаунта? <Link to="/select-role" className="register-link">Зарегистрироваться</Link>
+                        </p>
+                    </div>
+                </div>
 
-          <button type="submit" className="login-page__submit">
-            Войти
-          </button>
-
-          <button
-            type="button"
-            className="login-page__forgot"
-            onClick={() => navigate({ to: '/password-reset' })}
-          >
-            Забыли пароль?
-          </button>
-        </form>
-      </section>
-    </main>
-  )
+                <div className="login-right">
+                    <div className="login-gradient"></div>
+                    <svg
+                        className="login-star-big"
+                        width="1743"
+                        height="1495"
+                        viewBox="0 0 1743 1495"
+                        fill="none"
+                        xmlns="http://www.w3.org/2000/svg"
+                        preserveAspectRatio="xMidYMid slice"
+                    >
+                        <path
+                            d="M1380.46 182.716L1163.74 721.736L1742.41 936.883L1146.85 867.444L1134.64 1494.81L1005.22 872.481L0.00388986 1290.94L924.916 726.314L283.959 -0.000298724L1053.56 645.901L1380.46 182.716Z"
+                            fill="#7949FF"
+                            fillOpacity="0.5"
+                        />
+                    </svg>
+                </div>
+            </div>
+        </main>
+    );
 }

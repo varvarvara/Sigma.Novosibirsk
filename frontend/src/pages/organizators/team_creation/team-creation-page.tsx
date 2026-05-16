@@ -14,6 +14,7 @@ const candidates = [
 
 export function TeamCreationPage() {
     const navigate = useNavigate();
+    const sidebarAvatarSrc = localStorage.getItem("orgProfileAvatar") ?? "/teacher/profile/avatar-profile.png";
     const [teamName, setTeamName] = useState("");
     const [members, setMembers] = useState(candidates.slice(0, 2));
     const [memberName, setMemberName] = useState("");
@@ -63,13 +64,14 @@ export function TeamCreationPage() {
         <main className="team-creation-page" aria-label="Создание команды">
             <aside className="team-creation-sidebar" aria-label="Навигация">
                 <img className="team-creation-sidebar__reference" src="/sidebar-navigation.svg" alt="" aria-hidden="true" />
+                <img className="team-creation-sidebar__avatar" src={sidebarAvatarSrc} alt="" aria-hidden="true" />
                 <button className="team-creation-sidebar__hotspot team-creation-sidebar__hotspot--logo team-creation-clickable" type="button" aria-label="Главная" />
                 <button className="team-creation-sidebar__hotspot team-creation-sidebar__hotspot--users team-creation-clickable" type="button" aria-label="Участники" />
                 <button className="team-creation-sidebar__hotspot team-creation-sidebar__hotspot--calendar team-creation-clickable" type="button" aria-label="Мероприятия" />
                 <button className="team-creation-sidebar__hotspot team-creation-sidebar__hotspot--courses team-creation-clickable" type="button" aria-label="Курсы" />
                 <button className="team-creation-sidebar__hotspot team-creation-sidebar__hotspot--teams team-creation-clickable" type="button" aria-label="Команды" />
                 <button className="team-creation-sidebar__hotspot team-creation-sidebar__hotspot--settings team-creation-clickable" type="button" aria-label="Настройки" />
-                <button className="team-creation-sidebar__hotspot team-creation-sidebar__hotspot--profile team-creation-clickable" type="button" aria-label="Профиль" />
+                <button className="team-creation-sidebar__hotspot team-creation-sidebar__hotspot--profile team-creation-clickable" type="button" aria-label="Профиль" onClick={() => navigate({ to: "/org-profile" })} />
             </aside>
 
             <section className="team-creation-workspace">
@@ -94,7 +96,10 @@ export function TeamCreationPage() {
                         <input value={teamName} placeholder="Например: Сигма-тим" onChange={(event) => setTeamName(event.target.value)} />
                     </label>
 
-                    <h2 className="team-creation-section-title">Выберите участников</h2>
+                    <div className="team-creation-section-head">
+                        <h2 className="team-creation-section-title">Выберите участников</h2>
+                        <span>Добавлено: {members.length}</span>
+                    </div>
 
                     <div className="team-creation-tags" aria-label="Участники команды">
                         {members.map((member, index) => (

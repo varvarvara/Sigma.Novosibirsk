@@ -1,139 +1,238 @@
 .login-page {
-  position: relative;
-  width: 100%;
-  max-width: 390px;
-  min-height: 100dvh;
-  margin: 0 auto;
-  padding: 18px 35px 40px;
-  background: #ffffff;
-  font-family: 'Inter SemiBold';
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    min-height: 100vh;
 }
 
-.login-page__back {
-  position: absolute;
-  top: var(--back-chevron-offset);
-  left: var(--back-chevron-offset);
-  z-index: 30;
+.login-split {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    min-height: 100vh;
 }
 
-.login-page__content {
-  margin-top: 112px;
+.login-left {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #FFFFFF;
+    padding: 40px 24px;
+    overflow-y: auto;
 }
 
-.login-page__title {
-  color: #121018;
-  text-align: center;
-  font-size: 20px;
-  font-weight: 600;
-  line-height: 1.1;
+.login-card {
+    width: 100%;
+    max-width: 420px;
+    padding: 0;
+    box-sizing: border-box;
 }
 
-.login-page__subtitle {
-  margin-top: 8px;
-  color: #85838d;
-  text-align: center;
-  font-size: 14px;
-  font-weight: 400;
-  line-height: 1.35;
-  font-family: 'Inter Regular';
+.login-header {
+    text-align: center;
+    margin-bottom: 24px;
 }
 
-.login-page__link {
-  margin-left: 4px;
-  border: none;
-  padding: 0;
-  color: #7c61ef;
-  font-size: 14px;
-  font-weight: 400;
-  line-height: 1.35;
-  font-family: 'Inter Regular';
-  background: transparent;
-  cursor: pointer;
+.logo-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    background-color: #F4EBFF;
+    border-radius: 10px;
+    margin: 0 auto 24px;
 }
 
-.login-page__form {
-  margin-top: 34px;
-  display: grid;
-  gap: 14px;
+.login-title {
+    font-size: 24px;
+    font-weight: 600;
+    color: #101828;
+    margin: 0 0 8px 0;
 }
 
-.login-page__field {
-  display: grid;
-  gap: 8px;
+.login-subtitle {
+    font-size: 16px;
+    color: #475467;
+    margin: 0;
 }
 
-.login-page__label {
-  color: #2a2730;
-  font-size: 12px;
-  font-weight: 600;
-  line-height: 1.2;
+.login-form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
 }
 
-.login-page__input {
-  width: 320px;
-  height: 40px;
-  border: 1px solid #d2d1d7;
-  border-radius: 12px;
-  padding: 0 12px;
-  color: #2a2730;
-  font-size: 12px;
-  font-weight: 400;
-  outline: none;
-  background: #ffffff;
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    text-align: left;
 }
 
-.login-page__input:focus {
-  border-color: #b9a2ff;
-  box-shadow: 0 0 0 2px rgba(121, 73, 255, 0.12);
+.form-group label {
+    font-size: 14px;
+    font-weight: 500;
+    color: #344054;
 }
 
-.login-page__remember {
-  margin-top: 2px;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  width: fit-content;
-  color: #4a4753;
-  font-size: 12px;
-  font-weight: 400;
-  line-height: 1.25;
-  cursor: pointer;
+.form-group input {
+    padding: 10px 14px;
+    font-size: 16px;
+    color: #101828;
+    border: 1px solid #D0D5DD;
+    border-radius: 8px;
+    outline: none;
+    transition: all 0.2s ease-in-out;
+    box-sizing: border-box;
 }
 
-.login-page__checkbox {
-  width: 16px;
-  height: 16px;
-  accent-color: #7949ff;
+.form-group input::placeholder {
+    color: #667085;
 }
 
-.login-page__submit {
-  width: 320px;
-  height: 40px;
-  margin-top: 2px;
-  border: none;
-  border-radius: 30px;
-  color: #f5f4f8;
-  font-size: 16px;
-  font-weight: 600;
-  line-height: 1;
-  letter-spacing: -0.1px;
-  background: linear-gradient(90deg, #6a49f4 0%, #7954ff 100%);
-  cursor: pointer;
+.form-group input:focus {
+    border-color: #D6BBFB;
+    box-shadow: 0 0 0 4px #F4EBFF;
 }
 
-.login-page__submit:active {
-  transform: translateY(1px);
+.form-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 4px;
 }
 
-.login-page__forgot {
-  justify-self: center;
-  margin-top: -6px;
-  border: none;
-  padding: 0;
-  color: #9f9ca7;
-  font-size: 12px;
-  font-weight: 400;
-  line-height: 1.3;
-  background: transparent;
-  cursor: pointer;
+.checkbox-container {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    color: #344054;
+    cursor: pointer;
+}
+
+.checkbox-container input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    border: 1px solid #D0D5DD;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.forgot-password {
+    font-size: 14px;
+    font-weight: 600;
+    color: #6941C6;
+    text-decoration: none;
+}
+
+.login-button {
+    background-color: #7F56D9;
+    color: white;
+    font-size: 16px;
+    font-weight: 600;
+    padding: 10px 18px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.2s ease-in-out, box-shadow 0.2s;
+    box-shadow: 0 1px 2px rgba(16, 24, 40, 0.05);
+}
+
+.login-button:hover {
+    background-color: #6941C6;
+}
+
+.login-button:focus {
+    box-shadow: 0 0 0 4px #F4EBFF;
+    outline: none;
+}
+
+.login-footer {
+    text-align: center;
+    font-size: 14px;
+    color: #475467;
+    margin: 24px 0 0 0;
+}
+
+.register-link {
+    font-weight: 600;
+    color: #6941C6;
+    text-decoration: none;
+}
+
+.login-right {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    background: linear-gradient(135deg, #7848FF 0%, #B98FFF 50%, #D8C3FF 100%);
+}
+
+.login-gradient {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, #7848FF 0%, #9765FF 30%, #B98FFF 60%, #D8C3FF 100%);
+    opacity: 0.9;
+}
+
+.login-star-big {
+    position: absolute;
+    width: 120%;
+    height: 120%;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    object-fit: contain;
+    z-index: 1;
+}
+
+@media (max-width: 1200px) {
+    .login-split {
+        grid-template-columns: 1fr;
+    }
+
+    .login-right {
+        position: fixed;
+        top: 0;
+        right: 0;
+        width: 40%;
+        height: 100vh;
+        z-index: -1;
+    }
+
+    .login-left {
+        padding-right: 120px;
+    }
+}
+
+@media (max-width: 768px) {
+    .login-split {
+        grid-template-columns: 1fr;
+    }
+
+    .login-left {
+        padding: 24px 16px;
+        padding-right: 16px;
+    }
+
+    .login-right {
+        position: fixed;
+        top: 0;
+        right: 0;
+        width: 100%;
+        height: 100%;
+        z-index: -1;
+    }
+
+    .login-card {
+        max-width: 100%;
+    }
+
+    .login-title {
+        font-size: 22px;
+    }
 }

@@ -39,6 +39,17 @@
     pointer-events: none;
 }
 
+.team-creation-sidebar__avatar {
+    position: absolute;
+    top: 1008px;
+    left: 16px;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    object-fit: cover;
+    pointer-events: none;
+}
+
 .team-creation-sidebar__hotspot {
     position: absolute;
     left: 16px;
@@ -101,7 +112,7 @@
     margin: 0;
     color: #0F172A;
     font-family: 'Inter SemiBold';
-    font-size: 32px;
+    font-size: 24px;
     line-height: 40px;
     font-weight: 600;
 }
@@ -155,9 +166,14 @@
 }
 
 .team-creation-form {
-    margin-top: 156px;
+    margin-top: 24px;
+    border: 1px solid #E2E8F0;
+    border-radius: 16px;
+    padding: 24px;
     display: grid;
     gap: 28px;
+    background: #FFFFFF;
+    box-shadow: 0 12px 24px rgba(15, 23, 42, 0.06);
 }
 
 .team-creation-field {
@@ -176,6 +192,21 @@
 
 .team-creation-section-title {
     margin: 0;
+}
+
+.team-creation-section-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.team-creation-section-head > span {
+    color: #7F56D9;
+    font-family: 'Inter SemiBold';
+    font-size: 13px;
+    line-height: 18px;
+    font-weight: 600;
 }
 
 .team-creation-field input {

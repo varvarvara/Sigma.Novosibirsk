@@ -14,6 +14,7 @@ type Team = {
     captain: string;
     count: string;
     color: string;
+    points?: number;
     members?: string[];
 };
 
@@ -36,7 +37,12 @@ const initialTeams: Team[] = [
 
 const getInitialTeams = () => {
     const savedTeams = JSON.parse(localStorage.getItem("createdTeams") ?? "[]") as Team[];
-    return [...initialTeams, ...savedTeams];
+    const teamPoints = JSON.parse(localStorage.getItem("teamPoints") ?? "{}") as Record<string, number>;
+
+    return [...initialTeams, ...savedTeams].map((team) => ({
+        ...team,
+        points: teamPoints[team.title] ?? team.points ?? 200,
+    }));
 };
 
 const getTeamMembers = (team: Team) => team.members ?? initialMembers.map((member) => member.name);
@@ -58,6 +64,7 @@ const getMembersLabel = (count: number) => {
 
 export function TeamFormationPage() {
     const navigate = useNavigate();
+    const sidebarAvatarSrc = localStorage.getItem("orgProfileAvatar") ?? "/teacher/profile/avatar-profile.png";
     const [teamItems, setTeamItems] = useState<Team[]>(getInitialTeams);
     const [query, setQuery] = useState("");
     const [members, setMembers] = useState<Member[]>(initialMembers);
@@ -65,6 +72,8 @@ export function TeamFormationPage() {
     const [activeTeamId, setActiveTeamId] = useState(teamItems[0].id);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isMainPanelVisible, setIsMainPanelVisible] = useState(true);
+    const [isMainActionsHidden, setIsMainActionsHidden] = useState(false);
+    const [hiddenActionTeamIds, setHiddenActionTeamIds] = useState<number[]>([]);
     const [isPanelCollapsed, setIsPanelCollapsed] = useState(false);
     const [collapsedTeamIds, setCollapsedTeamIds] = useState<number[]>(teamItems.map((team) => team.id));
     const [notice, setNotice] = useState("Команды сформированы");
@@ -81,6 +90,7 @@ export function TeamFormationPage() {
 
     const toggleTeamPanel = (id: number) => {
         setCollapsedTeamIds((ids) => (ids.includes(id) ? ids.filter((teamId) => teamId !== id) : [...ids, id]));
+        setHiddenActionTeamIds((ids) => ids.filter((teamId) => teamId !== id));
         setActiveTeamId(id);
     };
 
@@ -110,6 +120,10 @@ export function TeamFormationPage() {
         setNotice("Изменения сохранены");
     };
 
+    const hideTeamActions = (id: number) => {
+        setHiddenActionTeamIds((ids) => (ids.includes(id) ? ids : [...ids, id]));
+    };
+
     const removeTeamMember = (teamId: number, memberName: string) => {
         setTeamItems((items) =>
             items.map((team) => {
@@ -133,13 +147,14 @@ export function TeamFormationPage() {
         <main className="team-formation-page" aria-label="Команды внеучебки">
             <aside className="team-sidebar" aria-label="Навигация">
                 <img className="team-sidebar__reference" src="/sidebar-navigation.svg" alt="" aria-hidden="true" />
+                <img className="team-sidebar__avatar" src={sidebarAvatarSrc} alt="" aria-hidden="true" />
                 <button className="team-sidebar__hotspot team-sidebar__hotspot--logo team-clickable" type="button" aria-label="Главная" />
                 <button className="team-sidebar__hotspot team-sidebar__hotspot--users team-clickable" type="button" aria-label="Участники" />
                 <button className="team-sidebar__hotspot team-sidebar__hotspot--calendar team-clickable" type="button" aria-label="Мероприятия" />
                 <button className="team-sidebar__hotspot team-sidebar__hotspot--courses team-clickable" type="button" aria-label="Курсы" />
                 <button className="team-sidebar__hotspot team-sidebar__hotspot--teams team-clickable" type="button" aria-label="Команды" />
                 <button className="team-sidebar__hotspot team-sidebar__hotspot--settings team-clickable" type="button" aria-label="Настройки" />
-                <button className="team-sidebar__hotspot team-sidebar__hotspot--profile team-clickable" type="button" aria-label="Профиль" />
+                <button className="team-sidebar__hotspot team-sidebar__hotspot--profile team-clickable" type="button" aria-label="Профиль" onClick={() => navigate({ to: "/org-profile" })} />
             </aside>
 
             <section className="team-workspace">
@@ -147,15 +162,18 @@ export function TeamFormationPage() {
                     <div className="team-header__left">
                         <h1>Команды</h1>
                         <nav className="team-tabs" aria-label="Разделы внеучебки">
-                            <button className="team-tabs__item team-clickable" type="button">Мероприятия</button>
+                            <button className="team-tabs__item team-clickable" type="button" onClick={() => navigate({ to: "/org-extracurricular" })}>Мероприятия</button>
                             <button className="team-tabs__item team-tabs__item--active team-clickable" type="button">Команды</button>
                             <button className="team-tabs__item team-clickable" type="button">Рейтинг</button>
                         </nav>
                     </div>
+                </header>
+
+                <div className="team-create-row">
                     <button className="team-primary-button team-clickable" type="button" onClick={() => navigate({ to: "/team-creation" })}>
                         Создать команду
                     </button>
-                </header>
+                </div>
 
                 <section className="team-list" aria-label="Команды">
                 {isMainPanelVisible && (
@@ -164,24 +182,35 @@ export function TeamFormationPage() {
                         <div className="team-panel__icon team-panel__icon--violet">Н</div>
                         <div>
                             <h2>Название команды</h2>
-                            <p>{getMembersLabel(members.length)} 200 балллов</p>
+                            <p>{getMembersLabel(members.length)} | 200 баллов</p>
                         </div>
                         <div className="team-panel__actions">
                             {isPanelCollapsed ? (
                                 <>
-                                    <button className="team-primary-button team-clickable" type="button" onClick={() => setIsPanelCollapsed(false)}>
+                                    <button className="team-primary-button team-clickable" type="button" onClick={() => {
+                                        setIsPanelCollapsed(false);
+                                        setIsMainActionsHidden(false);
+                                    }}>
                                         Редактировать
                                     </button>
                                     <button className="team-icon-button team-clickable" type="button" aria-label="Развернуть" onClick={() => setIsPanelCollapsed(false)}>
                                         <img src="/Button-down.svg" alt="" />
                                     </button>
                                 </>
+                            ) : isMainActionsHidden ? (
+                                <button className="team-icon-button team-clickable" type="button" aria-label="Свернуть" onClick={() => setIsPanelCollapsed(true)}>
+                                    <img src="/Button.svg" alt="" />
+                                </button>
                             ) : (
                                 <>
                                     <button className="team-danger-button team-clickable" type="button" onClick={() => setIsMainPanelVisible(false)}>
                                         Удалить
                                     </button>
-                                    <button className="team-light-button team-clickable" type="button" onClick={() => setNotice("Изменения сохранены")}>
+                                    <button className="team-primary-button team-clickable" type="button" onClick={() => {
+                                        setNotice("Изменения сохранены");
+                                        setIsMainActionsHidden(true);
+                                        setIsPanelCollapsed(true);
+                                    }}>
                                         Сохранить
                                     </button>
                                     <button className="team-icon-button team-clickable" type="button" aria-label="Свернуть" onClick={() => setIsPanelCollapsed(true)}>
@@ -196,19 +225,15 @@ export function TeamFormationPage() {
                         <>
                             <div className="team-tools">
                                 <div className="team-search">
-                                    <span>⌕</span>
                                     <input value={query} placeholder="Поиск участников" onChange={(event) => setQuery(event.target.value)} />
                                 </div>
                                 <div className="team-tools__actions">
-                                    <button className="team-primary-button team-clickable" type="button" onClick={() => setNotice("Редактирование")}>
-                                        Редактировать
-                                    </button>
                                 </div>
                             </div>
 
                             <div className="team-table" role="table" aria-label="Участники">
                                 <div className="team-table__header" role="row">
-                                    <span>Участник</span>
+                                    <span>Участники</span>
 
                                     <span />
                                     <span />
@@ -226,19 +251,21 @@ export function TeamFormationPage() {
                                                 <span>{member.name}</span>
                                             </span>
                                             <span className="team-status-placeholder" />
-                                            <span
-                                                className="team-member-row__remove"
-                                                role="button"
-                                                tabIndex={0}
-                                                aria-label={`Удалить ${member.name}`}
-                                                onClick={(event) => {
-                                                    event.stopPropagation();
-                                                    setMembers((items) => items.filter((item) => item.id !== member.id));
-                                                    setNotice("Участник удален");
-                                                }}
-                                            >
-                                                ×
-                                            </span>
+                                            {!isMainActionsHidden && (
+                                                <span
+                                                    className="team-member-row__remove"
+                                                    role="button"
+                                                    tabIndex={0}
+                                                    aria-label={`Удалить ${member.name}`}
+                                                    onClick={(event) => {
+                                                        event.stopPropagation();
+                                                        setMembers((items) => items.filter((item) => item.id !== member.id));
+                                                        setNotice("Участник удален");
+                                                    }}
+                                                >
+                                                    ×
+                                                </span>
+                                            )}
                                         </button>
                                     ))}
                                 </div>
@@ -250,6 +277,7 @@ export function TeamFormationPage() {
 
                     {teamItems.map((team) => {
                         const collapsed = collapsedTeamIds.includes(team.id);
+                        const actionsHidden = hiddenActionTeamIds.includes(team.id);
                         const currentTeamMembers = getTeamMembers(team);
                         const teamMembers = currentTeamMembers
                             .filter((member) => member.toLowerCase().includes(query.trim().toLowerCase()))
@@ -261,7 +289,7 @@ export function TeamFormationPage() {
                                     <div className="team-panel__icon" style={{ background: team.color }}>К</div>
                                     <div>
                                         <h2>{team.title}</h2>
-                                        <p>{getMembersLabel(currentTeamMembers.length)} 200 балллов</p>
+                                        <p>{getMembersLabel(currentTeamMembers.length)} | {team.points ?? 200} баллов</p>
                                     </div>
                                     <div className="team-panel__actions">
                                         {collapsed ? (
@@ -273,12 +301,20 @@ export function TeamFormationPage() {
                                                     <img src="/Button-down.svg" alt="" />
                                                 </button>
                                             </>
+                                        ) : actionsHidden ? (
+                                            <button className="team-icon-button team-clickable" type="button" aria-label="Свернуть" onClick={() => toggleTeamPanel(team.id)}>
+                                                <img src="/Button.svg" alt="" />
+                                            </button>
                                         ) : (
                                             <>
                                                 <button className="team-danger-button team-clickable" type="button" onClick={() => deleteTeam(team.id)}>
                                                     Удалить
                                                 </button>
-                                                <button className="team-light-button team-clickable" type="button" onClick={saveTeams}>
+                                                <button className="team-primary-button team-clickable" type="button" onClick={() => {
+                                                    saveTeams();
+                                                    hideTeamActions(team.id);
+                                                    toggleTeamPanel(team.id);
+                                                }}>
                                                     Сохранить
                                                 </button>
                                                 <button className="team-icon-button team-clickable" type="button" aria-label="Свернуть" onClick={() => toggleTeamPanel(team.id)}>
@@ -293,19 +329,15 @@ export function TeamFormationPage() {
                                     <>
                                         <div className="team-tools">
                                             <div className="team-search">
-                                                <span>⌕</span>
                                                 <input value={query} placeholder="Поиск участников" onChange={(event) => setQuery(event.target.value)} />
                                             </div>
                                             <div className="team-tools__actions">
-                                                <button className="team-primary-button team-clickable" type="button" onClick={() => setNotice("Редактирование")}>
-                                                    Редактировать
-                                                </button>
                                             </div>
                                         </div>
 
                                         <div className="team-table" role="table" aria-label={`Участники ${team.title}`}>
                                             <div className="team-table__header" role="row">
-                                                <span>Участник</span>
+                                                <span>Участники</span>
                                                 <span />
                                                 <span />
                                             </div>
@@ -322,18 +354,20 @@ export function TeamFormationPage() {
                                                             <span>{member.name}</span>
                                                         </span>
                                                         <span className="team-status-placeholder" />
-                                                        <span
-                                                            className="team-member-row__remove"
-                                                            role="button"
-                                                            tabIndex={0}
-                                                            aria-label={`Удалить ${member.name}`}
-                                                            onClick={(event) => {
-                                                                event.stopPropagation();
-                                                                removeTeamMember(team.id, member.name);
-                                                            }}
-                                                        >
-                                                            ×
-                                                        </span>
+                                                        {!actionsHidden && (
+                                                            <span
+                                                                className="team-member-row__remove"
+                                                                role="button"
+                                                                tabIndex={0}
+                                                                aria-label={`Удалить ${member.name}`}
+                                                                onClick={(event) => {
+                                                                    event.stopPropagation();
+                                                                    removeTeamMember(team.id, member.name);
+                                                                }}
+                                                            >
+                                                                ×
+                                                            </span>
+                                                        )}
                                                     </button>
                                                 ))}
                                             </div>

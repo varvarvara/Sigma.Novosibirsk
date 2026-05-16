@@ -39,6 +39,17 @@
     pointer-events: none;
 }
 
+.team-sidebar__avatar {
+    position: absolute;
+    top: 1008px;
+    left: 16px;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    object-fit: cover;
+    pointer-events: none;
+}
+
 .team-sidebar__hotspot {
     position: absolute;
     border: 0;
@@ -100,10 +111,14 @@
 }
 
 .team-header {
-    height: 145px;
+    height: auto;
     display: flex;
     align-items: flex-start;
     justify-content: space-between;
+}
+
+.team-header__left {
+    width: 100%;
 }
 
 .team-header__eyebrow {
@@ -119,7 +134,7 @@
     margin-bottom: 0;
     color: #0F172A;
     font-family: 'Inter SemiBold';
-    font-size: 40px;
+    font-size: 30px;
     line-height: 48px;
     font-weight: 600;
 }
@@ -127,6 +142,7 @@
 .team-tabs {
     height: 39px;
     margin-top: 32px;
+    width: 100%;
     border-bottom: 1px solid #E2E8F0;
     display: flex;
     align-items: flex-start;
@@ -212,16 +228,26 @@
 }
 
 .team-icon-button img {
-    width: 20px;
-    height: 20px;
+    width: 32px;
+    height: 32px;
     display: block;
+}
+
+.team-create-row {
+    margin: 32px 0;
+    display: flex;
+    justify-content: flex-end;
 }
 
 .team-panel {
     border-radius: 12px;
     background: #FFFFFF;
-    border: 2px solid #7C3AED;
+    border: 1px solid #E2E8F0;
     box-shadow: 0 12px 24px rgba(15, 23, 42, 0.08);
+}
+
+.team-panel:not(.team-panel--collapsed) {
+    border: 2px solid #7C3AED;
 }
 
 .team-panel--main {
@@ -316,6 +342,7 @@
     gap: 10px;
     background: #FFFFFF;
     color: #94A3B8;
+    font-family: 'Inter Regular';
 }
 
 .team-search input {
@@ -323,7 +350,7 @@
     border: 0;
     outline: 0;
     color: #0F172A;
-    font: inherit;
+    font-family: 'Inter Regular';
 }
 
 .team-search input::placeholder {
@@ -346,15 +373,14 @@
 }
 
 .team-table__header {
-    height: 44px;
+    height: 66px;
     padding: 0 20px;
-    background: #F8FAFC;
+    background: #FFFFFF;
     color: #64748B;
     font-family: 'Inter SemiBold';
-    font-size: 12px;
+    font-size: 14px;
     line-height: 16px;
     font-weight: 600;
-    text-transform: uppercase;
 }
 
 .team-table__body {
@@ -378,7 +404,7 @@
 
 .team-member-row:hover,
 .team-member-row--active {
-    background: #FAFAFA;
+    background: #FFFFFF;
 }
 
 .team-member-row__person {
@@ -386,8 +412,8 @@
     align-items: center;
     gap: 14px;
     color: #0F172A;
-    font-family: 'Inter SemiBold';
-    font-weight: 600;
+    font-family: 'Inter Regular';
+    font-weight: 400;
 }
 
 .team-member-row__avatar {
@@ -428,11 +454,11 @@
 
 .team-list {
     height: 100%;
-    margin-top: 32px;
+    margin-top: 0;
     padding-right: 2px;
     display: flex;
     flex-direction: column;
-    gap: 24px;
+    gap: 32px;
     overflow-y: auto;
 }
 

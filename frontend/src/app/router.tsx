@@ -19,6 +19,21 @@ import { CourseChoicePage } from '../pages/courses_errors/soon_update_page/cours
 import { CourseNothingPage } from '../pages/courses_errors/soon_update_page/course_nothing_page/course-nothing'
 import { FeedbackPage } from '../pages/feedback_page/feedback'
 import { MyCoursesPage } from '../pages/my_courses_page/my-courses-page'
+import { OrgExtracurricularPage } from '../pages/organizators/org_extracurricular_creation/org-exrtacurricular-creation-page'
+import { OrgExtracurricularManagementPage } from '../pages/organizators/org_extracurricular/org-extracurricular'
+import { TeamCreationPage } from '../pages/organizators/team_creation/team-creation-page'
+import { TeamFormationPage } from '../pages/organizators/team_formation/team-formation-page'
+import { ExtracurricularPointsAddPage } from '../pages/organizators/extracurricular_points_add/extracurricular-points-add'
+import { OrgProfileNewPage } from '../pages/organizators/org_profile_page/org-profile-new'
+
+import { SetupTeacherNewPage } from '../pages/setup_teacher_page/setup-teacher-new';
+import { SetupTeacherSuccessPage } from '../pages/setup_teacher_page/setup-teacher-success';
+import { TeacherProfileNewPage } from '../pages/teacher_profile_page/teacher-profile-new';
+import { TeacherSettingsPage } from '../pages/teacher_settings_page/teacher-settings';
+import { TeacherCoursesPage } from '../pages/teacher_courses_page/teacher-courses-page';
+import { TeacherCoursesApplyPage } from '../pages/teacher_courses_page/teacher-courses-apply';
+import { TeacherCoursesCertificatesPage } from '../pages/teacher_courses_page/teacher-courses-certificates';
+import { TeacherCourseEditPage } from '../pages/teacher_course_edit_page/teacher-course-edit-page';
 
 const rootRoute = createRootRoute({
   component: () => <Outlet />,
@@ -176,6 +191,97 @@ const MyCoursesRoute = createRoute({
   component: MyCoursesPage,
 })
 
+const OrgExtracurricularCreationRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/org-extracurricular-creation',
+  component: OrgExtracurricularPage,
+})
+
+const OrgExtracurricularManagementRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/org-extracurricular',
+  component: OrgExtracurricularManagementPage,
+})
+
+const TeamCreationRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/team-creation',
+  component: TeamCreationPage,
+})
+
+const TeamFormationRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/team-formation',
+  component: TeamFormationPage,
+})
+
+const ExtracurricularPointsAddRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/extracurricular-points-add',
+  validateSearch: (search: Record<string, unknown>) => ({
+    title: String(search.title ?? 'Название'),
+    date: String(search.date ?? '24 октября'),
+    time: String(search.time ?? '15:00'),
+    organizer: String(search.organizer ?? 'Иванова Анна'),
+  }),
+  component: ExtracurricularPointsAddPage,
+})
+
+const OrgProfileRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/org-profile',
+  component: OrgProfileNewPage,
+})
+
+// === Роуты Преподавателя ===
+const SetupTeacherRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: '/setup-teacher',
+    component: SetupTeacherNewPage,
+})
+
+const SetupTeacherSuccessRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: '/setup-teacher/success',
+    component: SetupTeacherSuccessPage,
+})
+
+const TeacherProfileRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: '/teacher/profile',
+    component: TeacherProfileNewPage,
+})
+
+const TeacherSettingsRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: '/teacher/settings',
+    component: TeacherSettingsPage,
+})
+
+const TeacherCoursesRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: '/teacher/courses',
+    component: TeacherCoursesPage,
+})
+
+const TeacherCoursesApplyRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: '/teacher/courses/apply',
+    component: TeacherCoursesApplyPage,
+})
+
+const TeacherCoursesCertificatesRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: '/teacher/courses/certificates',
+    component: TeacherCoursesCertificatesPage,
+})
+
+const TeacherCourseEditRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: '/teacher/courses/$courseId/edit',
+    component: TeacherCourseEditPage,
+})
+
 const routeTree = rootRoute.addChildren([
   EnterRootRoute,
   EnterRoute,
@@ -198,6 +304,20 @@ const routeTree = rootRoute.addChildren([
   CourseNothingRoute,
   FeedbackRoute,
   MyCoursesRoute,
+  OrgExtracurricularManagementRoute,
+  OrgExtracurricularCreationRoute,
+  TeamCreationRoute,
+  TeamFormationRoute,
+  ExtracurricularPointsAddRoute,
+  OrgProfileRoute,
+  SetupTeacherRoute,
+  SetupTeacherSuccessRoute,
+  TeacherProfileRoute,
+  TeacherSettingsRoute,
+  TeacherCoursesRoute,
+  TeacherCoursesApplyRoute,
+  TeacherCoursesCertificatesRoute,
+  TeacherCourseEditRoute,
 ])
 
 export const router = createRouter({

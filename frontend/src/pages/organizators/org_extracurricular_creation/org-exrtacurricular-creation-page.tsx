@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
-import "./org-extracurricular-page.css";
+import "./org-extracurricular-page-creation.css";
 
 type EventFormat = "offline" | "online";
 
@@ -33,6 +33,7 @@ const formatPersonName = (name: string) => {
 
 export function OrgExtracurricularPage() {
     const navigate = useNavigate();
+    const sidebarAvatarSrc = localStorage.getItem("orgProfileAvatar") ?? "/teacher/profile/avatar-profile.png";
     const [title, setTitle] = useState("");
     const [description, setDescription] = useState("");
     const [date, setDate] = useState("");
@@ -91,32 +92,43 @@ export function OrgExtracurricularPage() {
     };
 
     const saveEvent = () => {
+        const savedActivities = JSON.parse(localStorage.getItem("orgExtracurricularActivities") ?? "[]");
+
         localStorage.setItem(
-            "orgExtracurricularDraft",
-            JSON.stringify({
-                title,
-                description,
-                date,
-                time,
-                organizer,
-                categories: selectedCategories,
-                participants: selectedParticipants,
-                schedule,
-            }),
+            "orgExtracurricularActivities",
+            JSON.stringify([
+                ...savedActivities,
+                {
+                    id: Date.now(),
+                    title: title || "Новая активность",
+                    date: date || "18 июня",
+                    time: time || "10:00",
+                    organizer: organizer || "Анна Смирнова",
+                    email: "organizer@sigma.ru",
+                    attendanceSet: false,
+                    status: "draft",
+                    description,
+                    categories: selectedCategories,
+                    participants: selectedParticipants,
+                    schedule,
+                },
+            ]),
         );
+        navigate({ to: "/org-extracurricular" });
     };
 
     return (
         <main className="org-extra-page" aria-label="Создание активности">
             <aside className="org-extra-sidebar" aria-label="Навигация">
                 <img className="org-extra-sidebar__reference" src="/sidebar-navigation.svg" alt="" aria-hidden="true" />
+                <img className="org-extra-sidebar__avatar" src={sidebarAvatarSrc} alt="" aria-hidden="true" />
                 <button className="org-extra-sidebar__hotspot org-extra-sidebar__hotspot--logo org-extra-clickable" type="button" aria-label="Главная" />
                 <button className="org-extra-sidebar__hotspot org-extra-sidebar__hotspot--users org-extra-clickable" type="button" aria-label="Участники" />
                 <button className="org-extra-sidebar__hotspot org-extra-sidebar__hotspot--calendar org-extra-clickable" type="button" aria-label="Мероприятия" />
                 <button className="org-extra-sidebar__hotspot org-extra-sidebar__hotspot--courses org-extra-clickable" type="button" aria-label="Курсы" />
                 <button className="org-extra-sidebar__hotspot org-extra-sidebar__hotspot--teams org-extra-clickable" type="button" aria-label="Команды" />
                 <button className="org-extra-sidebar__hotspot org-extra-sidebar__hotspot--settings org-extra-clickable" type="button" aria-label="Настройки" />
-                <button className="org-extra-sidebar__hotspot org-extra-sidebar__hotspot--profile org-extra-clickable" type="button" aria-label="Профиль" />
+                <button className="org-extra-sidebar__hotspot org-extra-sidebar__hotspot--profile org-extra-clickable" type="button" aria-label="Профиль" onClick={() => navigate({ to: "/org-profile" })} />
             </aside>
 
             <section className="org-extra-workspace">
@@ -124,14 +136,9 @@ export function OrgExtracurricularPage() {
                     <div className="org-extra-header__left">
                         <h1>Создание активности</h1>
                         <p>Заполните данные для нового мероприятия или команды</p>
-                        <nav className="org-extra-tabs" aria-label="Разделы внеучебки">
-                            <button className="org-extra-tabs__item org-extra-tabs__item--active org-extra-clickable" type="button">Мероприятия</button>
-                            <button className="org-extra-tabs__item org-extra-clickable" type="button" onClick={() => navigate({ to: "/team-formation" })}>Команды</button>
-                            <button className="org-extra-tabs__item org-extra-clickable" type="button">Рейтинг</button>
-                        </nav>
                     </div>
                     <div className="org-extra-header__actions">
-                        <button className="org-extra-light-button org-extra-clickable" type="button" onClick={() => navigate({ to: "/team-formation" })}>
+                        <button className="org-extra-light-button org-extra-clickable" type="button" onClick={() => navigate({ to: "/org-extracurricular" })}>
                             Отмена
                         </button>
                         <button className="org-extra-primary-button org-extra-clickable" type="button" onClick={saveEvent}>

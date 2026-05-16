@@ -1,125 +1,119 @@
-import { Link, useNavigate } from "@tanstack/react-router";
+import React from 'react';
+import { Link } from '@tanstack/react-router';
+import './profile-page.css';
 import { Navbar } from "../../widgets/navbar/navbar";
-import "./profile-page.css";
 
 export function ProfilePage() {
-    const navigate = useNavigate();
-    const openCurricularCharges = (event: React.MouseEvent<HTMLAnchorElement>) => {
-        event.preventDefault();
-        event.stopPropagation();
-        navigate({ to: "/curricular", hash: "charges" });
-    };
-
-    const openCharges = (event: React.MouseEvent<HTMLAnchorElement>) => {
-        event.preventDefault();
-        event.stopPropagation();
-        navigate({ to: "/extracurricular", hash: "charges" });
-    };
-
-    const openCurricularAchievements = (event: React.MouseEvent<HTMLAnchorElement>) => {
-        event.preventDefault();
-        event.stopPropagation();
-        navigate({ to: "/curricular-achievements" });
-    };
-
     return (
-        <main className="profile-page">
-            <section className="user-info-section">
-                <button className="settings-button" type="button" aria-label="Настройки">
-                    <svg width="19" height="20" viewBox="0 0 19 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M10.2168 0C10.9731 0 11.658 0.420067 12.0362 1.04004C12.2201 1.33993 12.3431 1.70976 12.3125 2.09961C12.2921 2.39961 12.3834 2.70047 12.5469 2.98047C13.0682 3.83035 14.2238 4.14989 15.1231 3.66992C16.1347 3.09027 17.4116 3.44004 17.9942 4.42969L18.6787 5.61035C19.2714 6.60033 18.9448 7.87045 17.9229 8.44043C17.0543 8.95047 16.7474 10.0805 17.2686 10.9404C17.4321 11.2103 17.6163 11.4401 17.9024 11.5801C18.2601 11.7701 18.5363 12.0701 18.7305 12.3701C19.1084 12.99 19.0778 13.75 18.71 14.4199L17.9942 15.6201C17.616 16.26 16.9111 16.6601 16.1856 16.6602C15.8281 16.6602 15.4295 16.5602 15.1026 16.3604C14.8369 16.1904 14.5301 16.1299 14.2032 16.1299C13.1914 16.1299 12.3432 16.9602 12.3125 17.9502C12.3124 19.0999 11.3723 19.9998 10.1973 20H8.80668C7.62141 19.9999 6.68178 19.1 6.68168 17.9502C6.66124 16.9602 5.81256 16.1299 4.80082 16.1299C4.4636 16.1299 4.15688 16.1904 3.9014 16.3604C3.57446 16.5602 3.16574 16.6601 2.8184 16.6602C2.0826 16.6602 1.37719 16.2601 0.999061 15.6201L0.293983 14.4199C-0.08406 13.77 -0.104537 12.9901 0.273475 12.3701C0.436944 12.0702 0.743509 11.7701 1.09086 11.5801C1.37696 11.4401 1.56168 11.2104 1.73539 10.9404C2.24637 10.0804 1.93901 8.95043 1.07035 8.44043C0.058793 7.87045 -0.26779 6.60028 0.314491 5.61035L0.999061 4.42969C1.5918 3.43988 2.85903 3.09012 3.8809 3.66992C4.76989 4.14986 5.92504 3.83024 6.44633 2.98047C6.60984 2.70047 6.70212 2.39961 6.68168 2.09961C6.66133 1.70975 6.7737 1.33994 6.96781 1.04004C7.34595 0.420117 8.03043 0.0199985 8.7764 0H10.2168ZM9.51176 7.17969C7.90753 7.17987 6.60954 8.43999 6.60941 10.0098C6.60941 11.5796 7.90745 12.8299 9.51176 12.8301C11.1162 12.8301 12.3838 11.5798 12.3838 10.0098C12.3837 8.43987 11.1161 7.17969 9.51176 7.17969Z" fill="#2A282F"/>
-                    </svg>
-                </button>
+        <div className="profile-page-wrapper">
+            <div className="profile-container">
+                {/* Шапка профиля */}
+                <header className="profile-header">
+                    <div className="header-placeholder"></div>
+                    <h1 className="profile-title">Профиль</h1>
+                    <button className="settings-btn" aria-label="Настройки">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path fillRule="evenodd" clipRule="evenodd" d="M12.7168 2.0001C13.4731 2.0001 14.158 2.42017 14.5362 3.04014C14.7201 3.34003 14.8431 3.70986 14.8125 4.09971C14.7921 4.39971 14.8834 4.70057 15.0469 4.98057C15.5682 5.83045 16.7238 6.14999 17.6231 5.67002C18.6347 5.09037 19.9116 5.44014 20.4942 6.42979L21.1787 7.61045C21.7714 8.60043 21.4448 9.87055 20.4229 10.4405C19.5543 10.9506 19.2474 12.0806 19.7686 12.9405C19.9321 13.2104 20.1163 13.4402 20.4024 13.5802C20.7601 13.7702 21.0363 14.0702 21.2305 14.3702C21.6084 14.9901 21.5778 15.7501 21.21 16.42L20.4942 17.6202C20.116 18.2601 19.4111 18.6602 18.6856 18.6603C18.3281 18.6603 17.9295 18.5603 17.6026 18.3605C17.3369 18.1905 17.0301 18.13 16.7032 18.13C15.6914 18.13 14.8432 18.9603 14.8125 19.9503C14.8124 21.1 13.8723 21.9999 12.6973 22.0001H11.3067C10.1214 22 9.18178 21.1001 9.18168 19.9503C9.16124 18.9603 8.31256 18.13 7.30082 18.13C6.9636 18.13 6.65688 18.1905 6.4014 18.3605C6.07446 18.5603 5.66574 18.6602 5.3184 18.6603C4.5826 18.6603 3.87719 18.2602 3.49906 17.6202L2.79398 16.42C2.41594 15.7701 2.39546 14.9902 2.77348 14.3702C2.93694 14.0703 3.24351 13.7702 3.59086 13.5802C3.87696 13.4402 4.06168 13.2105 4.23539 12.9405C4.74637 12.0805 4.43901 10.9505 3.57035 10.4405C2.55879 9.87055 2.23221 8.60037 2.81449 7.61045L3.49906 6.42979C4.0918 5.43998 5.35903 5.09022 6.3809 5.67002C7.26989 6.14996 8.42504 5.83034 8.94633 4.98057C9.10984 4.70057 9.20212 4.39971 9.18168 4.09971C9.16133 3.70984 9.2737 3.34004 9.46781 3.04014C9.84595 2.42022 10.5304 2.0201 11.2764 2.0001H12.7168ZM12.0118 9.17979C10.4075 9.17997 9.10954 10.4401 9.10941 12.0099C9.10941 13.5797 10.4074 14.83 12.0118 14.8302C13.6162 14.8302 14.8838 13.5799 14.8838 12.0099C14.8837 10.44 13.6161 9.17979 12.0118 9.17979Z" fill="#101828"/>
+                        </svg>
+                    </button>
+                </header>
 
-                <img className="profile-image" src="/sigmacoins.svg" alt="Аватар пользователя" />
+                {/* Основная информация о пользователе */}
+                <section className="user-main-info">
+                    <div className="avatar-wrapper">
+                        {/* Заглушка для аватарки с инициалами, либо ставим картинку */}
+                        <div className="avatar-fallback">АВ</div>
+                    </div>
+                    <div className="user-text-info">
+                        <h2 className="user-name">Аня Волкова</h2>
+                        <p className="user-role-team">Ученица &bull; Команда 5</p>
+                    </div>
+                </section>
 
-                <h1 className="user-fullname semi-bold-text">
-                    Фамилия<br />
-                    Имя
-                </h1>
-
-                <p className="user-role semi-bold-text">Студент</p>
-                <div className="user-stats">
-                    <div className="stats-item">
-                        <div className="stats-value">
-                            <img src="/star.svg" alt="" />
-                            <p>20</p>
+                {/* Статистика / Баллы */}
+                <section className="stats-row">
+                    <div className="stat-card">
+                        <div className="stat-icon-wrapper flash-icon">
+                            <span className="emoji-icon">⚡</span>
                         </div>
-                        <p className="stats-label">ачивок</p>
+                        <div className="stat-value">13</div>
+                        <div className="stat-label">учебных<br/>баллов</div>
                     </div>
 
-                    <div className="stats-item">
-                        <div className="stats-value">
-                            <img src="/flash.svg" alt="" />
-                            <p>400</p>
+                    <div className="stat-card">
+                        <div className="stat-icon-wrapper star-icon">
+                            <span className="emoji-icon">⭐</span>
                         </div>
-                        <p className="stats-label">баллов</p>
+                        <div className="stat-value">11</div>
+                        <div className="stat-label">внеучебных<br/>баллов</div>
                     </div>
 
-                    <div className="stats-item">
-                        <div className="stats-value">
-                            <img src="/sigmacoins.svg" alt="" />
-                            <p>500</p>
+                    <div className="stat-card">
+                        <div className="stat-icon-wrapper coin-icon">
+                            <span className="emoji-icon">💰</span>
                         </div>
-                        <p className="stats-label">сигмакойнов</p>
+                        <div className="stat-value">300</div>
+                        <div className="stat-label">SigmaCoins</div>
                     </div>
-                </div>
-            </section>
+                </section>
 
-            <section className="activities-section">
-                <h2 className="activities-title">Мои активности</h2>
+                {/* Навигационное меню списка */}
+                <nav className="profile-menu">
+                    <Link to="/attendance" className="menu-item">
+                        <span className="menu-text">Посещаемость</span>
+                        <ChevronRightIcon />
+                    </Link>
+                    <Link to="/schedule" className="menu-item">
+                        <span className="menu-text">Мое расписание</span>
+                        <ChevronRightIcon />
+                    </Link>
+                    <Link to="/achievements" className="menu-item">
+                        <span className="menu-text">Достижения</span>
+                        <ChevronRightIcon />
+                    </Link>
+                    <Link to="/certificates" className="menu-item">
+                        <span className="menu-text">Сертификаты</span>
+                        <ChevronRightIcon />
+                    </Link>
+                </nav>
 
-                <div className="activities-list">
-                    <div
-                        className="activity-card"
-                        role="link"
-                        tabIndex={0}
-                        onClick={() => navigate({ to: "/curricular" })}
-                        onKeyDown={(event) => {
-                            if (event.key === "Enter" || event.key === " ") {
-                                navigate({ to: "/curricular" });
-                            }
-                        }}
-                    >
-                        <img className="activity-image" src="/star.svg" alt="" />
+                <section className="activities-section">
+                    <h2 className="activities-title">Мои активности</h2>
 
-                        <div className="activity-info">
-                            <h3>Учебная активность</h3>
-                            <Link to="/curricular" hash="charges" onClick={openCurricularCharges}>Посмотреть начисления</Link>
-                            <Link to="/curricular-achievements" onClick={openCurricularAchievements}>Посмотреть ачивки</Link>
+                    <div className="activities-list">
+                        <div className="activity-card">
+                            <img className="activity-image" src="/star.png" alt="" />
+
+                            <div className="activity-info">
+                                <h3>Учебная активность</h3>
+                                <Link to="/scores">Посмотреть начисления</Link>
+                                <Link to="/achievements">Посмотреть ачивки</Link>
+                            </div>
                         </div>
-                    </div>
 
-                    <div
-                        className="activity-card"
-                        role="link"
-                        tabIndex={0}
-                        onClick={() => navigate({ to: "/extracurricular" })}
-                        onKeyDown={(event) => {
-                            if (event.key === "Enter" || event.key === " ") {
-                                navigate({ to: "/extracurricular" });
-                            }
-                        }}
-                    >
-                        <img className="activity-image" src="/flash.svg" alt="" />
+                        <div className="activity-card">
+                            <img className="activity-image" src="/flash.png" alt="" />
 
-                        <div className="activity-info">
-                            <h3>Внеучебка</h3>
-                            <div className="team-meta">
-                                <p
-                                    className="team-name"
-                                    onClick={(event) => event.stopPropagation()}
-                                >
-                                    Название команды
-                                </p>
-                                <Link to="/extracurricular" hash="charges" onClick={openCharges}>Посмотреть начисления</Link>
+                            <div className="activity-info">
+                                <h3>Внеучебка</h3>
+                                <p className="team-name">Название команды</p>
+                                <Link to="/scores">Посмотреть начисления</Link>
                             </div>
                         </div>
                     </div>
-                </div>
-            </section>
+                </section>
 
-            <Navbar />
-        </main>
+                <Navbar />
+            </div>
+        </div>
+    );
+}
+
+// Компонент-иконка стрелочки вправо для пунктов меню
+function ChevronRightIcon() {
+    return (
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M9 18L15 12L9 6" stroke="#98A2B3" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+        </svg>
     );
 }
