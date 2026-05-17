@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
-import "./org-extracurricular-page-creation.css";
+import "./org-extracurricular-page.css";
 
 type EventFormat = "offline" | "online";
 
