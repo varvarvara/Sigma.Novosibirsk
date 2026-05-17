@@ -14,15 +14,19 @@ from app.modules.attendance.schemas import (
     CourseStudentAttendanceSummaryOut,
     LessonAttendanceItemOut,
     StudentAttendanceDashboardOut,
+    StudentAchievementDetailedOut,
+    StudentAttendanceChargeOut,
+    StudentAttendanceFilterCourseOut,
+    StudentAttendanceFilterOptionsOut,
     StudentCourseAttendanceOut,
-    StudentSearchItemOut
-    
+    StudentSearchItemOut,
 )
 
 
 class AttendanceService:
     def __init__(self, db: Session):
         self.repository = AttendanceRepository(db=db)
+        self.achievement_repository = AchievementRepository(db=db)
         self.gam_repo = GamificationRepository(db)
 
     @staticmethod
@@ -303,6 +307,48 @@ class AttendanceService:
             total_lessons=total_lessons,
             courses=courses_out,
         )
+
+    def get_my_filter_options(self, current_user: dict) -> StudentAttendanceFilterOptionsOut:
+        self._require_student(current_user=current_user)
+
+        student_id = current_user["user"].id
+        courses = [
+            StudentAttendanceFilterCourseOut(**item)
+            for item in self.repository.list_student_filter_courses(student_id=student_id)
+        ]
+        dates = self.repository.list_student_lesson_dates(student_id=student_id)
+
+        return StudentAttendanceFilterOptionsOut(courses=courses, dates=dates)
+
+    def get_my_attendance_charges(self, current_user: dict) -> list[StudentAttendanceChargeOut]:
+        self._require_student(current_user=current_user)
+
+        student_id = current_user["user"].id
+        rows = self.repository.list_student_attendance_charges(student_id=student_id)
+
+        return [StudentAttendanceChargeOut(**row) for row in rows]
+
+    def get_my_achievements(self, current_user: dict) -> list[StudentAchievementDetailedOut]:
+        self._require_student(current_user=current_user)
+
+        student_id = current_user["user"].id
+        rows = self.achievement_repository.list_student_achievements(student_id=student_id)
+
+        return [
+            StudentAchievementDetailedOut(
+                id=row.id,
+                student_id=row.student_id,
+                achievement_id=row.achievement_id,
+                awarded_at=row.awarded_at,
+                season_id=row.season_id,
+                course_id=row.course_id,
+                course_title=row.course_title,
+                achievement_name=row.achievement_name,
+                achievement_description=row.achievement_description,
+                achievement_score=row.achievement_score,
+            )
+            for row in rows
+        ]
         
 class AchievementService:
     def __init__(self, db: Session):

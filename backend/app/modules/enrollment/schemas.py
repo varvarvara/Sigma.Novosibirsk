@@ -3,7 +3,10 @@ from enum import Enum
 
 from pydantic import BaseModel
 
-ALLOWED_SLOT_HOURS = [9, 10, 11, 12]
+ALLOWED_SLOT_HOURS = [9, 10, 11]
+
+# Час начала занятия в расписании → id слота записи.
+SCHEDULE_HOUR_TO_ENROLLMENT_SLOT = {10: 9, 11: 10, 12: 11}
 
 
 class EnrollmentStatus(str, Enum):
@@ -34,7 +37,10 @@ class SlotCourseOption(BaseModel):
     course_id: int
     title: str
     description: str | None = None
+    syllabus_url: str | None = None
+    course_type: str | None = None
     teacher_name: str | None = None
+    cover_image_url: str | None = None
     capacity: int | None = None
     enrolled_count: int
     seats_left: int | None = None
@@ -43,6 +49,7 @@ class SlotCourseOption(BaseModel):
 class SlotOptionsItem(BaseModel):
     slot_hour: int
     courses: list[SlotCourseOption]
+    preview_cover_url: str | None = None
 
 
 class EnrollmentSlotOptionsOut(BaseModel):

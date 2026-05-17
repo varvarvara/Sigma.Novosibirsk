@@ -313,6 +313,19 @@ class SchedulingRepository:
             .first()
         )
 
+    def is_schedule_published_for_season(self, season_id: int) -> bool:
+        from app.modules.scheduling.models import ScheduleGeneration
+
+        published = (
+            self.db.query(ScheduleGeneration.id)
+            .filter(
+                ScheduleGeneration.season_id == season_id,
+                ScheduleGeneration.approved_at.isnot(None),
+            )
+            .first()
+        )
+        return published is not None
+
     def list_schedule_generation_items(self, generation_id: int):
         from app.modules.scheduling.models import ScheduleGenerationItem
 

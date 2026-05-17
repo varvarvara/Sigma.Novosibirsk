@@ -14,6 +14,7 @@ from app.modules.auth.schemas import PreRegistrationOut
 from app.modules.users.repository import UsersRepository
 from app.modules.users.schemas import StaffOutput
 from app.security.hashHelper import HashHelper
+from app.security.password_policy import generate_temporary_password
 from app.tasks import send_teacher_credentials_email_task
 from enums import PreRegistrationStatuses, StaffRoles
 
@@ -58,7 +59,7 @@ class AdminService:
     def approve_pre_registration(
         self,
         pre_registration_id: int,
-        data: PreRegistrationApproveIn,
+        data: PreRegistrationApproveIn | None = None,
     ) -> StaffOutput:
         pre_registration = self._users_repository.get_pre_registration_by_id(pre_registration_id=pre_registration_id)
         if pre_registration is None:
@@ -73,7 +74,8 @@ class AdminService:
         if self._users_repository.get_student_by_email(email=pre_registration.email) is not None:
             raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Student with this email already exists")
 
-        password_hash = HashHelper.get_password_hash(plain_password=data.password)
+        plain_password = data.password if data and data.password else generate_temporary_password(length=8)
+        password_hash = HashHelper.get_password_hash(plain_password=plain_password)
         staff = self._users_repository.create_staff_from_pre_registration(
             pre_registration=pre_registration,
             password_hash=password_hash,
@@ -88,7 +90,7 @@ class AdminService:
             send_teacher_credentials_email_task.delay(
                 email=pre_registration.email,
                 first_name=pre_registration.first_name,
-                password=data.password,
+                password=plain_password,
             )
         except Exception:
             logger.exception(

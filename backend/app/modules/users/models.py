@@ -19,6 +19,7 @@ class Staff(Base):
     university = Column(String(150), nullable=True)
     study_direction = Column(String(150), nullable=True)
     study_year = Column(Integer, nullable=True)
+    avatar_image_key = Column(String(512))
 
     courses = relationship("Course", back_populates="staff")
     slots = relationship("Slot", back_populates="staff")
@@ -60,6 +61,7 @@ class Student(Base):
         nullable=False,
     )
     season_id = Column(Integer, ForeignKey("season.id"), nullable=False)
+    avatar_image_key = Column(String(512))
 
     enrollments = relationship("Enrollment", back_populates="student")
     attendance = relationship("Attendance", back_populates="student")

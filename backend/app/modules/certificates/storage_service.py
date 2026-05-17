@@ -14,7 +14,6 @@ from zoneinfo import ZoneInfo
 # Load env explicitly for this module to avoid dependency on import order.
 BACKEND_DIR = Path(__file__).resolve().parents[3]
 load_dotenv(BACKEND_DIR / ".env")
-load_dotenv(BACKEND_DIR.parent / ".env")
 
 
 class S3StorageService:
@@ -32,18 +31,34 @@ class S3StorageService:
         self.endpoint_url = self._normalize_endpoint_url(endpoint_url=endpoint_url, bucket_name=bucket_name)
         self.bucket_name = bucket_name
         self.region_name = region_name
+        self.aws_access_key_id = aws_access_key_id
+        self.aws_secret_access_key = aws_secret_access_key
         self.public_base_url = self._resolve_public_base_url(public_base_url=public_base_url)
         self.timezone = self._resolve_timezone(timezone_name=timezone_name)
-        
-        self.s3_client = boto3.client(
-            "s3",
+
+        self.s3_client = self._create_s3_client(
             endpoint_url=self.endpoint_url,
-            aws_access_key_id=aws_access_key_id,
-            aws_secret_access_key=aws_secret_access_key,
-            region_name=region_name,
+            addressing_style="path",
+        )
+        self._virtual_s3_client = (
+            self._create_s3_client(
+                endpoint_url=self.public_base_url,
+                addressing_style="virtual",
+            )
+            if self.public_base_url
+            else None
+        )
+
+    def _create_s3_client(self, endpoint_url: Optional[str], addressing_style: str):
+        return boto3.client(
+            "s3",
+            endpoint_url=endpoint_url,
+            aws_access_key_id=self.aws_access_key_id,
+            aws_secret_access_key=self.aws_secret_access_key,
+            region_name=self.region_name,
             config=Config(
                 signature_version="s3v4",
-                s3={"addressing_style": "path"},
+                s3={"addressing_style": addressing_style},
                 retries={"max_attempts": 5, "mode": "standard"},
                 connect_timeout=5,
                 read_timeout=30,
@@ -95,6 +110,9 @@ class S3StorageService:
             base = self.endpoint_url.rstrip("/")
             return f"{base}/{self.bucket_name}/{safe_key}"
         return f"https://{self.bucket_name}.s3.amazonaws.com/{safe_key}"
+
+    def public_url_for_key(self, object_key: str) -> str:
+        return self._object_url(object_name=object_key)
 
     def is_configured(self) -> bool:
         return bool(self.endpoint_url and self.bucket_name)
@@ -235,24 +253,35 @@ class S3StorageService:
             return []
     
     def generate_presigned_url(
-        self, 
-        object_name: str, 
-        expiration: int = 3600
+        self,
+        object_name: str,
+        expiration: int = 3600,
     ) -> Optional[str]:
-        try:
-            if not self.bucket_name:
-                return None
-            return self.s3_client.generate_presigned_url(
-                "get_object",
-                Params={
-                    "Bucket": self.bucket_name,
-                    "Key": object_name,
-                },
-                ExpiresIn=expiration,
-            )
-        except ClientError as e:
-            print(f"Error generating presigned URL: {e}")
+        if not self.bucket_name:
             return None
+
+        params = {
+            "Bucket": self.bucket_name,
+            "Key": object_name,
+        }
+
+        clients = [client for client in (self.s3_client, self._virtual_s3_client) if client is not None]
+        last_error: ClientError | None = None
+
+        for client in clients:
+            try:
+                return client.generate_presigned_url(
+                    "get_object",
+                    Params=params,
+                    ExpiresIn=expiration,
+                )
+            except ClientError as error:
+                last_error = error
+
+        if last_error is not None:
+            print(f"Error generating presigned URL: {last_error}")
+
+        return None
 
     def generate_presigned_upload_url(
         self,

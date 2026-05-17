@@ -1,5 +1,10 @@
-from fastapi import FastAPI
+from contextlib import asynccontextmanager
 
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy import text
+
+from app.config import settings
 from app.db.base import Base, engine
 from app.modules.admin.router import adminRouter
 from app.modules.attendance.router import attendanceRouter
@@ -23,10 +28,49 @@ from app.modules.scheduling import models as scheduling_models  # noqa: F401
 from app.modules.users import models as users_models  # noqa: F401
 from app.modules.season import models as season_models  # noqa: F401
 
+def _ensure_student_gamification_trigger() -> None:
+    """Align DB trigger with season_id on gamification (required after migrations)."""
+    with engine.begin() as connection:
+        connection.execute(
+            text(
+                """
+                CREATE OR REPLACE FUNCTION create_gamification_row()
+                RETURNS TRIGGER
+                LANGUAGE plpgsql
+                AS $$
+                BEGIN
+                    INSERT INTO gamification(student_id, season_id)
+                    VALUES (NEW.id, NEW.season_id);
+                    RETURN NEW;
+                END;
+                $$;
+                """
+            )
+        )
+
+
+@asynccontextmanager
+async def lifespan(_: FastAPI):
+    _ensure_student_gamification_trigger()
+    yield
+
+
 app = FastAPI(
     title="Sigma Platform API",
     version="1.0.0",
     description="Sigma.Novosibirsk",
+    lifespan=lifespan,
+    docs_url="/docs" if settings.openapi_enabled else None,
+    redoc_url="/redoc" if settings.openapi_enabled else None,
+    openapi_url="/openapi.json" if settings.openapi_enabled else None,
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.cors_allow_origins,
+    allow_credentials=settings.CORS_ALLOW_CREDENTIALS,
+    allow_methods=settings.cors_allow_methods,
+    allow_headers=settings.cors_allow_headers,
 )
 
 

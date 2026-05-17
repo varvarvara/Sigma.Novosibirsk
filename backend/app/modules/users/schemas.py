@@ -2,13 +2,13 @@ import re
 from datetime import date
 
 from fastapi import HTTPException, status
-from pydantic import BaseModel, EmailStr, field_validator
+from pydantic import BaseModel, EmailStr, field_validator, model_validator
 
+from app.security.password_policy import validate_password_strength
 from enums import StaffRoles, StudentStatuses
 
 LETTER_MATCH_PATTERN = re.compile(r"^[а-яА-ЯёЁa-zA-Z\-]+$")
 PHONE_MATCH_PATTERN = re.compile(r"^\+?[0-9]{10,20}$")
-MIN_PASSWORD_LENGTH = 8
 
 
 class StudentInCreate(BaseModel):
@@ -25,6 +25,13 @@ class StudentInCreate(BaseModel):
     parent_phone: str
     password: str
     season_id: int
+
+    @model_validator(mode="before")
+    @classmethod
+    def normalize_patronymic(cls, value):
+        if isinstance(value, dict) and "partonymic" not in value and "patronymic" in value:
+            value["partonymic"] = value.get("patronymic")
+        return value
 
     @field_validator("first_name", "last_name", "partonymic", "parent_name")
     def validate_name_fields(cls, value):
@@ -57,12 +64,7 @@ class StudentInCreate(BaseModel):
 
     @field_validator("password")
     def validate_password(cls, value):
-        if len(value) < MIN_PASSWORD_LENGTH:
-            raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail=f"Password can not contain less than {MIN_PASSWORD_LENGTH} symbols",
-            )
-        return value
+        return validate_password_strength(value)
 
 
 class StaffInCreate(BaseModel):
@@ -78,6 +80,13 @@ class StaffInCreate(BaseModel):
     study_direction: str | None = None
     study_year: int | None = None
 
+    @model_validator(mode="before")
+    @classmethod
+    def normalize_patronymic(cls, value):
+        if isinstance(value, dict) and "partonymic" not in value and "patronymic" in value:
+            value["partonymic"] = value.get("patronymic")
+        return value
+
     @field_validator("first_name", "last_name", "partonymic")
     def validate_name_fields(cls, value):
         if value is None:
@@ -91,12 +100,7 @@ class StaffInCreate(BaseModel):
 
     @field_validator("password")
     def validate_password(cls, value):
-        if len(value) < MIN_PASSWORD_LENGTH:
-            raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail=f"Password can not contain less than {MIN_PASSWORD_LENGTH} symbols",
-            )
-        return value
+        return validate_password_strength(value)
 
     @field_validator("study_year")
     def validate_study_year(cls, value):
@@ -124,6 +128,7 @@ class StudentOutput(BaseModel):
     parent_name: str
     parent_phone: str
     student_status: StudentStatuses
+    avatar_url: str | None = None
 
     model_config = {"from_attributes": True}
 
@@ -139,5 +144,11 @@ class StaffOutput(BaseModel):
     university: str | None = None
     study_direction: str | None = None
     study_year: int | None = None
+    avatar_url: str | None = None
 
     model_config = {"from_attributes": True}
+
+
+class AvatarUploadOut(BaseModel):
+    avatar_url: str
+    avatar_image_key: str

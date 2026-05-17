@@ -1,9 +1,9 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.db.session import get_db
-from app.security.dependecies import get_current_user
-from app.security.permissions import require_admin
+from app.security.dependencies import get_current_user
+from app.security.permissions import require_admin, require_student
 from app.modules.gamification.repository import *
 from app.modules.gamification.service import *
 from app.modules.gamification.schemas import *
@@ -106,6 +106,20 @@ def update_level(level: int, new_score: int, current_user=Depends(require_staff)
 @gamificationRouter.delete("/level/{level}")
 def delete_level(level: int, current_user=Depends(require_staff), service: GamificationLevelService = Depends(get_level_service)):
     return service.delete(level)
+
+@gamificationRouter.get(
+    "/me/extracurricular",
+    response_model=StudentExtracurricularDashboardOut,
+    summary="Внеучебка: рейтинг команд, моя команда и начисления",
+)
+def get_my_extracurricular(
+    season_id: int = 1,
+    current_user: dict = Depends(require_student),
+    service: GamificationService = Depends(get_gam_service),
+):
+    student_id = current_user["user"].id
+    return service.get_my_extracurricular_dashboard(student_id=student_id, season_id=season_id)
+
 
 @gamificationRouter.get("/team/{student_id}")
 def get_student_team(student_id: int, current_user=Depends(require_student_or_staff), service: GamificationService = Depends(get_gam_service)):

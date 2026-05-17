@@ -31,6 +31,7 @@ class TokenStore:
         self._redis: Redis | None = None
         self._refresh_tokens_memory: dict[str, dict] = {}
         self._blacklisted_jti_memory: dict[str, int] = {}
+        self._password_reset_memory: dict[str, dict] = {}
         self._init_redis()
 
     def _init_redis(self) -> None:
@@ -55,6 +56,10 @@ class TokenStore:
         for token_jti, exp_ts in list(self._blacklisted_jti_memory.items()):
             if exp_ts <= now_ts:
                 self._blacklisted_jti_memory.pop(token_jti, None)
+
+        for reset_token, info in list(self._password_reset_memory.items()):
+            if info["exp"] <= now_ts:
+                self._password_reset_memory.pop(reset_token, None)
 
     def save_refresh(self, refresh_token: str, payload: dict, ttl_seconds: int) -> None:
         ttl = max(ttl_seconds, 1)
@@ -101,6 +106,37 @@ class TokenStore:
 
         self._cleanup_memory()
         return token_jti in self._blacklisted_jti_memory
+
+    def save_password_reset(self, reset_token: str, payload: dict, ttl_seconds: int) -> None:
+        ttl = max(ttl_seconds, 1)
+        if self._redis:
+            self._redis.setex(f"auth:password_reset:{reset_token}", ttl, json.dumps(payload))
+            return
+
+        self._password_reset_memory[reset_token] = {
+            "payload": payload,
+            "exp": self._now_ts() + ttl,
+        }
+
+    def get_password_reset(self, reset_token: str) -> dict | None:
+        if self._redis:
+            raw = self._redis.get(f"auth:password_reset:{reset_token}")
+            if not raw:
+                return None
+            return json.loads(raw)
+
+        self._cleanup_memory()
+        info = self._password_reset_memory.get(reset_token)
+        if not info:
+            return None
+        return info["payload"]
+
+    def revoke_password_reset(self, reset_token: str) -> None:
+        if self._redis:
+            self._redis.delete(f"auth:password_reset:{reset_token}")
+            return
+
+        self._password_reset_memory.pop(reset_token, None)
 
 
 class CacheStore:

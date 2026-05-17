@@ -1,10 +1,11 @@
 from datetime import date, time
 
-from fastapi import HTTPException, status
+from fastapi import HTTPException, UploadFile, status
 from sqlalchemy.orm import Session
 
 from app.modules.courses.repository import CourseRepository
 from app.modules.courses.schemas import (
+    CourseCoverUploadOut,
     CourseCreate,
     CourseOutput,
     CourseSlotOut,
@@ -12,11 +13,13 @@ from app.modules.courses.schemas import (
     CourseSlotsSetOut,
     CourseUpdate,
 )
+from app.modules.media.service import get_media_service
 
 
 class CourseService:
     def __init__(self, db: Session):
         self.repository = CourseRepository(db=db)
+        self._media = get_media_service()
 
     @staticmethod
     def _is_admin(current_user: dict) -> bool:
@@ -61,6 +64,7 @@ class CourseService:
             title=course.title,
             description=course.descriptions,
             syllabus_url=course.syllabus_url,
+            cover_image_url=self._media.resolve_url(course.cover_image_key),
             course_status=course.course_status,
             course_duration=course.course_duration,
             course_type=course.course_type,
@@ -181,6 +185,30 @@ class CourseService:
 
         updated = self.repository.update_course(course=course, **update_fields)
         return self._to_output(updated)
+
+    def upload_course_cover(
+        self,
+        course_id: int,
+        file: UploadFile,
+        current_user: dict,
+    ) -> CourseCoverUploadOut:
+        course = self.repository.get_by_id(course_id=course_id)
+        if course is None:
+            raise HTTPException(status_code=404, detail="Course not found")
+
+        self._ensure_course_write_access(course=course, current_user=current_user)
+
+        ext = self._media.validate_image(file)
+        old_key = course.cover_image_key
+        object_key = self._media.course_cover_key(course.season_id, course.id, ext)
+        self._media.upload_image(file=file, object_key=object_key)
+        updated = self.repository.set_cover_image_key(course_id=course.id, cover_image_key=object_key)
+        if updated is None:
+            raise HTTPException(status_code=404, detail="Course not found")
+
+        self._media.delete_object(old_key)
+        cover_image_url = self._media.resolve_url(object_key) or ""
+        return CourseCoverUploadOut(cover_image_url=cover_image_url, cover_image_key=object_key)
 
     def delete_course(self, course_id: int, current_user: dict) -> dict:
         if not self._is_admin(current_user):

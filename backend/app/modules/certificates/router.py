@@ -10,7 +10,7 @@ from app.modules.certificates.schemas import (
     TeacherCertificateOut,
 )
 from app.modules.certificates.service import CertificatesAppService
-from app.security.dependecies import get_current_user
+from app.security.dependencies import get_current_user
 from app.security.permissions import require_admin, require_student, require_teacher, require_teacher_or_admin
 
 

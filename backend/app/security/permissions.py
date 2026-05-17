@@ -2,7 +2,7 @@ from enum import Enum
 
 from fastapi import Depends, HTTPException, status
 
-from app.security.dependecies import get_current_user
+from app.security.dependencies import get_current_user
 
 STAFF_ROLE_TEACHER = "Teacher"
 STAFF_ROLE_ADMIN = "Admin"

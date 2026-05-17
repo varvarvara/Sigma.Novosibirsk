@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Body, Depends
 from sqlalchemy.orm import Session
 
 from app.db.session import get_db
@@ -43,7 +43,7 @@ def get_pre_registrations(_: dict = Depends(require_admin), session: Session = D
 @adminRouter.patch("/pre-registrations/{pre_registration_id}/approve", response_model=StaffOutput)
 def approve_pre_registration(
     pre_registration_id: int,
-    body: PreRegistrationApproveIn,
+    body: PreRegistrationApproveIn | None = Body(default=None),
     _: dict = Depends(require_admin),
     session: Session = Depends(get_db),
 ):

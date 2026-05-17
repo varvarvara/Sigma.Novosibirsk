@@ -4,7 +4,7 @@ from enum import Enum
 from pydantic import BaseModel, Field, HttpUrl, field_validator
 
 
-ALLOWED_SLOT_HOURS = {9, 10, 11, 12}
+ALLOWED_SLOT_HOURS = {10, 11, 12}
 
 
 class CourseStatus(str, Enum):
@@ -50,6 +50,7 @@ class CourseOutput(BaseModel):
     title: str
     description: str | None = None
     syllabus_url: str | None = None
+    cover_image_url: str | None = None
     course_status: CourseStatus
     course_duration: CourseDuration
     course_type: CourseType
@@ -60,6 +61,11 @@ class CourseOutput(BaseModel):
     model_config = {"from_attributes": True}
 
 
+class CourseCoverUploadOut(BaseModel):
+    cover_image_url: str
+    cover_image_key: str
+
+
 class CourseSlotIn(BaseModel):
     slot_date: date
     slot_hour: int
@@ -68,7 +74,7 @@ class CourseSlotIn(BaseModel):
     @classmethod
     def validate_slot_hour(cls, value: int):
         if value not in ALLOWED_SLOT_HOURS:
-            raise ValueError("Allowed slot start hours: 9, 10, 11, 12")
+            raise ValueError("Allowed slot start hours: 10, 11, 12")
         return value
 
 

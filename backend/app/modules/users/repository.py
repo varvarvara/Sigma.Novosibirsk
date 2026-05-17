@@ -104,11 +104,43 @@ class UsersRepository:
     def get_staff_by_email(self, email: str) -> Staff | None:
         return self.session.query(Staff).filter_by(email=email).first()
 
+    def update_student_password(self, student_id: int, password_hash: str) -> None:
+        student = self.session.query(Student).filter_by(id=student_id).first()
+        if student is None:
+            return
+        student.password = password_hash
+        self.session.commit()
+
+    def update_staff_password(self, staff_id: int, password_hash: str) -> None:
+        staff = self.session.query(Staff).filter_by(id=staff_id).first()
+        if staff is None:
+            return
+        staff.password = password_hash
+        self.session.commit()
+
     def get_student_by_id(self, user_id: int) -> Student | None:
         return self.session.query(Student).filter_by(id=user_id).first()
 
     def get_staff_by_id(self, user_id: int) -> Staff | None:
         return self.session.query(Staff).filter_by(id=user_id).first()
+
+    def set_student_avatar_key(self, student_id: int, avatar_image_key: str | None) -> Student | None:
+        student = self.get_student_by_id(student_id)
+        if student is None:
+            return None
+        student.avatar_image_key = avatar_image_key
+        self.session.commit()
+        self.session.refresh(student)
+        return student
+
+    def set_staff_avatar_key(self, staff_id: int, avatar_image_key: str | None) -> Staff | None:
+        staff = self.get_staff_by_id(staff_id)
+        if staff is None:
+            return None
+        staff.avatar_image_key = avatar_image_key
+        self.session.commit()
+        self.session.refresh(staff)
+        return staff
 
     def list_admins(self) -> list[Staff]:
         return (

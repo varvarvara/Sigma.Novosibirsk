@@ -9,7 +9,6 @@ from dotenv import load_dotenv
 
 BACKEND_DIR = Path(__file__).resolve().parents[3]
 load_dotenv(BACKEND_DIR / ".env")
-load_dotenv(BACKEND_DIR.parent / ".env")
 
 
 def _normalize_password(value: Optional[str]) -> Optional[str]:

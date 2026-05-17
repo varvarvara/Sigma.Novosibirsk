@@ -1,9 +1,10 @@
 from sqlalchemy.orm import Session
-from sqlalchemy import desc, text
+from sqlalchemy import desc, func, text
 from sqlalchemy.exc import IntegrityError
 from typing import Optional, List
 from app.modules.gamification.models import Gamification, GamificationLevel, ExtracurricularActivity, ExtracurricularTeam, ExtracurricularTeamMember, ExtracurricularScore
 from app.modules.gamification.schemas import GamificationLevelCreate, ExtracurricularActivityUpdate
+from app.modules.users.models import Student
 
 class GamificationRepository:
 
@@ -40,6 +41,120 @@ class GamificationRepository:
             .limit(limit)
             .all()
         )
+
+    def get_student_team_membership(self, student_id: int, season_id: int) -> ExtracurricularTeamMember | None:
+        return (
+            self.session.query(ExtracurricularTeamMember)
+            .join(ExtracurricularTeam, ExtracurricularTeam.id == ExtracurricularTeamMember.team_id)
+            .filter(
+                ExtracurricularTeamMember.student_id == student_id,
+                ExtracurricularTeamMember.season_id == season_id,
+            )
+            .first()
+        )
+
+    def list_team_rating_rows(self, season_id: int) -> list[dict]:
+        rows = (
+            self.session.query(
+                ExtracurricularTeam.id.label("team_id"),
+                ExtracurricularTeam.ex_team_number,
+                ExtracurricularTeam.ex_team_name,
+                func.coalesce(func.sum(ExtracurricularScore.ex_team_score), 0).label("total_coins"),
+            )
+            .outerjoin(
+                ExtracurricularScore,
+                (ExtracurricularScore.team_id == ExtracurricularTeam.id)
+                & (ExtracurricularScore.season_id == season_id),
+            )
+            .filter(ExtracurricularTeam.season_id == season_id)
+            .group_by(
+                ExtracurricularTeam.id,
+                ExtracurricularTeam.ex_team_number,
+                ExtracurricularTeam.ex_team_name,
+            )
+            .order_by(desc("total_coins"), ExtracurricularTeam.ex_team_number.asc())
+            .all()
+        )
+
+        results: list[dict] = []
+        for row in rows:
+            member_rows = (
+                self.session.query(Student.first_name, Student.last_name)
+                .join(
+                    ExtracurricularTeamMember,
+                    ExtracurricularTeamMember.student_id == Student.id,
+                )
+                .filter(
+                    ExtracurricularTeamMember.team_id == row.team_id,
+                    ExtracurricularTeamMember.season_id == season_id,
+                )
+                .order_by(Student.last_name.asc(), Student.first_name.asc())
+                .all()
+            )
+            members_label = ", ".join(
+                f"{member.first_name} {member.last_name[0]}.".strip()
+                for member in member_rows
+                if member.first_name or member.last_name
+            )
+            results.append(
+                {
+                    "team_id": row.team_id,
+                    "team_number": row.ex_team_number,
+                    "team_name": row.ex_team_name,
+                    "total_coins": int(row.total_coins or 0),
+                    "members_label": members_label or "—",
+                }
+            )
+
+        return results
+
+    def list_team_charges(self, team_id: int, season_id: int) -> list[dict]:
+        rows = (
+            self.session.query(
+                ExtracurricularScore.id,
+                ExtracurricularActivity.ex_course_name,
+                ExtracurricularScore.ex_team_score,
+            )
+            .join(
+                ExtracurricularActivity,
+                ExtracurricularScore.ex_course_id == ExtracurricularActivity.id,
+            )
+            .filter(
+                ExtracurricularScore.team_id == team_id,
+                ExtracurricularScore.season_id == season_id,
+            )
+            .order_by(ExtracurricularScore.id.asc())
+            .all()
+        )
+
+        return [
+            {
+                "id": row.id,
+                "activity_name": row.ex_course_name,
+                "coins": int(row.ex_team_score or 0),
+            }
+            for row in rows
+        ]
+
+    def list_team_members(self, team_id: int, season_id: int) -> list[dict]:
+        rows = (
+            self.session.query(Student.id, Student.first_name, Student.last_name)
+            .join(ExtracurricularTeamMember, ExtracurricularTeamMember.student_id == Student.id)
+            .filter(
+                ExtracurricularTeamMember.team_id == team_id,
+                ExtracurricularTeamMember.season_id == season_id,
+            )
+            .order_by(Student.last_name.asc(), Student.first_name.asc())
+            .all()
+        )
+
+        return [
+            {
+                "student_id": row.id,
+                "full_name": f"{row.first_name} {row.last_name}".strip(),
+            }
+            for row in rows
+        ]
 
     def delete(self, student_id: int) -> None:
         obj = self.get_by_student_id(student_id)

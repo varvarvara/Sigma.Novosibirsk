@@ -74,6 +74,15 @@ class CourseRepository:
         self.db.refresh(db_course)
         return db_course
 
+    def set_cover_image_key(self, course_id: int, cover_image_key: str | None) -> Course | None:
+        course = self.get_by_id(course_id=course_id)
+        if course is None:
+            return None
+        course.cover_image_key = cover_image_key
+        self.db.commit()
+        self.db.refresh(course)
+        return course
+
     def update_course(self, course: Course, **fields) -> Course:
         for key, value in fields.items():
             setattr(course, key, value)

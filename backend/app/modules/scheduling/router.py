@@ -8,7 +8,7 @@ from app.modules.scheduling.schemas import (
     TimetableItemOut,
 )
 from app.modules.scheduling.services import SchedulingService
-from app.security.dependecies import get_current_user
+from app.security.dependencies import get_current_user
 from app.security.permissions import require_admin, require_teacher_or_admin
 
 schedulingRouter = APIRouter(prefix="/scheduling", tags=["scheduling"])
@@ -56,6 +56,18 @@ def approve_schedule_preview(
 ):
     return SchedulingService(db=db).approve_preview(
         generation_id=generation_id,
+        current_user=current_user,
+    )
+
+
+@schedulingRouter.get("/publish-status")
+def get_schedule_publish_status(
+    season_id: int = Query(1, description="ID сезона"),
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    return SchedulingService(db=db).get_publish_status(
+        season_id=season_id,
         current_user=current_user,
     )
 

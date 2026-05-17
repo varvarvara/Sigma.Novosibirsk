@@ -42,3 +42,14 @@ def send_teacher_credentials_email(*, to_email: str, first_name: str, password: 
         f"Пароль: {password}\n"
     )
     send_email(to_email=to_email, subject=subject, body=body)
+
+
+def send_password_reset_email(*, to_email: str, reset_url: str) -> None:
+    subject = "Восстановление пароля Sigma.Novosibirsk"
+    body = (
+        "Здравствуйте!\n\n"
+        "Вы запросили сброс пароля. Перейдите по ссылке, чтобы задать новый пароль:\n"
+        f"{reset_url}\n\n"
+        "Ссылка действует ограниченное время. Если вы не запрашивали сброс, просто проигнорируйте это письмо.\n"
+    )
+    send_email(to_email=to_email, subject=subject, body=body)

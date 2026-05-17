@@ -2,26 +2,23 @@ import re
 from datetime import datetime
 
 from fastapi import HTTPException, status
-from pydantic import BaseModel, EmailStr, field_validator
+from pydantic import BaseModel, EmailStr, field_validator, model_validator
 
+from app.security.password_policy import validate_password_strength
 from enums import StaffRoles
 
 
 LETTER_MATCH_PATTERN = re.compile(r"^[а-яА-ЯёЁa-zA-Z\-]+$")
-MIN_PASSWORD_LENGTH = 8
 
 
 class PreRegistrationApproveIn(BaseModel):
-    password: str
+    password: str | None = None
 
     @field_validator("password")
     def validate_password(cls, value):
-        if len(value) < MIN_PASSWORD_LENGTH:
-            raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail=f"Password can not contain less than {MIN_PASSWORD_LENGTH} symbols",
-            )
-        return value
+        if value is None:
+            return value
+        return validate_password_strength(value)
 
 
 class StaffCreateByAdminIn(BaseModel):
@@ -31,6 +28,13 @@ class StaffCreateByAdminIn(BaseModel):
     email: EmailStr
     password: str
     staff_role: StaffRoles
+
+    @model_validator(mode="before")
+    @classmethod
+    def normalize_patronymic(cls, value):
+        if isinstance(value, dict) and "partonymic" not in value and "patronymic" in value:
+            value["partonymic"] = value.get("patronymic")
+        return value
 
     @field_validator("first_name", "last_name", "partonymic")
     def validate_name_fields(cls, value):
@@ -45,12 +49,7 @@ class StaffCreateByAdminIn(BaseModel):
 
     @field_validator("password")
     def validate_password(cls, value):
-        if len(value) < MIN_PASSWORD_LENGTH:
-            raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail=f"Password can not contain less than {MIN_PASSWORD_LENGTH} symbols",
-            )
-        return value
+        return validate_password_strength(value)
 
 
 class ActionMessage(BaseModel):

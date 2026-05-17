@@ -4,7 +4,7 @@ from enum import Enum
 from pydantic import BaseModel, field_validator
 
 
-ALLOWED_SLOT_HOURS = {9, 10, 11, 12}
+ALLOWED_SLOT_HOURS = {10, 11, 12}
 
 
 class Weekday(str, Enum):
@@ -20,7 +20,7 @@ class Weekday(str, Enum):
 class CourseScheduleGenerateIn(BaseModel):
     start_date: date
     weekdays: list[Weekday]
-    preferred_slots: list[int] = [9, 10, 11, 12]
+    preferred_slots: list[int] = [10, 11, 12]
 
     @field_validator("weekdays")
     @classmethod
@@ -40,7 +40,7 @@ class CourseScheduleGenerateIn(BaseModel):
         unique_values = sorted(set(value))
         invalid = [item for item in unique_values if item not in ALLOWED_SLOT_HOURS]
         if invalid:
-            raise ValueError("Allowed slot start hours: 9, 10, 11, 12")
+            raise ValueError("Allowed slot start hours: 10, 11, 12")
 
         return unique_values
 

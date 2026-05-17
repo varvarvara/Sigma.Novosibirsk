@@ -6,6 +6,9 @@ from app.db.session import get_db
 from app.modules.auth.schemas import (
     LoginRequest,
     LogoutRequest,
+    MessageOut,
+    PasswordResetConfirmIn,
+    PasswordResetRequestIn,
     PreRegistrationCreateIn,
     PreRegistrationOut,
     RefreshTokenRequest,
@@ -43,3 +46,13 @@ def logout(
 @authRouter.post("/staff/pre-registration", status_code=201, response_model=PreRegistrationOut)
 def staff_pre_registration(body: PreRegistrationCreateIn, session: Session = Depends(get_db)):
     return AuthService(session=session).staff_pre_registration(data=body)
+
+
+@authRouter.post("/password-reset/request", response_model=MessageOut)
+def request_password_reset(body: PasswordResetRequestIn, session: Session = Depends(get_db)):
+    return AuthService(session=session).request_password_reset(body=body)
+
+
+@authRouter.post("/password-reset/confirm", response_model=MessageOut)
+def confirm_password_reset(body: PasswordResetConfirmIn, session: Session = Depends(get_db)):
+    return AuthService(session=session).confirm_password_reset(body=body)

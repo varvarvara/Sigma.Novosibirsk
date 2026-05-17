@@ -3,8 +3,9 @@ from datetime import date, datetime
 from enum import Enum
 
 from fastapi import HTTPException, status
-from pydantic import BaseModel, EmailStr, Field, field_validator
+from pydantic import BaseModel, EmailStr, Field, field_validator, model_validator
 
+from app.security.password_policy import validate_password_strength as _validate_password_strength
 from enums import PreRegistrationStatuses
 
 
@@ -21,6 +22,25 @@ class TeacherCourseType(str, Enum):
 class LoginRequest(BaseModel):
     email: EmailStr
     password: str
+    remember_me: bool = False
+
+
+class PasswordResetRequestIn(BaseModel):
+    email: EmailStr
+
+
+class PasswordResetConfirmIn(BaseModel):
+    token: str = Field(..., min_length=16)
+    password: str
+
+    @field_validator("password")
+    @classmethod
+    def validate_password(cls, value: str) -> str:
+        return _validate_password_strength(value)
+
+
+class MessageOut(BaseModel):
+    message: str
 
 
 class UserWithToken(BaseModel):
@@ -52,6 +72,13 @@ class PreRegistrationCreateIn(BaseModel):
     proposed_course_title: str = Field(..., min_length=2, max_length=150)
     proposed_course_type: TeacherCourseType
     proposed_course_description: str = Field(..., min_length=1, max_length=MAX_PROPOSED_DESCRIPTION_LENGTH)
+
+    @model_validator(mode="before")
+    @classmethod
+    def normalize_patronymic(cls, value):
+        if isinstance(value, dict) and "partonymic" not in value and "patronymic" in value:
+            value["partonymic"] = value.get("patronymic")
+        return value
 
     @field_validator("first_name", "last_name", "partonymic")
     def validate_name_fields(cls, value):

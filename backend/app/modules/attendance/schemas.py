@@ -95,6 +95,27 @@ class StudentAttendanceDashboardOut(BaseModel):
     total_lessons: int
     courses: list[StudentCourseAttendanceOut]
 
+
+class StudentAttendanceFilterCourseOut(BaseModel):
+    course_id: int
+    course_title: str
+    teacher_name: str
+
+
+class StudentAttendanceFilterOptionsOut(BaseModel):
+    courses: list[StudentAttendanceFilterCourseOut]
+    dates: list[date]
+
+
+class StudentAttendanceChargeOut(BaseModel):
+    schedule_id: int
+    course_id: int
+    course_title: str
+    teacher_name: str
+    lesson_date: date
+    points: int
+    attended: bool
+
 class AchievementAssign(BaseModel):
     student_id: int
     achievement_id: int
@@ -135,3 +156,16 @@ class StudentAchievementOut(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class StudentAchievementDetailedOut(BaseModel):
+    id: int
+    student_id: int
+    achievement_id: int
+    awarded_at: datetime
+    season_id: int
+    course_id: int
+    course_title: str
+    achievement_name: str
+    achievement_description: str
+    achievement_score: int

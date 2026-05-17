@@ -15,6 +15,7 @@ class Course(Base):
     course_duration = Column(Enum("ThreeDays", "SixDays", name="course_types"), nullable=False, default="ThreeDays")
     course_type = Column(Enum("Olympiad", "Author", name="teacher_course_types"), nullable=False, default="Author")
     syllabus_url = Column(Text)
+    cover_image_key = Column(Text)
     capacity = Column(Integer, nullable=True)  # NULL means unlimited seats
     created_at = Column(TIMESTAMP, default="now()")
     updated_at = Column(TIMESTAMP, default="now()")

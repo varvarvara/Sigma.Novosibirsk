@@ -63,6 +63,62 @@ class GamificationService:
             "total_score": gam.total_score
         }
 
+    def get_my_extracurricular_dashboard(self, student_id: int, season_id: int = 1) -> dict:
+        rating_rows = self.repo.list_team_rating_rows(season_id)
+        place_by_team = {row["team_id"]: index for index, row in enumerate(rating_rows, start=1)}
+
+        rating = [
+            {
+                "place": index,
+                "team_id": row["team_id"],
+                "team_name": row["team_name"],
+                "members_label": row["members_label"],
+                "total_coins": row["total_coins"],
+            }
+            for index, row in enumerate(rating_rows, start=1)
+        ]
+
+        membership = self.repo.get_student_team_membership(student_id, season_id)
+        my_team = None
+        charges: list[dict] = []
+
+        if membership:
+            team = (
+                self.repo.session.query(ExtracurricularTeam)
+                .filter(ExtracurricularTeam.id == membership.team_id)
+                .first()
+            )
+            if team:
+                members = self.repo.list_team_members(team.id, season_id)
+                total_coins = next(
+                    (row["total_coins"] for row in rating_rows if row["team_id"] == team.id),
+                    0,
+                )
+                my_team = {
+                    "team_id": team.id,
+                    "team_number": team.ex_team_number,
+                    "team_name": team.ex_team_name,
+                    "total_coins": total_coins,
+                    "rating_place": place_by_team.get(team.id),
+                    "members": members,
+                }
+                charges = [
+                    {
+                        "id": row["id"],
+                        "activity_name": row["activity_name"],
+                        "role_label": "Участник",
+                        "coins": row["coins"],
+                    }
+                    for row in self.repo.list_team_charges(team.id, season_id)
+                ]
+
+        return {
+            "has_team": membership is not None,
+            "my_team": my_team,
+            "rating": rating,
+            "charges": charges,
+        }
+
 class GamificationLevelService:
 
     def __init__(self, repo: GamificationLevelRepository):

@@ -1,0 +1,22 @@
+.field-error {
+  margin: 0;
+  color: #d64545;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.25;
+}
+
+.field-input--error {
+  border-color: #d64545 !important;
+  box-shadow: 0 0 0 2px rgba(214, 69, 69, 0.12) !important;
+}
+
+.field-input--error:focus {
+  border-color: #d64545 !important;
+  box-shadow: 0 0 0 2px rgba(214, 69, 69, 0.12) !important;
+}
+
+.consent-card--error {
+  border-color: #d64545 !important;
+  box-shadow: 0 0 0 2px rgba(214, 69, 69, 0.1);
+}

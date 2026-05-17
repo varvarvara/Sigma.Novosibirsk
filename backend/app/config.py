@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Literal
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -18,10 +19,22 @@ class Settings(BaseSettings):
     POSTGRES_PORT: int = 5432
     DATABASE_URL: str | None = None
 
-    JWT_SECRET: str = "change_me"
+    APP_ENV: Literal["dev", "test", "prod"] = "dev"
+
+    JWT_SECRET: str | None = None
     JWT_ALGORITHM: str = "HS256"
     JWT_EXPIRE_MINUTES: int = 60
     REFRESH_EXPIRE_DAYS: int = 7
+    REMEMBER_REFRESH_EXPIRE_DAYS: int = 30
+    PASSWORD_RESET_EXPIRE_MINUTES: int = 60
+    FRONTEND_APP_URL: str = "http://localhost:5173"
+
+    CORS_ALLOW_ORIGINS: str = "*"
+    CORS_ALLOW_METHODS: str = "*"
+    CORS_ALLOW_HEADERS: str = "*"
+    CORS_ALLOW_CREDENTIALS: bool = False
+
+    OPENAPI_ENABLED: bool | None = None
 
     REDIS_HOST: str = "localhost"
     REDIS_PORT: int = 6379
@@ -50,6 +63,12 @@ class Settings(BaseSettings):
 
     APP_TIMEZONE: str = "Europe/Moscow"
     CERTIFICATES_FOLDER: str = "certificates"
+    MEDIA_FOLDER: str = "media"
+    PROFILES_FOLDER: str = "profiles"
+
+    @staticmethod
+    def _split_csv(value: str) -> list[str]:
+        return [item.strip() for item in value.split(",") if item.strip()]
 
     def build_database_url(self) -> str:
         return (
@@ -70,6 +89,30 @@ class Settings(BaseSettings):
     @property
     def redis_url(self) -> str:
         return self.REDIS_URL or self.build_redis_url()
+
+    @property
+    def cors_allow_origins(self) -> list[str]:
+        if self.CORS_ALLOW_ORIGINS.strip() == "*":
+            return ["*"]
+        return self._split_csv(self.CORS_ALLOW_ORIGINS)
+
+    @property
+    def cors_allow_methods(self) -> list[str]:
+        if self.CORS_ALLOW_METHODS.strip() == "*":
+            return ["*"]
+        return self._split_csv(self.CORS_ALLOW_METHODS)
+
+    @property
+    def cors_allow_headers(self) -> list[str]:
+        if self.CORS_ALLOW_HEADERS.strip() == "*":
+            return ["*"]
+        return self._split_csv(self.CORS_ALLOW_HEADERS)
+
+    @property
+    def openapi_enabled(self) -> bool:
+        if self.OPENAPI_ENABLED is not None:
+            return self.OPENAPI_ENABLED
+        return self.APP_ENV != "prod"
 
 
 settings = Settings()

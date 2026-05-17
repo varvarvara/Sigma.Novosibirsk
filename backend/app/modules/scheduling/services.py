@@ -42,6 +42,18 @@ class SchedulingService:
         return current_user.get("user_type") == "student"
 
     @staticmethod
+    def _entity_id(current_user: dict) -> int | None:
+        user = current_user.get("user")
+        if user is not None and getattr(user, "id", None) is not None:
+            return int(user.id)
+
+        raw_id = current_user.get("id")
+        if raw_id is not None:
+            return int(raw_id)
+
+        return None
+
+    @staticmethod
     def _to_timetable_item(row) -> TimetableItemOut:
         schedule, course_class, course, staff = row
         teacher_name = f"{staff.first_name} {staff.last_name}".strip()
@@ -191,9 +203,9 @@ class SchedulingService:
         user_type = current_user.get("user_type")
         staff_role = current_user.get("staff_role")
 
-        current_user_id = current_user.get("id")
-        current_staff_id = current_user.get("staff_id") or current_user_id
-        current_student_id = current_user.get("student_id") or current_user_id
+        entity_id = SchedulingService._entity_id(current_user)
+        current_staff_id = current_user.get("staff_id") or entity_id
+        current_student_id = current_user.get("student_id") or entity_id
 
         if user_type == "staff" and staff_role == "Admin":
             return teacher_id, student_id
@@ -559,15 +571,22 @@ class SchedulingService:
             student_id=student_id,
         )
 
-        rows = self.repository.list_schedule_events(
-            season_id=season_id,
-            teacher_id=teacher_id,
-            course_id=course_id,
-            student_id=student_id,
-        )
+        schedule_published = self.repository.is_schedule_published_for_season(season_id=season_id)
+        if self._is_student(current_user) and not schedule_published:
+            rows = []
+        elif student_id is not None and not schedule_published:
+            rows = []
+        else:
+            rows = self.repository.list_schedule_events(
+                season_id=season_id,
+                teacher_id=teacher_id,
+                course_id=course_id,
+                student_id=student_id,
+            )
 
         return {
             "season_id": season_id,
+            "schedule_published": schedule_published,
             "filters": {
                 "teacher_id": teacher_id,
                 "course_id": course_id,
@@ -575,6 +594,16 @@ class SchedulingService:
             },
             "events": [self._event_from_row(row) for row in rows],
         }
+
+    def get_publish_status(self, season_id: int, current_user: dict) -> dict:
+        if not self._is_admin(current_user) and not self._is_student(current_user):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Student/Admin access required",
+            )
+
+        published = self.repository.is_schedule_published_for_season(season_id=season_id)
+        return {"season_id": season_id, "published": published}
 
     def export_events_ics(
         self,

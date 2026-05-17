@@ -1,8 +1,9 @@
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, File, Query, UploadFile
 from sqlalchemy.orm import Session
 
 from app.db.session import get_db
 from app.modules.courses.schemas import (
+    CourseCoverUploadOut,
     CourseCreate,
     CourseOutput,
     CourseSlotOut,
@@ -11,7 +12,7 @@ from app.modules.courses.schemas import (
     CourseUpdate,
 )
 from app.modules.courses.service import CourseService
-from app.security.dependecies import get_current_user
+from app.security.dependencies import get_current_user
 from app.security.permissions import require_admin, require_teacher, require_teacher_or_admin
 
 courseRouter = APIRouter(prefix="/courses", tags=["courses"])
@@ -65,6 +66,20 @@ def update_course(
     db: Session = Depends(get_db),
 ):
     return CourseService(db=db).update_course(course_id=course_id, data=data, current_user=current_user)
+
+
+@courseRouter.post("/{course_id}/cover", response_model=CourseCoverUploadOut)
+def upload_course_cover(
+    course_id: int,
+    file: UploadFile = File(...),
+    current_user: dict = Depends(require_teacher_or_admin),
+    db: Session = Depends(get_db),
+):
+    return CourseService(db=db).upload_course_cover(
+        course_id=course_id,
+        file=file,
+        current_user=current_user,
+    )
 
 
 @courseRouter.delete("/{course_id}")

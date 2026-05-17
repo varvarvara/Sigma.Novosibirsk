@@ -131,8 +131,8 @@ CREATE OR REPLACE FUNCTION public.create_gamification_row() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
 BEGIN
-INSERT INTO gamification(student_id)
-VALUES(NEW.id);
+INSERT INTO gamification(student_id, season_id)
+VALUES(NEW.id, NEW.season_id);
 RETURN NEW;
 END;
 $$;

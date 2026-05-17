@@ -1,3 +1,5 @@
+from datetime import date
+
 from sqlalchemy import func, or_
 from sqlalchemy.orm import Session
 from fastapi import HTTPException
@@ -244,11 +246,94 @@ class AttendanceRepository:
             .join(Enrollment, Enrollment.course_id == Course.id)
             .filter(
                 Enrollment.student_id == student_id,
-                Enrollment.enrollment_status != "Dropped",
+                Enrollment.enrollment_status == "Active",
             )
             .order_by(Course.id.asc())
             .all()
         )
+
+    def list_student_filter_courses(self, student_id: int) -> list[dict]:
+        rows = (
+            self.db.query(Course.id, Course.title, Staff.first_name, Staff.last_name)
+            .join(Enrollment, Enrollment.course_id == Course.id)
+            .join(Staff, Course.staff_id == Staff.id)
+            .filter(
+                Enrollment.student_id == student_id,
+                Enrollment.enrollment_status == "Active",
+            )
+            .order_by(Course.id.asc())
+            .all()
+        )
+
+        return [
+            {
+                "course_id": row.id,
+                "course_title": row.title,
+                "teacher_name": f"{row.first_name} {row.last_name}".strip() or "Преподаватель не указан",
+            }
+            for row in rows
+        ]
+
+    def list_student_lesson_dates(self, student_id: int) -> list[date]:
+        rows = (
+            self.db.query(Schedule.lesson_date)
+            .join(CourseClass, Schedule.course_class_id == CourseClass.id)
+            .join(Course, CourseClass.course_id == Course.id)
+            .join(Enrollment, Enrollment.course_id == Course.id)
+            .filter(
+                Enrollment.student_id == student_id,
+                Enrollment.enrollment_status == "Active",
+            )
+            .distinct()
+            .order_by(Schedule.lesson_date.asc())
+            .all()
+        )
+
+        return [row.lesson_date for row in rows if isinstance(row.lesson_date, date)]
+
+    def list_student_attendance_charges(self, student_id: int) -> list[dict]:
+        rows = (
+            self.db.query(
+                Schedule.id.label("schedule_id"),
+                Course.id.label("course_id"),
+                Course.title.label("course_title"),
+                Staff.first_name,
+                Staff.last_name,
+                Schedule.lesson_date,
+                Attendance.attendance_status,
+            )
+            .join(CourseClass, Schedule.course_class_id == CourseClass.id)
+            .join(Course, CourseClass.course_id == Course.id)
+            .join(Staff, Course.staff_id == Staff.id)
+            .join(Enrollment, Enrollment.course_id == Course.id)
+            .outerjoin(
+                Attendance,
+                (Attendance.schedule_id == Schedule.id) & (Attendance.student_id == student_id),
+            )
+            .filter(
+                Enrollment.student_id == student_id,
+                Enrollment.enrollment_status == "Active",
+            )
+            .order_by(Schedule.lesson_date.asc(), Schedule.lesson_time.asc())
+            .all()
+        )
+
+        results: list[dict] = []
+        for row in rows:
+            attended = row.attendance_status is True
+            results.append(
+                {
+                    "schedule_id": row.schedule_id,
+                    "course_id": row.course_id,
+                    "course_title": row.course_title,
+                    "teacher_name": f"{row.first_name} {row.last_name}".strip() or "Преподаватель не указан",
+                    "lesson_date": row.lesson_date,
+                    "points": 1 if attended else 0,
+                    "attended": attended,
+                }
+            )
+
+        return results
 
     def count_student_attended_total(self, student_id: int) -> int:
         return (
@@ -326,5 +411,26 @@ class AchievementRepository:
                 StudentAchievement.student_id == student_id,
                 Achievement.course_id == course_id,
             )
+            .all()
+        )
+
+    def list_student_achievements(self, student_id: int):
+        return (
+            self.db.query(
+                StudentAchievement.id.label("id"),
+                StudentAchievement.student_id.label("student_id"),
+                StudentAchievement.achievement_id.label("achievement_id"),
+                StudentAchievement.awarded_at.label("awarded_at"),
+                StudentAchievement.season_id.label("season_id"),
+                Achievement.course_id.label("course_id"),
+                Course.title.label("course_title"),
+                Achievement.achievement_name.label("achievement_name"),
+                Achievement.achievement_description.label("achievement_description"),
+                Achievement.achievement_score.label("achievement_score"),
+            )
+            .join(Achievement, StudentAchievement.achievement_id == Achievement.id)
+            .join(Course, Achievement.course_id == Course.id)
+            .filter(StudentAchievement.student_id == student_id)
+            .order_by(StudentAchievement.awarded_at.desc(), StudentAchievement.id.desc())
             .all()
         )

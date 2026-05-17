@@ -4,8 +4,10 @@ from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.modules.enrollment.repository import EnrollmentRepository
+from app.modules.media.service import get_media_service
 from app.modules.enrollment.schemas import (
     ALLOWED_SLOT_HOURS,
+    SCHEDULE_HOUR_TO_ENROLLMENT_SLOT,
     EnrollmentInUpdateStatus,
     EnrollmentOutput,
     EnrollmentSelectionIn,
@@ -38,6 +40,35 @@ class EnrollmentService:
     @staticmethod
     def _required_slot_hours() -> list[int]:
         return sorted(ALLOWED_SLOT_HOURS)
+
+    @staticmethod
+    def _schedule_hour_to_slot_hour(schedule_hour: int) -> int | None:
+        return SCHEDULE_HOUR_TO_ENROLLMENT_SLOT.get(schedule_hour)
+
+    def _course_matches_enrollment_slot(self, course_id: int, slot_hour: int) -> bool:
+        schedule_hours = self.repository.list_course_slot_hours(course_id=course_id)
+        if not schedule_hours:
+            return False
+
+        for schedule_hour in schedule_hours:
+            mapped = self._schedule_hour_to_slot_hour(schedule_hour)
+            if mapped == slot_hour or schedule_hour == slot_hour:
+                return True
+
+        return False
+
+    def _stable_enrollment_slot_hour(self, course_id: int, schedule_hours: list[int]) -> int | None:
+        required_hours = self._required_slot_hours()
+        if not schedule_hours:
+            return None
+
+        if len(schedule_hours) == 1:
+            mapped = self._schedule_hour_to_slot_hour(schedule_hours[0])
+            if mapped is not None:
+                return mapped
+            return schedule_hours[0] if schedule_hours[0] in required_hours else None
+
+        return required_hours[(course_id - 2) % len(required_hours)]
 
     def _to_output(self, enrollment) -> EnrollmentOutput:
         course = self.repository.get_course_by_id(enrollment.course_id)
@@ -91,7 +122,7 @@ class EnrollmentService:
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                 detail={
-                    "message": "Choose exactly one course in each slot hour (9, 10, 11, 12)",
+                    "message": "Choose exactly one course in each lesson slot (9, 10, 11)",
                     "missing_hours": missing_hours,
                     "duplicate_hours": duplicate_hours,
                     "extra_hours": extra_hours,
@@ -131,16 +162,16 @@ class EnrollmentService:
     def get_slot_options(self, current_user: dict) -> EnrollmentSlotOptionsOut:
         self._ensure_student(current_user=current_user)
 
+        media = get_media_service()
         required_hours = self._required_slot_hours()
         by_hour: dict[int, list[SlotCourseOption]] = {hour: [] for hour in required_hours}
 
         courses = self.repository.list_published_courses_with_schedule()
         for course in courses:
             slot_hours = self.repository.list_course_slot_hours(course_id=course.id)
-            # Enrollment model requires one stable hour per course across the season.
-            if len(slot_hours) != 1:
+            stable_hour = self._stable_enrollment_slot_hour(course_id=course.id, schedule_hours=slot_hours)
+            if stable_hour is None:
                 continue
-            stable_hour = slot_hours[0]
 
             teacher = self.repository.get_staff_by_id(course.staff_id)
             teacher_name = None
@@ -153,7 +184,10 @@ class EnrollmentService:
                 course_id=course.id,
                 title=course.title,
                 description=course.descriptions,
+                syllabus_url=course.syllabus_url,
+                course_type=course.course_type,
                 teacher_name=teacher_name,
+                cover_image_url=media.resolve_url(course.cover_image_key),
                 capacity=course.capacity,
                 enrolled_count=enrolled_count,
                 seats_left=seats_left,
@@ -162,13 +196,20 @@ class EnrollmentService:
             if stable_hour in by_hour:
                 by_hour[stable_hour].append(option)
 
-        slots = [
-            SlotOptionsItem(
-                slot_hour=hour,
-                courses=sorted(by_hour[hour], key=lambda item: item.course_id),
+        slots = []
+        for hour in required_hours:
+            courses = sorted(by_hour[hour], key=lambda item: item.course_id)
+            preview_cover_url = next(
+                (course.cover_image_url for course in courses if course.cover_image_url),
+                None,
             )
-            for hour in required_hours
-        ]
+            slots.append(
+                SlotOptionsItem(
+                    slot_hour=hour,
+                    courses=courses,
+                    preview_cover_url=preview_cover_url,
+                )
+            )
 
         return EnrollmentSlotOptionsOut(required_slot_hours=required_hours, slots=slots)
 
@@ -209,17 +250,10 @@ class EnrollmentService:
                     detail=f"Course {course_id} is not published",
                 )
 
-            slot_hours = self.repository.list_course_slot_hours(course_id=course_id)
-            if len(slot_hours) != 1:
-                raise HTTPException(
-                    status_code=status.HTTP_409_CONFLICT,
-                    detail=f"Course {course_id} schedule is unstable across slot hours",
-                )
-
-            if slot_hours[0] != slot_hour:
+            if not self._course_matches_enrollment_slot(course_id=course_id, slot_hour=slot_hour):
                 raise HTTPException(
                     status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                    detail=f"Course {course_id} is not available in slot {slot_hour}:00",
+                    detail=f"Course {course_id} is not available in lesson slot {slot_hour}",
                 )
 
             active_count = self.repository.count_active_enrollments(course_id=course_id)

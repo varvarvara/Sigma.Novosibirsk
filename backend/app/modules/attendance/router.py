@@ -9,9 +9,12 @@ from app.modules.attendance.schemas import (
     AttendanceMarkOut,
     CourseAttendanceSummaryOut,
     CourseStudentAttendanceDetailOut,
+    StudentAttendanceChargeOut,
     StudentAttendanceDashboardOut,
+    StudentAttendanceFilterOptionsOut,
     StudentSearchItemOut,
     StudentCourseAchievementOut,
+    StudentAchievementDetailedOut,
     AchievementOut,
     AchievementAssign,
     StudentAchievementOut 
@@ -92,4 +95,27 @@ def get_my_attendance(
 ):
     return AttendanceService(db=db).get_my_attendance(current_user=current_user)
 
+
+@attendanceRouter.get("/me/filter-options", response_model=StudentAttendanceFilterOptionsOut)
+def get_my_attendance_filter_options(
+    current_user: dict = Depends(require_student),
+    db: Session = Depends(get_db),
+):
+    return AttendanceService(db=db).get_my_filter_options(current_user=current_user)
+
+
+@attendanceRouter.get("/me/charges", response_model=list[StudentAttendanceChargeOut])
+def get_my_attendance_charges(
+    current_user: dict = Depends(require_student),
+    db: Session = Depends(get_db),
+):
+    return AttendanceService(db=db).get_my_attendance_charges(current_user=current_user)
+
+
+@attendanceRouter.get("/me/achievements", response_model=list[StudentAchievementDetailedOut])
+def get_my_achievements(
+    current_user: dict = Depends(require_student),
+    db: Session = Depends(get_db),
+):
+    return AttendanceService(db=db).get_my_achievements(current_user=current_user)
 

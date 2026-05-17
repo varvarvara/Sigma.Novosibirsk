@@ -87,3 +87,39 @@ class StudentTeamRead(BaseModel):
 
     team_number: int
     team_name: str
+
+
+class ExtracurricularTeamMemberOut(BaseModel):
+    student_id: int
+    full_name: str
+
+
+class ExtracurricularMyTeamOut(BaseModel):
+    team_id: int
+    team_number: int
+    team_name: str
+    total_coins: int
+    rating_place: int | None = None
+    members: list[ExtracurricularTeamMemberOut]
+
+
+class ExtracurricularRatingTeamOut(BaseModel):
+    place: int
+    team_id: int
+    team_name: str
+    members_label: str
+    total_coins: int
+
+
+class ExtracurricularChargeOut(BaseModel):
+    id: int
+    activity_name: str
+    role_label: str
+    coins: int
+
+
+class StudentExtracurricularDashboardOut(BaseModel):
+    has_team: bool
+    my_team: ExtracurricularMyTeamOut | None = None
+    rating: list[ExtracurricularRatingTeamOut]
+    charges: list[ExtracurricularChargeOut]

@@ -62,7 +62,8 @@ CREATE TABLE staff (
     birth_date DATE,
     university VARCHAR(150),
     study_direction VARCHAR(150),
-    study_year INT CHECK (study_year BETWEEN 1 AND 6)
+    study_year INT CHECK (study_year BETWEEN 1 AND 6),
+    avatar_image_key VARCHAR(512)
 );
 
 CREATE TABLE intake_control (
@@ -104,7 +105,8 @@ CREATE TABLE students (
     parent_name VARCHAR(150) NOT NULL,
     parent_phone VARCHAR(20) NOT NULL,
     student_status student_statuses NOT NULL DEFAULT 'Registered',
-    season_id BIGINT NOT NULL REFERENCES season(id) ON DELETE CASCADE
+    season_id BIGINT NOT NULL REFERENCES season(id) ON DELETE CASCADE,
+    avatar_image_key VARCHAR(512)
 );
 
 CREATE TABLE pre_registration (
@@ -144,6 +146,7 @@ CREATE TABLE course (
     course_duration course_types NOT NULL DEFAULT 'ThreeDays',
     course_type teacher_course_types NOT NULL DEFAULT 'Author',
     syllabus_url TEXT,
+    cover_image_key TEXT,
     capacity INT NULL CHECK (capacity >= 1),
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -535,8 +538,8 @@ RETURNS TRIGGER
 LANGUAGE plpgsql
 AS $$
 BEGIN
-INSERT INTO gamification(student_id)
-VALUES(NEW.id);
+INSERT INTO gamification(student_id, season_id)
+VALUES (NEW.id, NEW.season_id);
 RETURN NEW;
 END;
 $$;

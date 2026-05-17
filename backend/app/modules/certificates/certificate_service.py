@@ -14,7 +14,6 @@ ALLOWED_CERTIFICATE_EXTENSIONS = {".pdf", ".png", ".jpg", ".jpeg"}
 
 BACKEND_DIR = Path(__file__).resolve().parents[3]
 load_dotenv(BACKEND_DIR / ".env")
-load_dotenv(BACKEND_DIR.parent / ".env")
 
 
 class CertificateService:

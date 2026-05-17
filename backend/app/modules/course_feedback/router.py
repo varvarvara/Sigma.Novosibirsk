@@ -10,7 +10,7 @@ from app.modules.course_feedback.schemas import (
     FeedbackWindowStatusOut,
 )
 from app.modules.course_feedback.service import CourseFeedbackService
-from app.security.dependecies import get_current_user
+from app.security.dependencies import get_current_user
 from app.security.permissions import require_admin, require_student, require_teacher, require_teacher_or_admin
 
 courseFeedbackRouter = APIRouter(prefix="/course-feedback", tags=["course-feedback"])
