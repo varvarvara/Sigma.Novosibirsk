@@ -1,5 +1,8 @@
 import { useMemo, useState } from 'react';
 import { useLocation, useNavigate } from '@tanstack/react-router';
+import { TeacherSidebar } from '../../shared/ui/teacher_sidebar/teacher-sidebar';
+import '../../shared/ui/teacher_sidebar/teacher-sidebar-styles.css';
+import '../teacher_courses_page/teacher-courses-styles.css';
 import './achievement.css';
 
 type Student = {
@@ -110,34 +113,29 @@ export function AchievementPage() {
 
   return (
     <main className="achievement-page" aria-label="Ачивки">
-      <aside className="achievement-sidebar" aria-label="Основная навигация">
-        <img className="achievement-sidebar__reference" src="/sidebar-teacher.svg" alt="" aria-hidden="true" />
-        <button className="achievement-sidebar__hotspot achievement-sidebar__hotspot--logo achievement-clickable" type="button" aria-label="Главная" />
-        <button className="achievement-sidebar__hotspot achievement-sidebar__hotspot--profile achievement-clickable" type="button" aria-label="Профиль" onClick={() => navigate({ to: '/teacher/profile' })} />
-        <button className="achievement-sidebar__hotspot achievement-sidebar__hotspot--courses achievement-clickable" type="button" aria-label="Курсы" onClick={() => navigate({ to: '/teacher/courses' })} />
-        <button className="achievement-sidebar__hotspot achievement-sidebar__hotspot--achievement achievement-sidebar__hotspot--active achievement-clickable" type="button" aria-label="Посещаемость" />
-        <button className="achievement-sidebar__hotspot achievement-sidebar__hotspot--calendar achievement-clickable" type="button" aria-label="Расписание" />
-        <button className="achievement-sidebar__hotspot achievement-sidebar__hotspot--settings achievement-clickable" type="button" aria-label="Настройки" onClick={() => navigate({ to: '/teacher/settings' })} />
-        <button className="achievement-sidebar__hotspot achievement-sidebar__hotspot--avatar achievement-clickable" type="button" aria-label="Профиль" onClick={() => navigate({ to: '/teacher/profile' })} />
-      </aside>
+      <TeacherSidebar />
 
-      <aside className="courses-subnav achievement-subnav" aria-label="Навигация раздела">
-        <img className="achievement-subnav__reference" src="/subnav-teacher.svg" alt="" aria-hidden="true" />
-        {navItems.map((item, index) => (
+      <aside className="courses-subnav" aria-label="Навигация раздела">
+        {navItems.map((item) => (
           <button
             key={item.id}
-            className={`achievement-subnav__hotspot achievement-subnav__hotspot--${item.id} achievement-clickable${location.pathname === item.path && item.id === 'achievements' ? ' achievement-subnav__hotspot--active' : ''}`}
+            className={`courses-subnav-item achievement-clickable${location.pathname === item.path ? ' active' : ''}`}
             type="button"
             onClick={() => navigate({ to: item.path })}
             aria-label={item.label}
-            style={{ top: 36 + index * 56 }}
-          />
+          >
+            <img className="courses-subnav-icon" src={item.icon} alt="" />
+            <span>{item.label}</span>
+          </button>
         ))}
-        <div className="achievement-subnav-user">
+        <div className="courses-subnav-user">
+          <img className="courses-subnav-avatar" src="/teacher/sidebar/avatar.png" alt="" />
+          <div className="courses-subnav-user-info">
           <span>Имя фамилия</span>
           <span>teacher@sigma.ru</span>
+          </div>
+          <img className="courses-subnav-logout" src="/teacher/sidebar/sub_nav_courses/log-out.svg" alt="Выход" />
         </div>
-        <button className="achievement-subnav__hotspot achievement-subnav__hotspot--logout achievement-clickable" type="button" aria-label="Выход" />
       </aside>
 
       <section className="achievement-workspace">

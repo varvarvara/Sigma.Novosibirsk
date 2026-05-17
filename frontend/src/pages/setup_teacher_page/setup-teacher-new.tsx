@@ -4,17 +4,17 @@ import './setup-teacher-styles.css';
 
 export function SetupTeacherNewPage() {
   const navigate = useNavigate();
-  const [step, setStep] = useState<1 | 2>(1);
+  const [step, setStep] = useState<1 | 2>(2);
   const [isLoading, setIsLoading] = useState(false);
   const [consentChecked, setConsentChecked] = useState(false);
 
   const [formData, setFormData] = useState({
-    // Шаг 1: Место обучения
     university: '',
     direction: '',
     course: '',
     courseInfo: '',
-    // Шаг 2: Личная информация
+    courseType: '',
+    courseDescription: '',
     firstName: '',
     lastName: '',
     patronymic: '',
@@ -28,14 +28,49 @@ export function SetupTeacherNewPage() {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
+  const handleBirthDatePartChange = (part: 'day' | 'month' | 'year', value: string) => {
+    const digits = value.replace(/\D/g, '');
+    const maxLength = part === 'year' ? 4 : 2;
+    const trimmed = digits.slice(0, maxLength);
+
+    if (part === 'day') {
+      const day = Number(trimmed);
+
+      if (trimmed.length === 2 && (day < 1 || day > 31)) {
+        return;
+      }
+    }
+
+    if (part === 'month') {
+      const month = Number(trimmed);
+
+      if (trimmed.length === 2 && (month < 1 || month > 12)) {
+        return;
+      }
+    }
+
+    setFormData((prev) => {
+      const [day = '', month = '', year = ''] = prev.birthDate.split('.');
+      const nextDate = {
+        day,
+        month,
+        year,
+        [part]: trimmed,
+      };
+
+      return { ...prev, birthDate: `${nextDate.day}.${nextDate.month}.${nextDate.year}` };
+    });
+  };
+
+  const [birthDay = '', birthMonth = '', birthYear = ''] = formData.birthDate.split('.');
+
   const handleContinue = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     
-    // Имитация обработки
     setTimeout(() => {
       setIsLoading(false);
-      setStep(2);
+      setStep(1);
     }, 800);
   };
 
@@ -56,26 +91,11 @@ export function SetupTeacherNewPage() {
       {/* Левая колонка: форма */}
       <div className="setup-teacher-left">
         <div className="setup-teacher-content">
-          {/**
-           * Desktop registration: back button hidden for now.
-           *
-           * <button
-           *   type="button"
-           *   className="setup-teacher-back"
-           *   onClick={() => navigate({ to: '/select-role' })}
-           *   aria-label="Назад"
-           * >
-           *   <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-           *     <path d="M15 18L9 12L15 6" stroke="#7848FF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-           *   </svg>
-           * </button>
-           */}
 
           <h1 className="setup-teacher-title">Зарегистрироваться</h1>
 
           {step === 1 ? (
-            // Шаг 1: Место обучения
-            <form onSubmit={handleContinue} className="setup-teacher-form">
+            <form onSubmit={handleFinish} className="setup-teacher-form">
               <h2 className="setup-teacher-subtitle">Место обучения</h2>
 
               <div className="setup-teacher-input-group">
@@ -113,7 +133,6 @@ export function SetupTeacherNewPage() {
                   onChange={handleChange}
                   required
                 >
-                  <option value="">Выберите</option>
                   <option value="1">1 курс</option>
                   <option value="2">2 курс</option>
                   <option value="3">3 курс</option>
@@ -134,11 +153,26 @@ export function SetupTeacherNewPage() {
                     />
                   </div>
                   <div className="setup-teacher-input-row">
-                    <input
-                      type="text"
-                      placeholder="Тип курса"
+                    <select
+                      name="courseType"
+                      value={formData.courseType}
+                      onChange={handleChange}
                       required
+                    >
+                      <option value="Олимпиадный">Олимпиадный</option>
+                      <option value="Авторский">Авторский</option>
+                    </select>
+                  </div>
+                  <div className="setup-teacher-description-block">
+                    <label htmlFor="courseDescription">Описание</label>
+                    <textarea
+                      id="courseDescription"
+                      name="courseDescription"
+                      value={formData.courseDescription}
+                      onChange={handleChange}
+                      maxLength={500}
                     />
+                    <span>500 символов</span>
                   </div>
                 </div>
               </div>
@@ -151,10 +185,10 @@ export function SetupTeacherNewPage() {
                 {isLoading ? (
                   <>
                     <span className="spinner"></span>
-                    Продолжить регистрацию
+                    Завершить регистрацию
                   </>
                 ) : (
-                  'Продолжить регистрацию'
+                  'Завершить регистрацию'
                 )}
               </button>
 
@@ -164,7 +198,7 @@ export function SetupTeacherNewPage() {
             </form>
           ) : (
             // Шаг 2: Личная информация
-            <form onSubmit={handleFinish} className="setup-teacher-form">
+            <form onSubmit={handleContinue} className="setup-teacher-form">
               <h2 className="setup-teacher-subtitle">Личная информация</h2>
 
               <div className="setup-teacher-input-group">
@@ -208,9 +242,9 @@ export function SetupTeacherNewPage() {
               <div className="setup-teacher-input-group">
                 <label>Дата рождения</label>
                 <div className="setup-teacher-date-row">
-                  <input type="text" placeholder="DD" maxLength={2} />
-                  <input type="text" placeholder="MM" maxLength={2} />
-                  <input type="text" placeholder="YYYY" maxLength={4} />
+                  <input type="text" placeholder="DD" value={birthDay} maxLength={2} onChange={(event) => handleBirthDatePartChange('day', event.target.value)} />
+                  <input type="text" placeholder="MM" value={birthMonth} maxLength={2} onChange={(event) => handleBirthDatePartChange('month', event.target.value)} />
+                  <input type="text" placeholder="YYYY" value={birthYear} maxLength={4} onChange={(event) => handleBirthDatePartChange('year', event.target.value)} />
                 </div>
               </div>
 
@@ -226,7 +260,7 @@ export function SetupTeacherNewPage() {
                     name="phone"
                     value={formData.phone}
                     onChange={handleChange}
-                    placeholder="+7 (555) 000-00-00"
+                    placeholder="+7 (ХХХ) ХХ-ХХ-ХХ"
                   />
                 </div>
               </div>
@@ -239,7 +273,7 @@ export function SetupTeacherNewPage() {
                   name="email"
                   value={formData.email}
                   onChange={handleChange}
-                  placeholder="olivia@untitleui.com"
+                  placeholder="example@sigma.ru"
                   required
                 />
               </div>
@@ -279,7 +313,7 @@ export function SetupTeacherNewPage() {
                 className={`setup-teacher-button ${consentChecked && !isLoading ? 'is-ready' : ''}`}
                 disabled={isLoading || !consentChecked}
               >
-                {isLoading ? 'Завершить регистрацию' : 'Завершить регистрацию'}
+                {isLoading ? 'Продолжить регистрацию' : 'Продолжить регистрацию'}
               </button>
 
               <p className="setup-teacher-footer">

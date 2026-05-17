@@ -1,4 +1,8 @@
 import { createRootRoute, createRoute, createRouter, Outlet } from '@tanstack/react-router'
+import { WelcomePage } from '../pages/welcome_page/welcome-page';
+import { SelectRolePage } from '../pages/select_role_page/select-role-page';
+import { SetupStudentPage } from '../pages/setup_student_page/setup-student-page';
+
 import { EnterPage } from '../pages/enter_page/enter-page'
 import { RolePage } from '../pages/role_page/role-page'
 import { LoginPage } from '../pages/login_page/login-page'
@@ -36,21 +40,35 @@ import { TeacherCoursesPage } from '../pages/teacher_courses_page/teacher-course
 import { TeacherCoursesApplyPage } from '../pages/teacher_courses_page/teacher-courses-apply';
 import { TeacherCoursesCertificatesPage } from '../pages/teacher_courses_page/teacher-courses-certificates';
 import { TeacherCourseEditPage } from '../pages/teacher_course_edit_page/teacher-course-edit-page';
+import { TeacherSchedulePage } from '../pages/teacher_schedule_page/teacher-schedule-page';
 
 const rootRoute = createRootRoute({
   component: () => <Outlet />,
 })
 
-const EnterRootRoute = createRoute({
+
+const SelectRoleRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: '/select-role',
+    component: SelectRolePage,
+})
+
+const SetupStudentRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: '/setup-student',
+    component: SetupStudentPage,
+})
+
+const EnterRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/',
   component: EnterPage,
 })
 
-const EnterRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: '/enter',
-  component: EnterPage,
+const WelcomeRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: '/welcome',
+    component: WelcomePage,
 })
 
 const RoleRoute = createRoute({
@@ -241,7 +259,6 @@ const OrgProfileRoute = createRoute({
   component: OrgProfileNewPage,
 })
 
-// === Роуты Преподавателя ===
 const SetupTeacherRoute = createRoute({
     getParentRoute: () => rootRoute,
     path: '/setup-teacher',
@@ -302,8 +319,17 @@ const TeacherCourseEditRoute = createRoute({
     component: TeacherCourseEditPage,
 })
 
+const TeacherScheduleRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: '/teacher/schedule',
+    component: TeacherSchedulePage,
+})
+
+
 const routeTree = rootRoute.addChildren([
-  EnterRootRoute,
+  WelcomeRoute,
+  SelectRoleRoute,
+  SetupStudentRoute,
   EnterRoute,
   RoleRoute,
   LoginRoute,
@@ -341,6 +367,7 @@ const routeTree = rootRoute.addChildren([
   TeacherAttendanceRoute,
   TeacherAchievementRoute,
   TeacherCourseEditRoute,
+  TeacherScheduleRoute,
 ])
 
 export const router = createRouter({

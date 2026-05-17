@@ -124,25 +124,6 @@
     z-index: 1;
 }
 
-@media (max-width: 1200px) {
-    .welcome-split {
-        grid-template-columns: 1fr;
-    }
-
-    .welcome-right {
-        position: fixed;
-        top: 0;
-        right: 0;
-        width: 40%;
-        height: 100vh;
-        z-index: -1;
-    }
-
-    .welcome-left {
-        padding-right: 120px;
-    }
-}
-
 @media (max-width: 768px) {
     .welcome-split {
         grid-template-columns: 1fr;

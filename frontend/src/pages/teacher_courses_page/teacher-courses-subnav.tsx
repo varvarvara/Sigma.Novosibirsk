@@ -24,6 +24,13 @@ const navItems = [
 export const TeacherCoursesSubnav = () => {
   const location = useLocation();
   const currentPath = location.pathname;
+  const isActive = (id: string, path: string) => {
+    if (id === 'my') {
+      return currentPath === path;
+    }
+
+    return currentPath === path || currentPath.startsWith(`${path}/`);
+  };
 
   return (
     <aside className="courses-subnav">
@@ -31,7 +38,7 @@ export const TeacherCoursesSubnav = () => {
         <a
           key={item.id}
           href={item.path}
-          className={`courses-subnav-item ${currentPath === item.path ? 'active' : ''}`}
+          className={`courses-subnav-item ${isActive(item.id, item.path) ? 'active' : ''}`}
         >
           <img className="courses-subnav-icon" src={item.icon} alt="" />
           <span>{item.label}</span>
@@ -39,11 +46,6 @@ export const TeacherCoursesSubnav = () => {
       ))}
 
       <div className="courses-subnav-user">
-        <img
-          className="courses-subnav-avatar"
-          src="/teacher/sidebar/avatar.png"
-          alt="Пользователь"
-        />
         <div className="courses-subnav-user-info">
           <span>Olivia Ryne</span>
           <span>olivia@untitledui.com</span>

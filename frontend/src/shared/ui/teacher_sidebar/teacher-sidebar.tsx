@@ -1,11 +1,33 @@
 import { useLocation } from '@tanstack/react-router';
+import { useEffect, useState } from 'react';
 import './teacher-sidebar-styles.css';
 
 export const TeacherSidebar = () => {
   const location = useLocation();
   const currentPath = location.pathname;
+  const [avatarSrc, setAvatarSrc] = useState(() => localStorage.getItem('teacherProfileAvatar') ?? '/teacher/sidebar/avatar.png');
 
-  const isActive = (path: string) => currentPath === path;
+  const isActive = (path: string) => {
+    if (path === '/teacher/attendance') {
+      return currentPath === path || currentPath.startsWith(`${path}/`) || currentPath === '/teacher/achievements';
+    }
+
+    return currentPath === path || currentPath.startsWith(`${path}/`);
+  };
+
+  useEffect(() => {
+    const updateAvatar = () => {
+      setAvatarSrc(localStorage.getItem('teacherProfileAvatar') ?? '/teacher/sidebar/avatar.png');
+    };
+
+    window.addEventListener('storage', updateAvatar);
+    window.addEventListener('teacherProfileAvatarChanged', updateAvatar);
+
+    return () => {
+      window.removeEventListener('storage', updateAvatar);
+      window.removeEventListener('teacherProfileAvatarChanged', updateAvatar);
+    };
+  }, []);
 
   return (
     <aside className="teacher-sidebar">
@@ -65,7 +87,7 @@ export const TeacherSidebar = () => {
 
         <div className="nav-item avatar">
           <img
-            src="/teacher/sidebar/avatar.png"
+            src={avatarSrc}
             alt="Профиль"
           />
         </div>

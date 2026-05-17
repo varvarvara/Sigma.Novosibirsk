@@ -125,6 +125,14 @@
   max-width: 120px;
 }
 
+/* Align birth inputs so day/month/year sit on the same baseline
+   even when some labels are visually hidden (sr-only). */
+.birth-row .form-group {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+
 .form-group label {
   font-size: 12px;
   font-weight: 500;

@@ -1,13 +1,24 @@
 .achievement-page {
   width: 100%;
-  min-width: 1975px;
-  height: 1080px;
-  margin: 0;
+  max-width: calc(100vw - 72px);
+  min-width: 0;
+  min-height: 100vh;
+  height: auto;
+  margin: 0 0 0 72px;
   display: flex;
-  overflow: hidden;
+  overflow: visible;
   background: #FFFFFF;
   color: #171717;
   font-family: 'Inter Regular', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+.achievement-page::after {
+  content: '';
+  position: fixed;
+  inset: 0 0 0 72px;
+  background: #FFFFFF;
+  z-index: -1;
+  pointer-events: none;
 }
 
 .achievement-clickable {
@@ -165,11 +176,23 @@
 }
 
 .achievement-workspace {
-  width: calc(1975px - 362px);
-  height: 1080px;
+  width: calc(100vw - 72px - 260px);
+  max-width: calc(100vw - 72px - 260px);
+  min-height: 100vh;
+  height: auto;
+  margin-left: 260px;
   padding: 64px 56px;
   background: #FFFFFF;
-  overflow: hidden;
+  overflow: auto;
+}
+
+.achievement-page > .courses-subnav {
+  position: fixed;
+  left: 72px;
+  top: 0;
+  height: 100vh;
+  z-index: 90;
+  flex: 0 0 260px;
 }
 
 .achievement-header {
@@ -312,17 +335,19 @@
 .achievement-panel {
   width: 100%;
   background: #FFFFFF;
-  overflow: hidden;
+  overflow-x: auto;
+  overflow-y: hidden;
 }
 
 .achievement-table {
   width: 100%;
+  min-width: 1280px;
 }
 
 .achievement-table-header,
 .achievement-row {
   display: grid;
-  grid-template-columns: 2fr 1.8fr repeat(4, 96px) 260px 120px;
+  grid-template-columns: minmax(210px, 2fr) minmax(240px, 1.8fr) repeat(4, minmax(92px, 96px)) minmax(260px, 300px) minmax(112px, 120px);
   align-items: center;
 }
 
@@ -499,6 +524,7 @@
   align-items: center;
   gap: 42px;
   justify-content: flex-end;
+  padding-right: 24px;
 }
 
 .achievement-icon-button {
@@ -580,4 +606,94 @@
   justify-content: flex-end;
   width: 100%;
   margin-top: 12px;
+}
+
+@media (max-width: 1024px) {
+  .achievement-page > .courses-subnav {
+    left: 72px;
+    width: 220px;
+    flex-basis: 220px;
+  }
+
+  .achievement-workspace {
+    width: calc(100vw - 72px - 220px);
+    max-width: calc(100vw - 72px - 220px);
+    margin-left: 220px;
+    padding: 48px 32px;
+  }
+}
+
+@media (max-width: 768px) {
+  .achievement-page {
+    margin-left: 64px;
+    max-width: calc(100vw - 64px);
+  }
+
+  .achievement-page::after {
+    left: 64px;
+  }
+
+  .achievement-page > .courses-subnav {
+    left: 64px;
+    width: 200px;
+    flex-basis: 200px;
+    padding: 20px 12px;
+  }
+
+  .achievement-workspace {
+    width: calc(100vw - 64px - 200px);
+    max-width: calc(100vw - 64px - 200px);
+    margin-left: 200px;
+    padding: 40px 24px;
+  }
+
+  .achievement-header {
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .achievement-pagination-row {
+    gap: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .achievement-page {
+    margin-left: 60px;
+    max-width: calc(100vw - 60px);
+  }
+
+  .achievement-page::after {
+    left: 60px;
+  }
+
+  .achievement-page > .courses-subnav {
+    display: none;
+  }
+
+  .achievement-workspace {
+    width: calc(100vw - 60px);
+    max-width: calc(100vw - 60px);
+    margin-left: 0;
+    padding: 32px 16px;
+  }
+
+  .achievement-course-title-row {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .achievement-course-title-row span {
+    margin-top: 0;
+  }
+
+  .achievement-pagination-row {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .achievement-pagination {
+    order: -1;
+  }
 }

@@ -1,5 +1,8 @@
 import { useMemo, useState } from 'react';
 import { useLocation, useNavigate } from '@tanstack/react-router';
+import { TeacherSidebar } from '../../shared/ui/teacher_sidebar/teacher-sidebar';
+import '../../shared/ui/teacher_sidebar/teacher-sidebar-styles.css';
+import '../teacher_courses_page/teacher-courses-styles.css';
 import './attendance.css';
 
 type Student = {
@@ -110,34 +113,29 @@ export function AttendancePage() {
 
   return (
     <main className="attendance-page" aria-label="Посещаемость">
-      <aside className="attendance-sidebar" aria-label="Основная навигация">
-        <img className="attendance-sidebar__reference" src="/sidebar-teacher.svg" alt="" aria-hidden="true" />
-        <button className="attendance-sidebar__hotspot attendance-sidebar__hotspot--logo attendance-clickable" type="button" aria-label="Главная" />
-        <button className="attendance-sidebar__hotspot attendance-sidebar__hotspot--profile attendance-clickable" type="button" aria-label="Профиль" onClick={() => navigate({ to: '/teacher/profile' })} />
-        <button className="attendance-sidebar__hotspot attendance-sidebar__hotspot--courses attendance-clickable" type="button" aria-label="Курсы" onClick={() => navigate({ to: '/teacher/courses' })} />
-        <button className="attendance-sidebar__hotspot attendance-sidebar__hotspot--attendance attendance-sidebar__hotspot--active attendance-clickable" type="button" aria-label="Посещаемость" />
-        <button className="attendance-sidebar__hotspot attendance-sidebar__hotspot--calendar attendance-clickable" type="button" aria-label="Расписание" />
-        <button className="attendance-sidebar__hotspot attendance-sidebar__hotspot--settings attendance-clickable" type="button" aria-label="Настройки" onClick={() => navigate({ to: '/teacher/settings' })} />
-        <button className="attendance-sidebar__hotspot attendance-sidebar__hotspot--avatar attendance-clickable" type="button" aria-label="Профиль" onClick={() => navigate({ to: '/teacher/profile' })} />
-      </aside>
+      <TeacherSidebar />
 
-      <aside className="courses-subnav attendance-subnav" aria-label="Навигация раздела">
-        <img className="attendance-subnav__reference" src="/subnav-teacher.svg" alt="" aria-hidden="true" />
-        {navItems.map((item, index) => (
+      <aside className="courses-subnav" aria-label="Навигация раздела">
+        {navItems.map((item) => (
           <button
             key={item.id}
-            className={`attendance-subnav__hotspot attendance-subnav__hotspot--${item.id} attendance-clickable${location.pathname === item.path && item.id === 'attendance' ? ' attendance-subnav__hotspot--active' : ''}`}
+            className={`courses-subnav-item attendance-clickable${location.pathname === item.path ? ' active' : ''}`}
             type="button"
             onClick={() => navigate({ to: item.path })}
             aria-label={item.label}
-            style={{ top: 36 + index * 56 }}
-          />
+          >
+            <img className="courses-subnav-icon" src={item.icon} alt="" />
+            <span>{item.label}</span>
+          </button>
         ))}
-        <div className="attendance-subnav-user">
+        <div className="courses-subnav-user">
+          <img className="courses-subnav-avatar" src="/teacher/sidebar/avatar.png" alt="" />
+          <div className="courses-subnav-user-info">
           <span>Имя фамилия</span>
           <span>teacher@sigma.ru</span>
+          </div>
+          <img className="courses-subnav-logout" src="/teacher/sidebar/sub_nav_courses/log-out.svg" alt="Выход" />
         </div>
-        <button className="attendance-subnav__hotspot attendance-subnav__hotspot--logout attendance-clickable" type="button" aria-label="Выход" />
       </aside>
 
       <section className="attendance-workspace">

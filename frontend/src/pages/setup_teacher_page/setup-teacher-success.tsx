@@ -20,13 +20,13 @@ export function SetupTeacherSuccessPage() {
         </div>
 
         {/* Заголовок */}
-        <h1 style={{ fontSize: '28px', fontWeight: 600, lineHeight: '36px', color: '#101828', margin: '0 0 16px 0' }}>
+        <h1 style={{ fontSize: '28px', fontFamily: 'Inter SemiBold', fontWeight: 600, lineHeight: '36px', color: '#101828', margin: '0 0 16px 0' }}>
           Регистрация прошла успешно!
         </h1>
 
         {/* Подзаголовок */}
         <p style={{ fontSize: '16px', lineHeight: '24px', color: '#667085', margin: '0 0 32px 0' }}>
-          В течение нескольких дней с вами свяжется организатор!
+          В течение нескольких дней с вами свяжется организатор
         </p>
 
         {/* Кнопка */}
@@ -43,7 +43,8 @@ export function SetupTeacherSuccessPage() {
             lineHeight: '24px',
             cursor: 'pointer',
             width: '100%',
-            transition: 'all 0.2s ease'
+            transition: 'all 0.2s ease',
+            fontFamily: 'Inter SemiBold',
           }}
           onMouseEnter={(e) => {
             e.currentTarget.style.background = '#6b38cc';
@@ -54,7 +55,7 @@ export function SetupTeacherSuccessPage() {
             e.currentTarget.style.boxShadow = 'none';
           }}
         >
-          Переагрузить страницу
+          Перезагрузить страницу
         </button>
       </div>
     </div>

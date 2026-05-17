@@ -5,9 +5,9 @@ import "./select-role-page.css";
 type RoleType = 'student' | 'teacher' | 'organizer' | null;
 
 const ROLES = [
-    { id: 'student' as const, name: 'Ученик', subtitle: '9-11 класс', description: 'описание' },
-    { id: 'teacher' as const, name: 'Преподаватель', subtitle: 'с 1 курса', description: 'описание' },
-    { id: 'organizer' as const, name: 'Организатор', subtitle: 'бесценный', description: 'описание' },
+    { id: 'student' as const, name: 'Ученик', subtitle: '9-11 класс', description: 'описание', image: '/role-student.png' },
+    { id: 'teacher' as const, name: 'Преподаватель', subtitle: 'с 1 курса', description: 'описание', image: '/role-teacher.png' },
+    { id: 'organizer' as const, name: 'Организатор', subtitle: 'бесценный', description: 'описание', image: '/role-organizer.png' },
 ];
 
 export function SelectRolePage() {
@@ -56,7 +56,7 @@ export function SelectRolePage() {
                             onClick={() => setSelectedRole(role.id as RoleType)}
                             type="button"
                         >
-                            <img src="/role-avatar.png" alt={role.name} className="role-avatar" />
+                            <img src={role.image} alt={role.name} className="role-avatar" />
                             <div className="role-text">
                                 <h3 className="role-name">{role.name}</h3>
                                 <p className="role-subtitle">{role.subtitle}</p>
