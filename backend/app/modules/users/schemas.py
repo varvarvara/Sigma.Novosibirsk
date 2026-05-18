@@ -133,6 +133,45 @@ class StudentOutput(BaseModel):
     model_config = {"from_attributes": True}
 
 
+class StaffMeUpdate(BaseModel):
+    first_name: str | None = None
+    last_name: str | None = None
+    partonymic: str | None = None
+    birth_date: date | None = None
+    university: str | None = None
+    study_direction: str | None = None
+    study_year: int | None = None
+
+    @model_validator(mode="before")
+    @classmethod
+    def normalize_patronymic(cls, value):
+        if isinstance(value, dict) and "partonymic" not in value and "patronymic" in value:
+            value["partonymic"] = value.get("patronymic")
+        return value
+
+    @field_validator("first_name", "last_name", "partonymic")
+    def validate_name_fields(cls, value):
+        if value is None:
+            return value
+        if not LETTER_MATCH_PATTERN.fullmatch(value):
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="Name fields should contain only letters",
+            )
+        return value
+
+    @field_validator("study_year")
+    def validate_study_year(cls, value):
+        if value is None:
+            return value
+        if value < 1 or value > 6:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="study_year must be between 1 and 6",
+            )
+        return value
+
+
 class StaffOutput(BaseModel):
     id: int
     first_name: str

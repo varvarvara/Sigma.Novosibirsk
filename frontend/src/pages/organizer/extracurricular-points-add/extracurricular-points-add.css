@@ -1,10 +1,11 @@
+.points-status,
+.points-notice {
+  margin: 0 0 12px;
+  color: #6b6578;
+}
+
 .points-add-page {
-    min-width: 1694px;
-    min-height: 1080px;
     margin: 0;
-    display: flex;
-    overflow: hidden;
-    background: #FFFFFF;
     color: #0F172A;
     font-family: 'Inter SemiBold';
 }
@@ -18,94 +19,14 @@
     transform: translateY(1px) scale(0.99);
 }
 
-.points-sidebar {
-    position: relative;
-    width: 81px;
-    height: 1080px;
-    padding: 0;
-    background: #6941C6;
-    flex: 0 0 81px;
-    overflow: hidden;
-}
-
-.points-sidebar__reference {
-    position: absolute;
-    inset: 0;
-    width: 81px;
-    height: 1080px;
-    display: block;
-    pointer-events: none;
-}
-
-.points-sidebar__avatar {
-    position: absolute;
-    top: 1008px;
-    left: 16px;
-    width: 48px;
-    height: 48px;
-    border-radius: 50%;
-    object-fit: cover;
-    pointer-events: none;
-}
-
-.points-sidebar__hotspot {
-    position: absolute;
-    border: 0;
-    width: 48px;
-    height: 48px;
-    border-radius: 6px;
-    background: transparent;
-}
-
-.points-sidebar__hotspot:hover {
-    background: rgba(255, 255, 255, 0.1);
-}
-
-.points-sidebar__hotspot--logo {
-    top: 24px;
-    left: 16px;
-    height: 48px;
-    border-radius: 16px;
-}
-
-.points-sidebar__hotspot--users {
-    top: 88px;
-    left: 16px;
-}
-
-.points-sidebar__hotspot--calendar {
-    top: 144px;
-    left: 16px;
-}
-
-.points-sidebar__hotspot--courses {
-    top: 200px;
-    left: 16px;
-}
-
-.points-sidebar__hotspot--teams {
-    top: 256px;
-    left: 16px;
-}
-
-.points-sidebar__hotspot--settings {
-    top: 911px;
-    left: 16px;
-}
-
-.points-sidebar__hotspot--profile {
-    top: 1008px;
-    left: 16px;
-    border-radius: 50%;
-}
-
-.points-workspace {
-    position: relative;
-    width: 1613px;
-    height: 1080px;
-    padding: 39px 40px 64px;
-    overflow: hidden;
-    background: #FFFFFF;
+.points-add-page .org-layout__workspace.points-workspace {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    min-width: 0;
+    padding: 32px 40px 40px;
+    box-sizing: border-box;
+    background: #ffffff;
 }
 
 .points-header {
@@ -273,12 +194,14 @@
 }
 
 .points-panel {
+    flex: 1;
+    min-height: 0;
     width: 100%;
-    height: auto;
-    max-height: 820px;
     margin-top: 24px;
+    display: flex;
+    flex-direction: column;
     background: #FFFFFF;
-    overflow: visible;
+    overflow: hidden;
     box-shadow: none;
 }
 
@@ -292,7 +215,8 @@
 }
 
 .points-search {
-    width: 520px;
+    width: 100%;
+    max-width: 520px;
     height: 40px;
     border: 1px solid #CBD5E1;
     border-radius: 8px;
@@ -316,9 +240,11 @@
 }
 
 .points-table {
+    flex: 1;
+    min-height: 0;
     width: 100%;
-    height: auto;
-    max-height: 736px;
+    display: flex;
+    flex-direction: column;
     border: 1px solid #E2E8F0;
     border-radius: 12px;
     overflow: hidden;
@@ -342,7 +268,8 @@
 }
 
 .points-table__body {
-    max-height: 680px;
+    flex: 1;
+    min-height: 0;
     overflow-y: auto;
 }
 

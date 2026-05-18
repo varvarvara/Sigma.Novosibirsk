@@ -38,16 +38,19 @@ import { CourseChoicePage } from '../pages/student/course-choice'
 import { CourseNothingPage } from '../pages/student/course-nothing'
 import { FeedbackPage } from '../pages/student/feedback'
 import { MyCoursesPage } from '../pages/student/my-courses'
-import { OrgExtracurricularPage } from '../pages/organizer/org-extracurricular'
+import { OrgExtracurricularCreationPage, OrgExtracurricularPage } from '../pages/organizer/org-extracurricular'
 import { TeamFormationPage } from '../pages/organizer/team-formation'
 import { TeamCreationPage } from '../pages/organizer/team-creation'
 import { OrgProfileNewPage } from '../pages/organizer/profile/org-profile-new'
 import { ExtracurricularPointsAddPage } from '../pages/organizer/extracurricular-points-add/extracurricular-points-add'
+import { OrgCoursesStubPage, OrgScheduleStubPage, OrgUsersStubPage } from '../pages/organizer/org-stub'
 import { TeacherProfilePage } from '../pages/teacher/profile'
 import { TeacherCoursesPage } from '../pages/teacher/courses'
 import { TeacherCoursesApplyPage } from '../pages/teacher/courses/teacher-courses-apply'
 import { TeacherCoursesCertificatesPage } from '../pages/teacher/courses/teacher-courses-certificates'
 import { TeacherCourseEditPage } from '../pages/teacher/course-edit'
+import { TeacherAttendancePage } from '../pages/teacher/attendance'
+import { TeacherAchievementsPage } from '../pages/teacher/achievements'
 import { TeacherSchedulePage } from '../pages/teacher/schedule'
 import { TeacherSettingsPage } from '../pages/teacher/settings'
 
@@ -358,6 +361,13 @@ const OrgExtracurricularRoute = createRoute({
   component: OrgExtracurricularPage,
 })
 
+const OrgExtracurricularCreationRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/org-extracurricular-creation',
+  beforeLoad: requireAdmin,
+  component: OrgExtracurricularCreationPage,
+})
+
 const TeamFormationRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/team-formation',
@@ -383,7 +393,35 @@ const ExtracurricularPointsAddRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/extracurricular-points-add',
   beforeLoad: requireAdmin,
+  validateSearch: (search: Record<string, unknown>) => ({
+    activityId: typeof search.activityId === 'number' ? search.activityId : Number(search.activityId) || undefined,
+    title: typeof search.title === 'string' ? search.title : undefined,
+    date: typeof search.date === 'string' ? search.date : undefined,
+    time: typeof search.time === 'string' ? search.time : undefined,
+    organizer: typeof search.organizer === 'string' ? search.organizer : undefined,
+  }),
   component: ExtracurricularPointsAddPage,
+})
+
+const OrgUsersStubRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/org-users-stub',
+  beforeLoad: requireAdmin,
+  component: OrgUsersStubPage,
+})
+
+const OrgScheduleStubRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/org-schedule-stub',
+  beforeLoad: requireAdmin,
+  component: OrgScheduleStubPage,
+})
+
+const OrgCoursesStubRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/org-courses-stub',
+  beforeLoad: requireAdmin,
+  component: OrgCoursesStubPage,
 })
 
 const TeacherProfileRoute = createRoute({
@@ -419,6 +457,20 @@ const TeacherCourseEditRoute = createRoute({
   path: '/teacher/course-edit',
   beforeLoad: requireTeacher,
   component: TeacherCourseEditPage,
+})
+
+const TeacherAttendanceRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/teacher/attendance',
+  beforeLoad: requireTeacher,
+  component: TeacherAttendancePage,
+})
+
+const TeacherAchievementsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/teacher/achievements',
+  beforeLoad: requireTeacher,
+  component: TeacherAchievementsPage,
 })
 
 const TeacherScheduleRoute = createRoute({
@@ -463,15 +515,21 @@ const routeTree = rootRoute.addChildren([
   FeedbackRoute,
   MyCoursesRoute,
   OrgExtracurricularRoute,
+  OrgExtracurricularCreationRoute,
   TeamFormationRoute,
   TeamCreationRoute,
   OrgProfileRoute,
   ExtracurricularPointsAddRoute,
+  OrgUsersStubRoute,
+  OrgScheduleStubRoute,
+  OrgCoursesStubRoute,
   TeacherProfileRoute,
   TeacherCoursesRoute,
   TeacherCoursesApplyRoute,
   TeacherCoursesCertificatesRoute,
   TeacherCourseEditRoute,
+  TeacherAttendanceRoute,
+  TeacherAchievementsRoute,
   TeacherScheduleRoute,
   TeacherSettingsRoute,
 ])

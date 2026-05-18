@@ -1,12 +1,10 @@
+.team-creation-status {
+  margin: 0 0 12px;
+  color: #6b6578;
+}
+
 .team-creation-page {
-    width: 1920px;
-    height: 1080px;
-    min-width: 1920px;
-    min-height: 1080px;
     margin: 0;
-    display: flex;
-    overflow: hidden;
-    background: #FFFFFF;
     color: #0F172A;
     font-family: 'Inter SemiBold';
 }
@@ -20,86 +18,9 @@
     transform: translateY(1px) scale(0.99);
 }
 
-.team-creation-sidebar {
-    position: relative;
-    width: 81px;
-    height: 1080px;
-    padding: 0;
-    background: #6941C6;
-    flex: 0 0 81px;
-    overflow: hidden;
-}
-
-.team-creation-sidebar__reference {
-    position: absolute;
-    inset: 0;
-    width: 81px;
-    height: 1080px;
-    display: block;
-    pointer-events: none;
-}
-
-.team-creation-sidebar__avatar {
-    position: absolute;
-    top: 1008px;
-    left: 16px;
-    width: 48px;
-    height: 48px;
-    border-radius: 50%;
-    object-fit: cover;
-    pointer-events: none;
-}
-
-.team-creation-sidebar__hotspot {
-    position: absolute;
-    left: 16px;
-    width: 48px;
-    height: 48px;
-    border: 0;
-    border-radius: 6px;
-    background: transparent;
-}
-
-.team-creation-sidebar__hotspot:hover {
-    background: rgba(255, 255, 255, 0.1);
-}
-
-.team-creation-sidebar__hotspot--logo {
-    top: 24px;
-    border-radius: 16px;
-}
-
-.team-creation-sidebar__hotspot--users {
-    top: 88px;
-}
-
-.team-creation-sidebar__hotspot--calendar {
-    top: 144px;
-}
-
-.team-creation-sidebar__hotspot--courses {
-    top: 200px;
-}
-
-.team-creation-sidebar__hotspot--teams {
-    top: 256px;
-}
-
-.team-creation-sidebar__hotspot--settings {
-    top: 911px;
-}
-
-.team-creation-sidebar__hotspot--profile {
-    top: 1008px;
-    border-radius: 50%;
-}
-
 .team-creation-workspace {
-    width: 1839px;
-    height: 1080px;
     padding: 39px 40px 64px;
-    overflow: hidden;
-    background: #FFFFFF;
+    box-sizing: border-box;
 }
 
 .team-creation-header {

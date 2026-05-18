@@ -2,7 +2,13 @@ from fastapi import APIRouter, Depends, File, UploadFile
 from sqlalchemy.orm import Session
 
 from app.db.session import get_db
-from app.modules.users.schemas import AvatarUploadOut, StaffOutput, StudentInCreate, StudentOutput
+from app.modules.users.schemas import (
+    AvatarUploadOut,
+    StaffMeUpdate,
+    StaffOutput,
+    StudentInCreate,
+    StudentOutput,
+)
 from app.modules.users.service import UsersService
 from app.security.dependencies import get_current_user
 
@@ -12,6 +18,15 @@ usersRouter = APIRouter(prefix="/users", tags=["users"])
 @usersRouter.get("/me", response_model=StudentOutput | StaffOutput)
 def get_me(current_user=Depends(get_current_user), session: Session = Depends(get_db)):
     return UsersService(session=session).get_me(current_user=current_user)
+
+
+@usersRouter.patch("/me", response_model=StaffOutput)
+def update_me(
+    payload: StaffMeUpdate,
+    current_user=Depends(get_current_user),
+    session: Session = Depends(get_db),
+):
+    return UsersService(session=session).update_me(current_user=current_user, payload=payload)
 
 
 @usersRouter.post("/me/avatar", response_model=AvatarUploadOut)

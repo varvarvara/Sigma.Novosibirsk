@@ -1,80 +1,127 @@
-import { useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
+import { AuthApiError } from "../../../api/auth";
+import {
+    addExtracurricularTeamMember,
+    createExtracurricularTeam,
+    listExtracurricularTeams,
+} from "../../../api/organizer/extracurricular";
+import { getSeasonStudents, type SeasonStudent } from "../../../api/organizer/season";
+import { DEFAULT_SEASON_ID } from "../../../features/auth/student-registration";
+import { OrgSidebar } from "../../../shared/ui/org-sidebar";
 import "./team-creation-page.css";
 
-const candidates = [
-    "Иван Алексеев",
-    "Мария Соколова",
-    "Андрей Петров",
-    "Ева Морозова",
-    "Дмитрий Волков",
-    "Анна Лебедева",
-    "Никита Орлов",
-];
+function formatStudentName(student: SeasonStudent) {
+    return `${student.first_name} ${student.last_name}`.trim();
+}
+
+function formatMemberName(name: string) {
+    const [firstName = "", lastName = ""] = name.split(" ");
+
+    if (!lastName) {
+        return firstName;
+    }
+
+    return `${lastName} ${firstName[0]}.`;
+}
 
 export function TeamCreationPage() {
     const navigate = useNavigate();
-    const sidebarAvatarSrc = localStorage.getItem("orgProfileAvatar") ?? "/teacher/profile/avatar-profile.png";
     const [teamName, setTeamName] = useState("");
-    const [members, setMembers] = useState(candidates.slice(0, 2));
+    const [memberIds, setMemberIds] = useState<number[]>([]);
     const [memberName, setMemberName] = useState("");
+    const [students, setStudents] = useState<SeasonStudent[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [isSaving, setIsSaving] = useState(false);
+    const [error, setError] = useState<string | null>(null);
 
-    const filteredCandidates = candidates.filter((candidate) => {
+    const loadStudents = useCallback(async () => {
+        setIsLoading(true);
+        setError(null);
+
+        try {
+            const seasonStudents = await getSeasonStudents(DEFAULT_SEASON_ID);
+            setStudents(seasonStudents);
+        } catch (loadError) {
+            if (loadError instanceof AuthApiError) {
+                setError(loadError.message);
+            } else {
+                setError("Не удалось загрузить участников");
+            }
+        } finally {
+            setIsLoading(false);
+        }
+    }, []);
+
+    useEffect(() => {
+        void loadStudents();
+    }, [loadStudents]);
+
+    const selectedMembers = useMemo(
+        () => students.filter((student) => memberIds.includes(student.id)),
+        [memberIds, students],
+    );
+
+    const filteredCandidates = useMemo(() => {
         const query = memberName.trim().toLowerCase();
 
-        if (!query) {
-            return true;
-        }
+        return students.filter((candidate) => {
+            if (!query) {
+                return true;
+            }
 
-        return candidate.toLowerCase().includes(query);
-    });
+            return formatStudentName(candidate).toLowerCase().includes(query);
+        });
+    }, [memberName, students]);
 
-    const addMember = (name: string) => {
-        setMembers((items) => (items.includes(name) ? items : [...items, name]));
+    const addMember = (student: SeasonStudent) => {
+        setMemberIds((items) => (items.includes(student.id) ? items : [...items, student.id]));
         setMemberName("");
     };
 
-    const formatMemberName = (name: string) => {
-        const [firstName = "", lastName = ""] = name.split(" ");
+    const createTeam = async () => {
+        const trimmedName = teamName.trim() || "Название команды";
+        setIsSaving(true);
+        setError(null);
 
-        if (!lastName) {
-            return firstName;
+        try {
+            const existingTeams = await listExtracurricularTeams();
+            const nextTeamNumber =
+                existingTeams.reduce((max, team) => Math.max(max, team.ex_team_number), 0) + 1;
+
+            const createdTeam = await createExtracurricularTeam({
+                ex_team_number: nextTeamNumber,
+                ex_team_name: trimmedName,
+                season_id: DEFAULT_SEASON_ID,
+            });
+
+            await Promise.all(
+                memberIds.map((studentId) =>
+                    addExtracurricularTeamMember({
+                        team_id: createdTeam.id,
+                        student_id: studentId,
+                        season_id: DEFAULT_SEASON_ID,
+                    }),
+                ),
+            );
+
+            navigate({ to: "/team-formation" });
+        } catch (saveError) {
+            if (saveError instanceof AuthApiError) {
+                setError(saveError.message);
+            } else {
+                setError("Не удалось создать команду");
+            }
+        } finally {
+            setIsSaving(false);
         }
-
-        return `${lastName} ${firstName[0]}.`;
-    };
-
-    const createTeam = () => {
-        const createdTeam = {
-            id: Date.now(),
-            title: teamName.trim() || "Название команды",
-            direction: "Созданная команда",
-            captain: members[0] ?? "",
-            count: `${members.length} участников`,
-            color: "#7C3AED",
-            members,
-        };
-
-        const savedTeams = JSON.parse(localStorage.getItem("createdTeams") ?? "[]");
-        localStorage.setItem("createdTeams", JSON.stringify([...savedTeams, createdTeam]));
-        navigate({ to: "/team-formation" });
     };
 
     return (
-        <main className="team-creation-page" aria-label="Создание команды">
-            <aside className="team-creation-sidebar" aria-label="Навигация">
-                <img className="team-creation-sidebar__reference" src="/sidebar-navigation.svg" alt="" aria-hidden="true" />
-                <img className="team-creation-sidebar__avatar" src={sidebarAvatarSrc} alt="" aria-hidden="true" />
-                <button className="team-creation-sidebar__hotspot team-creation-sidebar__hotspot--logo team-creation-clickable" type="button" aria-label="Главная" />
-                <button className="team-creation-sidebar__hotspot team-creation-sidebar__hotspot--users team-creation-clickable" type="button" aria-label="Участники" />
-                <button className="team-creation-sidebar__hotspot team-creation-sidebar__hotspot--calendar team-creation-clickable" type="button" aria-label="Мероприятия" />
-                <button className="team-creation-sidebar__hotspot team-creation-sidebar__hotspot--courses team-creation-clickable" type="button" aria-label="Курсы" />
-                <button className="team-creation-sidebar__hotspot team-creation-sidebar__hotspot--teams team-creation-clickable" type="button" aria-label="Команды" />
-                <button className="team-creation-sidebar__hotspot team-creation-sidebar__hotspot--settings team-creation-clickable" type="button" aria-label="Настройки" />
-                <button className="team-creation-sidebar__hotspot team-creation-sidebar__hotspot--profile team-creation-clickable" type="button" aria-label="Профиль" onClick={() => navigate({ to: "/org-profile" })} />
-            </aside>
+        <main className="org-layout team-creation-page" aria-label="Создание команды">
+            <OrgSidebar />
 
-            <section className="team-creation-workspace">
+            <section className="org-layout__workspace team-creation-workspace">
                 <header className="team-creation-header">
                     <div className="team-creation-header__left">
                         <h1>Создание команды</h1>
@@ -84,11 +131,19 @@ export function TeamCreationPage() {
                         <button className="team-creation-light-button team-creation-clickable" type="button" onClick={() => navigate({ to: "/team-formation" })}>
                             Отмена
                         </button>
-                        <button className="team-creation-primary-button team-creation-clickable" type="button" onClick={createTeam}>
-                            Создать
+                        <button
+                            className="team-creation-primary-button team-creation-clickable"
+                            type="button"
+                            onClick={() => void createTeam()}
+                            disabled={isSaving}
+                        >
+                            {isSaving ? "Создание..." : "Создать"}
                         </button>
                     </div>
                 </header>
+
+                {error ? <p className="team-creation-status">{error}</p> : null}
+                {isLoading ? <p className="team-creation-status">Загрузка участников...</p> : null}
 
                 <section className="team-creation-form" aria-label="Параметры команды">
                     <label className="team-creation-field">
@@ -98,18 +153,18 @@ export function TeamCreationPage() {
 
                     <div className="team-creation-section-head">
                         <h2 className="team-creation-section-title">Выберите участников</h2>
-                        <span>Добавлено: {members.length}</span>
+                        <span>Добавлено: {selectedMembers.length}</span>
                     </div>
 
                     <div className="team-creation-tags" aria-label="Участники команды">
-                        {members.map((member, index) => (
+                        {selectedMembers.map((member) => (
                             <button
                                 className="team-creation-tag team-creation-clickable"
                                 type="button"
-                                key={`${member}-${index}`}
-                                onClick={() => setMembers((items) => items.filter((_, itemIndex) => itemIndex !== index))}
+                                key={member.id}
+                                onClick={() => setMemberIds((items) => items.filter((id) => id !== member.id))}
                             >
-                                <span>{formatMemberName(member)}</span>
+                                <span>{formatMemberName(formatStudentName(member))}</span>
                                 <span className="team-creation-tag__remove">×</span>
                             </button>
                         ))}
@@ -121,19 +176,24 @@ export function TeamCreationPage() {
 
                     <div className="team-creation-search-results" aria-label="Найденные участники">
                         {filteredCandidates.map((candidate) => (
-                            <div className="team-creation-search-result" key={candidate}>
-                                <span>{candidate}</span>
-                                {members.includes(candidate) ? (
+                            <div className="team-creation-search-result" key={candidate.id}>
+                                <span>{formatStudentName(candidate)}</span>
+                                {memberIds.includes(candidate.id) ? (
                                     <button
                                         className="team-creation-remove team-creation-clickable"
                                         type="button"
-                                        aria-label={`Удалить ${candidate}`}
-                                        onClick={() => setMembers((items) => items.filter((item) => item !== candidate))}
+                                        aria-label={`Удалить ${formatStudentName(candidate)}`}
+                                        onClick={() => setMemberIds((items) => items.filter((id) => id !== candidate.id))}
                                     >
                                         ×
                                     </button>
                                 ) : (
-                                    <button className="team-creation-add-button team-creation-clickable" type="button" aria-label={`Добавить ${candidate}`} onClick={() => addMember(candidate)}>
+                                    <button
+                                        className="team-creation-add-button team-creation-clickable"
+                                        type="button"
+                                        aria-label={`Добавить ${formatStudentName(candidate)}`}
+                                        onClick={() => addMember(candidate)}
+                                    >
                                         <img src="/Button-add.svg" alt="" />
                                     </button>
                                 )}

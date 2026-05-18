@@ -142,6 +142,18 @@ class UsersRepository:
         self.session.refresh(staff)
         return staff
 
+    def update_staff(self, staff_id: int, updates: dict) -> Staff | None:
+        staff = self.get_staff_by_id(staff_id)
+        if staff is None:
+            return None
+
+        for field, value in updates.items():
+            setattr(staff, field, value)
+
+        self.session.commit()
+        self.session.refresh(staff)
+        return staff
+
     def list_admins(self) -> list[Staff]:
         return (
             self.session.query(Staff)

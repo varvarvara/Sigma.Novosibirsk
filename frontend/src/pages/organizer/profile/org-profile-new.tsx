@@ -1,179 +1,412 @@
-import { useState } from 'react';
+import { type ChangeEvent, useCallback, useEffect, useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
+import { AuthApiError, clearAuthTokens, getAccessToken, getRefreshToken, logout } from '../../../api/auth';
+import {
+  deleteMyAvatar,
+  getCurrentStudent,
+  isStaffProfile,
+  updateMyStaffProfile,
+  uploadMyAvatar,
+  type StaffProfile,
+} from '../../../api/students/profile';
+import { validateBirthDate } from '../../../features/auth/birth-date-validation';
+import { OrgSidebar } from '../../../shared/ui/org-sidebar';
+import { ORG_AVATAR_UPDATED_EVENT } from '../../../shared/ui/org-sidebar/use-org-avatar';
+import '../../../styles/field-error.css';
 import './org-profile-new-styles.css';
 
-const initialProfileData = {
-  firstName: 'Анна',
-  lastName: 'Смирнова',
-  patronymic: 'Игоревна',
-  email: 'organizer@sigma.ru',
-  birthDay: '15',
-  birthMonth: '03',
-  birthYear: '1998',
-  phoneCountry: 'RUS',
-  phoneNumber: '+7 (555) 000-00-00',
+const DEFAULT_AVATAR_SRC = '/teacher/profile/avatar-profile.png';
+const AVATAR_MAX_SIZE_BYTES = 5 * 1024 * 1024;
+
+type ProfileData = {
+  firstName: string;
+  lastName: string;
+  patronymic: string;
+  email: string;
+  birthDay: string;
+  birthMonth: string;
+  birthYear: string;
 };
 
-type ProfileData = typeof initialProfileData;
+const emptyProfileData: ProfileData = {
+  firstName: '',
+  lastName: '',
+  patronymic: '',
+  email: '',
+  birthDay: '',
+  birthMonth: '',
+  birthYear: '',
+};
 
-const getInitialProfileData = (): ProfileData => {
-  const savedProfile = localStorage.getItem('orgProfileData');
-
-  if (!savedProfile) {
-    return initialProfileData;
+function FieldErrorMessage({ id, message }: { id?: string; message?: string }) {
+  if (!message) {
+    return null;
   }
 
-  return { ...initialProfileData, ...JSON.parse(savedProfile) };
-};
+  return (
+    <p className="field-error" id={id}>
+      {message}
+    </p>
+  );
+}
+
+function mapStaffProfile(staff: StaffProfile): ProfileData {
+  const birthParts = staff.birth_date?.split('-') ?? [];
+
+  return {
+    firstName: staff.first_name,
+    lastName: staff.last_name,
+    patronymic: staff.partonymic ?? '',
+    email: staff.email,
+    birthYear: birthParts[0] ?? '',
+    birthMonth: birthParts[1] ?? '',
+    birthDay: birthParts[2] ?? '',
+  };
+}
+
+function getFullName(profile: ProfileData) {
+  return [profile.lastName, profile.firstName, profile.patronymic].filter(Boolean).join(' ');
+}
+
+function formatBirthDateForApi(day: string, month: string, year: string) {
+  const dayValue = day.trim();
+  const monthValue = month.trim();
+  const yearValue = year.trim();
+
+  if (!dayValue && !monthValue && !yearValue) {
+    return null;
+  }
+
+  return `${yearValue}-${monthValue.padStart(2, '0')}-${dayValue.padStart(2, '0')}`;
+}
 
 export const OrgProfileNewPage = () => {
   const navigate = useNavigate();
-  const [avatarSrc, setAvatarSrc] = useState<string | null>(() => localStorage.getItem('orgProfileAvatar') ?? '/teacher/profile/avatar-profile.png');
-  const [pendingAvatarSrc, setPendingAvatarSrc] = useState<string | null | undefined>(undefined);
-  const [profileData, setProfileData] = useState<ProfileData>(getInitialProfileData);
-  const [draftProfileData, setDraftProfileData] = useState<ProfileData>(getInitialProfileData);
+  const [birthDateError, setBirthDateError] = useState<string | null>(null);
+  const [avatarSrc, setAvatarSrc] = useState<string | null>(DEFAULT_AVATAR_SRC);
+  const [profileData, setProfileData] = useState<ProfileData>(emptyProfileData);
+  const [isProfileLoading, setIsProfileLoading] = useState(true);
+  const [isProfileSaving, setIsProfileSaving] = useState(false);
+  const [isAvatarUploading, setIsAvatarUploading] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [profileError, setProfileError] = useState<string | null>(null);
+  const [saveNotice, setSaveNotice] = useState<string | null>(null);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
-  const updateProfileField = (field: keyof ProfileData, value: string) => {
-    setDraftProfileData((data) => ({ ...data, [field]: value }));
-  };
+  const updateProfileField =
+    (field: keyof ProfileData) =>
+    (event: ChangeEvent<HTMLInputElement>) => {
+      setProfileData((current) => ({ ...current, [field]: event.target.value }));
+      setSaveNotice(null);
+      setSaveError(null);
+    };
 
-  const uploadAvatar = (file?: File) => {
-    if (!file || !file.type.startsWith('image/')) {
+  const loadProfile = useCallback(async () => {
+    const accessToken = getAccessToken();
+    if (!accessToken) {
+      navigate({ to: '/login' });
       return;
     }
 
-    const reader = new FileReader();
-    reader.onload = () => {
-      const nextAvatar = String(reader.result);
+    setIsProfileLoading(true);
+    setProfileError(null);
 
-      setPendingAvatarSrc(nextAvatar);
-    };
-    reader.readAsDataURL(file);
-  };
-
-  const fullName = [profileData.lastName, profileData.firstName, profileData.patronymic].filter(Boolean).join(' ');
-  const previewAvatarSrc = pendingAvatarSrc === undefined ? avatarSrc : pendingAvatarSrc;
-
-  const saveProfile = () => {
-    setProfileData(draftProfileData);
-    localStorage.setItem('orgProfileData', JSON.stringify(draftProfileData));
-
-    if (pendingAvatarSrc !== undefined) {
-      setAvatarSrc(pendingAvatarSrc);
-
-      if (pendingAvatarSrc) {
-        localStorage.setItem('orgProfileAvatar', pendingAvatarSrc);
-      } else {
-        localStorage.removeItem('orgProfileAvatar');
+    try {
+      const user = await getCurrentStudent();
+      if (!isStaffProfile(user)) {
+        setProfileError('Профиль организатора доступен только для staff');
+        return;
       }
 
-      setPendingAvatarSrc(undefined);
+      const mapped = mapStaffProfile(user);
+      setProfileData(mapped);
+      setAvatarSrc(user.avatar_url ?? DEFAULT_AVATAR_SRC);
+    } catch (error) {
+      if (error instanceof AuthApiError && error.status === 401) {
+        clearAuthTokens();
+        navigate({ to: '/login' });
+        return;
+      }
+
+      setProfileError('Не удалось загрузить профиль');
+    } finally {
+      setIsProfileLoading(false);
+    }
+  }, [navigate]);
+
+  useEffect(() => {
+    void loadProfile();
+  }, [loadProfile]);
+
+  const birthInputClass = birthDateError ? 'field-input--error' : '';
+  const fullName = getFullName(profileData);
+  const isFormDisabled = isProfileLoading || isProfileSaving;
+
+  const handleAvatarChange = async (event: ChangeEvent<HTMLInputElement>) => {
+    const selectedFile = event.target.files?.[0];
+    if (!selectedFile) {
+      return;
+    }
+
+    if (!selectedFile.type.startsWith('image/')) {
+      alert('Нужно выбрать файл изображения.');
+      event.target.value = '';
+      return;
+    }
+
+    if (selectedFile.size > AVATAR_MAX_SIZE_BYTES) {
+      alert('Максимальный размер аватара: 5 МБ.');
+      event.target.value = '';
+      return;
+    }
+
+    setIsAvatarUploading(true);
+
+    try {
+      const uploaded = await uploadMyAvatar(selectedFile);
+      setAvatarSrc(uploaded.avatar_url || DEFAULT_AVATAR_SRC);
+      localStorage.setItem('orgProfileAvatar', uploaded.avatar_url || DEFAULT_AVATAR_SRC);
+      window.dispatchEvent(new Event(ORG_AVATAR_UPDATED_EVENT));
+      setSaveNotice('Аватар обновлён');
+      setSaveError(null);
+    } catch (error) {
+      if (error instanceof AuthApiError) {
+        alert(error.message);
+      } else {
+        alert('Не удалось загрузить аватар.');
+      }
+    } finally {
+      setIsAvatarUploading(false);
+      event.target.value = '';
     }
   };
 
-  const handleLogout = () => {
-    navigate({ to: '/login' });
+  const handleDeleteAvatar = async () => {
+    setIsAvatarUploading(true);
+
+    try {
+      const user = await deleteMyAvatar();
+      const nextAvatar = isStaffProfile(user) ? user.avatar_url ?? DEFAULT_AVATAR_SRC : DEFAULT_AVATAR_SRC;
+      setAvatarSrc(nextAvatar);
+      localStorage.removeItem('orgProfileAvatar');
+      window.dispatchEvent(new Event(ORG_AVATAR_UPDATED_EVENT));
+      setSaveNotice('Аватар удалён');
+      setSaveError(null);
+    } catch (error) {
+      if (error instanceof AuthApiError) {
+        alert(error.message);
+      } else {
+        alert('Не удалось удалить аватар.');
+      }
+    } finally {
+      setIsAvatarUploading(false);
+    }
+  };
+
+  const saveProfile = async () => {
+    const firstName = profileData.firstName.trim();
+    const lastName = profileData.lastName.trim();
+
+    if (!firstName || !lastName) {
+      setSaveError('Укажите имя и фамилию');
+      return;
+    }
+
+    const { birthDay, birthMonth, birthYear } = profileData;
+    const hasBirthInput = Boolean(birthDay || birthMonth || birthYear);
+
+    if (hasBirthInput) {
+      const birthError = validateBirthDate(birthDay, birthMonth, birthYear);
+      if (birthError) {
+        setBirthDateError(birthError);
+        return;
+      }
+    }
+
+    setBirthDateError(null);
+    setIsProfileSaving(true);
+    setSaveError(null);
+    setSaveNotice(null);
+
+    try {
+      const updated = await updateMyStaffProfile({
+        first_name: firstName,
+        last_name: lastName,
+        partonymic: profileData.patronymic.trim() || null,
+        birth_date: hasBirthInput ? formatBirthDateForApi(birthDay, birthMonth, birthYear) : null,
+      });
+
+      setProfileData(mapStaffProfile(updated));
+      setSaveNotice('Изменения сохранены');
+    } catch (error) {
+      if (error instanceof AuthApiError) {
+        setSaveError(error.message);
+      } else {
+        setSaveError('Не удалось сохранить профиль');
+      }
+    } finally {
+      setIsProfileSaving(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    if (isLoggingOut) {
+      return;
+    }
+
+    setIsLoggingOut(true);
+    const accessToken = getAccessToken();
+    const refreshToken = getRefreshToken();
+
+    try {
+      if (accessToken || refreshToken) {
+        await logout({ refresh_token: refreshToken }, accessToken);
+      }
+    } catch {
+      // Logout continues locally even if the API request fails.
+    } finally {
+      clearAuthTokens();
+      setIsLoggingOut(false);
+      navigate({ to: '/login' });
+    }
   };
 
   return (
-    <div className="org-profile-container">
-      <aside className="org-profile-sidebar" aria-label="Навигация">
-        <img className="org-profile-sidebar__reference" src="/sidebar-navigation.svg" alt="" aria-hidden="true" />
-        {avatarSrc && <img className="org-profile-sidebar__avatar" src={avatarSrc} alt="" aria-hidden="true" />}
-        <button className="org-profile-sidebar__hotspot org-profile-sidebar__hotspot--logo org-profile-clickable" type="button" aria-label="Главная" onClick={() => navigate({ to: '/org-extracurricular' })} />
-        <button className="org-profile-sidebar__hotspot org-profile-sidebar__hotspot--users org-profile-clickable" type="button" aria-label="Участники" />
-        <button className="org-profile-sidebar__hotspot org-profile-sidebar__hotspot--calendar org-profile-clickable" type="button" aria-label="Мероприятия" onClick={() => navigate({ to: '/org-extracurricular' })} />
-        <button className="org-profile-sidebar__hotspot org-profile-sidebar__hotspot--courses org-profile-clickable" type="button" aria-label="Курсы" />
-        <button className="org-profile-sidebar__hotspot org-profile-sidebar__hotspot--teams org-profile-clickable" type="button" aria-label="Команды" onClick={() => navigate({ to: '/team-formation' })} />
-        <button className="org-profile-sidebar__hotspot org-profile-sidebar__hotspot--settings org-profile-clickable" type="button" aria-label="Настройки" />
-        <button className="org-profile-sidebar__hotspot org-profile-sidebar__hotspot--profile org-profile-clickable" type="button" aria-label="Профиль" onClick={() => navigate({ to: '/org-profile' })} />
-      </aside>
-      
-      <main className="org-profile-content">
-        <div className="profile-header-gradient" />
-        <div className="profile-header-card">
-          <div className="profile-header-content">
-            {previewAvatarSrc ? (
-              <img
-                src={previewAvatarSrc}
-                alt="Аватар профиля"
-                className="profile-avatar-large"
-              />
-            ) : (
-              <div className="profile-avatar-large profile-avatar-large--empty" aria-hidden="true" />
-            )}
-            <div className="profile-user-info">
-              <h1>{fullName || 'Фамилия Имя Отчество'}</h1>
-              <p>{profileData.email || 'Почта'}</p>
+    <div className="org-layout org-profile-container">
+      <OrgSidebar avatarSrc={avatarSrc ?? undefined} />
+
+      <main className="org-layout__workspace org-profile-content">
+        <header className="org-profile-hero">
+          <div className="org-profile-hero__banner" aria-hidden="true" />
+          <div className="org-profile-hero__panel">
+            <div className="org-profile-hero__main">
+              {avatarSrc ? (
+                <img src={avatarSrc} alt="Аватар профиля" className="org-profile-hero__avatar" />
+              ) : (
+                <div className="org-profile-hero__avatar org-profile-hero__avatar--empty" aria-hidden="true" />
+              )}
+              <div className="org-profile-hero__info">
+                <h1>{fullName || 'Профиль организатора'}</h1>
+                <p>{profileData.email || 'Почта'}</p>
+              </div>
             </div>
+            <button className="org-profile-hero__logout" type="button" onClick={() => void handleLogout()} disabled={isLoggingOut}>
+              Выйти из аккаунта
+            </button>
           </div>
-          <button className="btn-logout" onClick={handleLogout}>
-            Выйти из аккаунта
-          </button>
-        </div>
+        </header>
+
+        {isProfileLoading ? <p className="org-profile-status">Загрузка...</p> : null}
+        {profileError ? <p className="org-profile-status org-profile-status--error">{profileError}</p> : null}
+        {saveError ? <p className="org-profile-status org-profile-status--error">{saveError}</p> : null}
+        {saveNotice ? <p className="org-profile-status org-profile-status--success">{saveNotice}</p> : null}
 
         <div className="profile-card">
           <section className="profile-section">
             <h2>Личная информация</h2>
             <div className="form-row">
               <div className="form-group">
-                <label>Имя</label>
-                <input type="text" value={draftProfileData.firstName} placeholder="Имя" onChange={(event) => updateProfileField('firstName', event.target.value)} />
+                <label htmlFor="org-profile-first-name">Имя</label>
+                <input
+                  id="org-profile-first-name"
+                  type="text"
+                  value={profileData.firstName}
+                  placeholder="Имя"
+                  disabled={isFormDisabled}
+                  onChange={updateProfileField('firstName')}
+                />
               </div>
               <div className="form-group">
-                <label>Фамилия</label>
-                <input type="text" value={draftProfileData.lastName} placeholder="Фамилия" onChange={(event) => updateProfileField('lastName', event.target.value)} />
+                <label htmlFor="org-profile-last-name">Фамилия</label>
+                <input
+                  id="org-profile-last-name"
+                  type="text"
+                  value={profileData.lastName}
+                  placeholder="Фамилия"
+                  disabled={isFormDisabled}
+                  onChange={updateProfileField('lastName')}
+                />
               </div>
             </div>
             <div className="form-row">
               <div className="form-group">
-                <label>Отчество</label>
-                <input type="text" value={draftProfileData.patronymic} placeholder="Отчество" onChange={(event) => updateProfileField('patronymic', event.target.value)} />
+                <label htmlFor="org-profile-patronymic">Отчество</label>
+                <input
+                  id="org-profile-patronymic"
+                  type="text"
+                  value={profileData.patronymic}
+                  placeholder="Отчество"
+                  disabled={isFormDisabled}
+                  onChange={updateProfileField('patronymic')}
+                />
               </div>
             </div>
             <div className="form-row birth-row">
               <div className="form-group small">
-                <label>Дата рождения</label>
-                <input type="text" value={draftProfileData.birthDay} placeholder="День" onChange={(event) => updateProfileField('birthDay', event.target.value)} />
+                <label htmlFor="org-profile-birth-day">Дата рождения</label>
+                <input
+                  id="org-profile-birth-day"
+                  type="text"
+                  inputMode="numeric"
+                  value={profileData.birthDay}
+                  placeholder="ДД"
+                  maxLength={2}
+                  className={birthInputClass}
+                  disabled={isFormDisabled}
+                  onChange={updateProfileField('birthDay')}
+                />
               </div>
               <div className="form-group small">
-                <label className="sr-only">Месяц</label>
-                <input type="text" value={draftProfileData.birthMonth} placeholder="Месяц" onChange={(event) => updateProfileField('birthMonth', event.target.value)} />
+                <label className="sr-only" htmlFor="org-profile-birth-month">
+                  Месяц
+                </label>
+                <input
+                  id="org-profile-birth-month"
+                  type="text"
+                  inputMode="numeric"
+                  value={profileData.birthMonth}
+                  placeholder="ММ"
+                  maxLength={2}
+                  className={birthInputClass}
+                  disabled={isFormDisabled}
+                  onChange={updateProfileField('birthMonth')}
+                />
               </div>
               <div className="form-group small">
-                <label className="sr-only">Год</label>
-                <input type="text" value={draftProfileData.birthYear} placeholder="Год" onChange={(event) => updateProfileField('birthYear', event.target.value)} />
+                <label className="sr-only" htmlFor="org-profile-birth-year">
+                  Год
+                </label>
+                <input
+                  id="org-profile-birth-year"
+                  type="text"
+                  inputMode="numeric"
+                  value={profileData.birthYear}
+                  placeholder="ГГГГ"
+                  maxLength={4}
+                  className={birthInputClass}
+                  disabled={isFormDisabled}
+                  onChange={updateProfileField('birthYear')}
+                />
               </div>
             </div>
+            <FieldErrorMessage id="org-profile-birth-date-error" message={birthDateError ?? undefined} />
           </section>
 
           <section className="profile-section">
             <h2>Контакты</h2>
             <div className="form-row">
-              <div className="form-group phone">
-                <label>Номер телефона</label>
-                <div className="phone-input">
-                  <input type="text" value={draftProfileData.phoneCountry} placeholder="Страна" onChange={(event) => updateProfileField('phoneCountry', event.target.value)} />
-                  <input type="text" value={draftProfileData.phoneNumber} placeholder="Номер" onChange={(event) => updateProfileField('phoneNumber', event.target.value)} />
-                </div>
-              </div>
-            </div>
-            <div className="form-row">
               <div className="form-group">
-                <label>Email</label>
-                <input type="email" value={draftProfileData.email} placeholder="Почта" onChange={(event) => updateProfileField('email', event.target.value)} />
+                <label htmlFor="org-profile-email">Email</label>
+                <input id="org-profile-email" type="email" value={profileData.email} placeholder="Почта" readOnly />
+                <p className="org-profile-hint">Email меняется только через администратора</p>
               </div>
             </div>
           </section>
 
           <section className="profile-section upload-section">
             <div className="upload-row">
-              {previewAvatarSrc ? (
-                <img
-                  className="upload-avatar"
-                  src={previewAvatarSrc}
-                  alt="Аватар"
-                />
+              {avatarSrc ? (
+                <img className="upload-avatar" src={avatarSrc} alt="Аватар" />
               ) : (
                 <div className="upload-avatar upload-avatar--empty" aria-hidden="true" />
               )}
@@ -182,34 +415,48 @@ export const OrgProfileNewPage = () => {
                 onDragOver={(event) => event.preventDefault()}
                 onDrop={(event) => {
                   event.preventDefault();
-                  uploadAvatar(event.dataTransfer.files[0]);
+                  const file = event.dataTransfer.files[0];
+                  if (!file) {
+                    return;
+                  }
+                  const input = document.createElement('input');
+                  input.type = 'file';
+                  const dataTransfer = new DataTransfer();
+                  dataTransfer.items.add(file);
+                  input.files = dataTransfer.files;
+                  void handleAvatarChange({ target: input } as ChangeEvent<HTMLInputElement>);
                 }}
               >
                 <input
                   className="upload-input"
                   type="file"
                   accept="image/svg+xml,image/png,image/jpeg,image/gif"
-                  onChange={(event) => uploadAvatar(event.target.files?.[0])}
+                  disabled={isAvatarUploading || isFormDisabled}
+                  onChange={(event) => void handleAvatarChange(event)}
                 />
-                <img
-                  className="upload-icon"
-                  src="/teacher/profile/upload-cloud.svg"
-                  alt="Загрузка"
-                />
-                <p>Нажмите или перетащите</p>
-                <span>SVG, PNG, JPG or GIF (max. 800x400px)</span>
+                <img className="upload-icon" src="/teacher/profile/upload-cloud.svg" alt="Загрузка" />
+                <p>{isAvatarUploading ? 'Загрузка...' : 'Нажмите или перетащите'}</p>
+                <span>SVG, PNG, JPG or GIF (max. 5 MB)</span>
               </label>
             </div>
           </section>
           <div className="profile-actions">
-          <button className="profile-delete-button org-profile-clickable" type="button" onClick={() => {
-            setPendingAvatarSrc(null);
-          }}>
-                    Удалить
-                  </button>
-                  <button className="profile-save-button org-profile-clickable" type="button" onClick={saveProfile}>
-                    Сохранить
-                  </button>
+            <button
+              className="profile-delete-button org-profile-clickable"
+              type="button"
+              onClick={() => void handleDeleteAvatar()}
+              disabled={isAvatarUploading || isFormDisabled}
+            >
+              Удалить
+            </button>
+            <button
+              className="profile-save-button org-profile-clickable"
+              type="button"
+              onClick={() => void saveProfile()}
+              disabled={isFormDisabled}
+            >
+              {isProfileSaving ? 'Сохранение...' : 'Сохранить'}
+            </button>
           </div>
         </div>
       </main>

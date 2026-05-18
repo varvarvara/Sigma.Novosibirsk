@@ -1,16 +1,5 @@
-export type ChargeType = "Капитан" | "Ведущий" | "Участник";
-
 export type MemberScoreEntry = {
     rawPoints: string;
-    chargeType: ChargeType;
-};
-
-export const CHARGE_TYPES: ChargeType[] = ["Капитан", "Ведущий", "Участник"];
-
-const CHARGE_MULTIPLIERS: Record<ChargeType, number> = {
-    Капитан: 1.5,
-    Ведущий: 1.2,
-    Участник: 1,
 };
 
 export function getMemberScoreKey(teamId: number | "main", memberId: number) {
@@ -27,14 +16,6 @@ export function parseRawPoints(value: string) {
     return Math.floor(parsed);
 }
 
-export function calculateMemberPoints(rawPoints: number, chargeType: ChargeType) {
-    if (rawPoints <= 0) {
-        return 0;
-    }
-
-    return Math.round(rawPoints * CHARGE_MULTIPLIERS[chargeType]);
-}
-
 export function calculateTeamTotal(
     memberIds: number[],
     scores: Record<string, MemberScoreEntry>,
@@ -46,8 +27,7 @@ export function calculateTeamTotal(
             return total;
         }
 
-        const rawPoints = parseRawPoints(entry.rawPoints);
-        return total + calculateMemberPoints(rawPoints, entry.chargeType);
+        return total + parseRawPoints(entry.rawPoints);
     }, 0);
 }
 

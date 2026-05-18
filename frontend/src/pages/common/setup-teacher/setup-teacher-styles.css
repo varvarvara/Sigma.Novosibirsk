@@ -405,22 +405,30 @@
 
 .setup-teacher-success-page__button {
   width: 100%;
-  padding: 12px 24px;
+  height: 44px;
+  margin: 0;
+  padding: 0;
   border: none;
   border-radius: 8px;
-  background: #7848ff;
   color: #ffffff;
   font-family: 'Inter SemiBold', Inter, sans-serif;
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 600;
-  line-height: 24px;
+  line-height: 1;
+  letter-spacing: -0.1px;
+  background: linear-gradient(90deg, #6a49f4 0%, #7954ff 100%);
   cursor: pointer;
   transition:
-    background 0.2s ease,
-    box-shadow 0.2s ease;
+    transform 0.1s ease,
+    filter 0.18s ease,
+    box-shadow 0.18s ease;
 }
 
 .setup-teacher-success-page__button:hover {
-  background: #6b38cc;
-  box-shadow: 0 8px 16px rgba(120, 72, 255, 0.3);
+  filter: brightness(1.04);
+  box-shadow: 0 6px 16px rgba(106, 73, 244, 0.34);
+}
+
+.setup-teacher-success-page__button:active {
+  transform: translateY(1px);
 }

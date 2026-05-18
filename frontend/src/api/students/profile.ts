@@ -87,6 +87,21 @@ export function getCurrentStudent() {
   });
 }
 
+export type StaffMeUpdate = {
+  first_name?: string;
+  last_name?: string;
+  partonymic?: string | null;
+  birth_date?: string | null;
+};
+
+export function updateMyStaffProfile(payload: StaffMeUpdate) {
+  return request<StaffProfile>("/users/me", {
+    method: "PATCH",
+    headers: authHeaders(),
+    body: JSON.stringify(payload),
+  });
+}
+
 export function getStudentGamification(studentId: number) {
   return request<Gamification>(`/gamification/gamification/${studentId}`, {
     headers: authHeaders(),
@@ -108,4 +123,15 @@ export function uploadMyAvatar(file: File) {
     headers: authHeaders(),
     body: formData,
   });
+}
+
+export function deleteMyAvatar() {
+  return request<CurrentUser>("/users/me/avatar", {
+    method: "DELETE",
+    headers: authHeaders(),
+  });
+}
+
+export function isStaffProfile(user: CurrentUser): user is StaffProfile {
+  return "staff_role" in user;
 }

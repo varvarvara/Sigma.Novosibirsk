@@ -6,6 +6,7 @@ from app.modules.users.repository import UsersRepository
 from app.modules.users.schemas import (
     AvatarUploadOut,
     StaffInCreate,
+    StaffMeUpdate,
     StaffOutput,
     StudentInCreate,
     StudentOutput,
@@ -39,6 +40,27 @@ class UsersService:
         if current_user["user_type"] == "student":
             return self._student_output(current_user["user"])
         return self._staff_output(current_user["user"])
+
+    def update_me(self, current_user: dict, payload: StaffMeUpdate) -> StaffOutput:
+        if current_user["user_type"] != "staff":
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Profile update is available only for staff users",
+            )
+
+        updates = payload.model_dump(exclude_unset=True, mode="json")
+        if not updates:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="No fields to update",
+            )
+
+        staff: Staff = current_user["user"]
+        updated = self._users_repository.update_staff(staff.id, updates)
+        if updated is None:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Staff user not found")
+
+        return self._staff_output(updated)
 
     def signup_student(self, user_details: StudentInCreate) -> StudentOutput:
         if self._users_repository.user_exist_by_email(email=user_details.email):

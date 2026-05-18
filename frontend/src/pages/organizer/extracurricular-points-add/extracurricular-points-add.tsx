@@ -1,5 +1,15 @@
-import { useMemo, useState } from "react";
-import { useNavigate } from "@tanstack/react-router";
+import { useCallback, useEffect, useState } from "react";
+import { useNavigate, useSearch } from "@tanstack/react-router";
+import { AuthApiError } from "../../../api/auth";
+import {
+    DEFAULT_EXTRACURRICULAR_ACTIVITY_SCORE,
+    listExtracurricularActivities,
+    listExtracurricularScores,
+    listExtracurricularTeams,
+    markExtracurricularTeamAttendance,
+} from "../../../api/organizer/extracurricular";
+import { DEFAULT_SEASON_ID } from "../../../features/auth/student-registration";
+import { OrgSidebar } from "../../../shared/ui/org-sidebar";
 import "./extracurricular-points-add.css";
 
 type TeamScore = {
@@ -7,37 +17,6 @@ type TeamScore = {
     name: string;
     points: number;
     visited: boolean;
-};
-
-type SavedTeam = {
-    id: number;
-    title: string;
-    points?: number;
-};
-
-const defaultTeams: SavedTeam[] = [
-    { id: 1, title: "Команда медиа" },
-    { id: 2, title: "Команда событий" },
-    { id: 3, title: "Команда дизайна" },
-    { id: 4, title: "Команда разработки" },
-];
-
-const getInitialTeams = (): TeamScore[] => {
-    const savedTeams = JSON.parse(localStorage.getItem("createdTeams") ?? "[]") as SavedTeam[];
-    const teams = [...defaultTeams, ...savedTeams];
-
-    return teams.map((team, index) => ({
-        id: team.id || index + 1,
-        name: team.title,
-        points: 0,
-        visited: false,
-    }));
-};
-
-const getSearchValue = (key: string, fallback: string) => {
-    const params = new URLSearchParams(window.location.search);
-
-    return params.get(key) || fallback;
 };
 
 const formatResponsible = (name: string) => {
@@ -48,104 +27,155 @@ const formatResponsible = (name: string) => {
 
 export function ExtracurricularPointsAddPage() {
     const navigate = useNavigate();
-    const sidebarAvatarSrc = localStorage.getItem("orgProfileAvatar") ?? "/teacher/profile/avatar-profile.png";
-    const [teams, setTeams] = useState<TeamScore[]>(getInitialTeams);
-    const [query, setQuery] = useState("");
+    const search = useSearch({ from: "/extracurricular-points-add" });
+    const [teams, setTeams] = useState<TeamScore[]>([]);
     const [notice, setNotice] = useState("Черновик");
+    const [isLoading, setIsLoading] = useState(true);
+    const [isSaving, setIsSaving] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+    const [defaultPoints, setDefaultPoints] = useState(DEFAULT_EXTRACURRICULAR_ACTIVITY_SCORE);
 
-    const title = getSearchValue("title", "Название");
-    const date = getSearchValue("date", "24 октября");
-    const time = getSearchValue("time", "15:00");
-    const organizer = getSearchValue("organizer", "Иванова Анна");
+    const activityId = search.activityId;
+    const title = search.title ?? "Название";
+    const date = search.date ?? "—";
+    const time = search.time ?? "—";
+    const organizer = search.organizer ?? "—";
 
-    const filteredTeams = useMemo(() => {
-        const value = query.trim().toLowerCase();
-
-        if (!value) {
-            return teams;
+    const loadTeams = useCallback(async () => {
+        if (!activityId) {
+            setError("Не выбрано мероприятие");
+            setIsLoading(false);
+            return;
         }
 
-        return teams.filter((team) => team.name.toLowerCase().includes(value));
-    }, [teams, query]);
+        setIsLoading(true);
+        setError(null);
 
-    const visitedCount = teams.filter((team) => team.visited).length;
-    const totalPoints = teams.reduce((sum, team) => sum + team.points, 0);
+        try {
+            const [apiTeams, scores, activities] = await Promise.all([
+                listExtracurricularTeams(),
+                listExtracurricularScores(),
+                listExtracurricularActivities(),
+            ]);
+
+            const activity = activities.find((item) => item.id === activityId);
+            const activityScore = activity?.ex_course_score ?? DEFAULT_EXTRACURRICULAR_ACTIVITY_SCORE;
+            setDefaultPoints(activityScore);
+
+            const scoredTeamIds = new Set(
+                scores
+                    .filter((score) => score.ex_course_id === activityId)
+                    .map((score) => score.team_id),
+            );
+
+            setTeams(
+                apiTeams.map((team) => ({
+                    id: team.id,
+                    name: team.ex_team_name,
+                    points: scoredTeamIds.has(team.id) ? activityScore : 0,
+                    visited: scoredTeamIds.has(team.id),
+                })),
+            );
+        } catch (loadError) {
+            if (loadError instanceof AuthApiError) {
+                setError(loadError.message);
+            } else {
+                setError("Не удалось загрузить команды");
+            }
+            setTeams([]);
+        } finally {
+            setIsLoading(false);
+        }
+    }, [activityId]);
+
+    useEffect(() => {
+        void loadTeams();
+    }, [loadTeams]);
+
+    const filteredTeams = teams;
 
     const updateTeam = (id: number, patch: Partial<TeamScore>) => {
         setTeams((items) => items.map((team) => (team.id === id ? { ...team, ...patch } : team)));
     };
 
-    const savePoints = () => {
-        const teamPoints = JSON.parse(localStorage.getItem("teamPoints") ?? "{}") as Record<string, number>;
-        const savedTeams = JSON.parse(localStorage.getItem("createdTeams") ?? "[]") as SavedTeam[];
-        const nextTeamPoints = teams.reduce<Record<string, number>>((acc, team) => {
-            acc[team.name] = (acc[team.name] ?? 200) + team.points;
-            return acc;
-        }, { ...teamPoints });
-        const nextSavedTeams = savedTeams.map((team) => ({
-            ...team,
-            points: nextTeamPoints[team.title] ?? team.points ?? 200,
-        }));
+    const savePoints = async () => {
+        if (!activityId) {
+            setNotice("Выберите мероприятие");
+            return;
+        }
 
-        localStorage.setItem("teamPoints", JSON.stringify(nextTeamPoints));
-        localStorage.setItem("createdTeams", JSON.stringify(nextSavedTeams));
-        localStorage.setItem(
-            "extracurricularPoints",
-            JSON.stringify({
-                title,
-                date,
-                time,
-                organizer,
-                teams,
-            }),
-        );
-        setNotice("Сохранено");
-        navigate({ to: "/org-extracurricular" });
+        setIsSaving(true);
+        setNotice("Сохранение...");
+
+        try {
+            const visitedTeams = teams.filter((team) => team.visited);
+
+            await Promise.all(
+                visitedTeams.map(async (team) => {
+                    try {
+                        await markExtracurricularTeamAttendance({
+                            team_id: team.id,
+                            ex_course_id: activityId,
+                            season_id: DEFAULT_SEASON_ID,
+                        });
+                    } catch (saveError) {
+                        if (saveError instanceof AuthApiError && saveError.status === 400) {
+                            return;
+                        }
+                        throw saveError;
+                    }
+                }),
+            );
+
+            setNotice("Сохранено");
+            navigate({ to: "/org-extracurricular" });
+        } catch (saveError) {
+            if (saveError instanceof AuthApiError) {
+                setNotice(saveError.message);
+            } else {
+                setNotice("Не удалось сохранить посещаемость");
+            }
+        } finally {
+            setIsSaving(false);
+        }
     };
 
     return (
-        <main className="points-add-page" aria-label="Начисление баллов">
-            <aside className="points-sidebar" aria-label="Навигация">
-                <img className="points-sidebar__reference" src="/sidebar-navigation.svg" alt="" aria-hidden="true" />
-                <img className="points-sidebar__avatar" src={sidebarAvatarSrc} alt="" aria-hidden="true" />
-                <button className="points-sidebar__hotspot points-sidebar__hotspot--logo points-clickable" type="button" aria-label="Главная" />
-                <button className="points-sidebar__hotspot points-sidebar__hotspot--users points-clickable" type="button" aria-label="Участники" />
-                <button className="points-sidebar__hotspot points-sidebar__hotspot--calendar points-clickable" type="button" aria-label="Мероприятия" />
-                <button className="points-sidebar__hotspot points-sidebar__hotspot--courses points-clickable" type="button" aria-label="Курсы" />
-                <button className="points-sidebar__hotspot points-sidebar__hotspot--teams points-clickable" type="button" aria-label="Команды" />
-                <button className="points-sidebar__hotspot points-sidebar__hotspot--settings points-clickable" type="button" aria-label="Настройки" />
-                <button className="points-sidebar__hotspot points-sidebar__hotspot--profile points-clickable" type="button" aria-label="Профиль" onClick={() => navigate({ to: "/org-profile" })} />
-            </aside>
+        <main className="org-layout points-add-page" aria-label="Начисление баллов">
+            <OrgSidebar />
 
-            <section className="points-workspace">
+            <section className="org-layout__workspace points-workspace">
                 <header className="points-header">
                     <button className="points-back-button points-clickable" type="button" aria-label="Назад" onClick={() => navigate({ to: "/org-extracurricular" })}>
                         <img src="/Back-Button.svg" alt="" />
                     </button>
                     <div className="points-header__left">
                         <h1>{title}</h1>
-                        <p>{date} • {time}-17:00 | Ответственный: {formatResponsible(organizer)}</p>
+                        <p>{date} • {time} | Ответственный: {formatResponsible(organizer)}</p>
                         <nav className="points-tabs" aria-label="Разделы внеучебки">
                             <button className="points-tabs__item points-tabs__item--active points-clickable" type="button" onClick={() => navigate({ to: "/org-extracurricular" })}>Мероприятия</button>
                             <button className="points-tabs__item points-clickable" type="button" onClick={() => navigate({ to: "/team-formation" })}>Команды</button>
                             <button className="points-tabs__item points-clickable" type="button">Рейтинг</button>
                         </nav>
                     </div>
-                    <div className="points-header__actions">
-                    </div>
+                    <div className="points-header__actions" />
                 </header>
 
                 <div className="points-tools">
                     <button
                         className="points-light-button points-clickable"
                         type="button"
-                        onClick={savePoints}
+                        onClick={() => void savePoints()}
+                        disabled={isSaving || isLoading || !activityId}
                     >
-                        Сохранить посещаемость
+                        {isSaving ? "Сохранение..." : "Сохранить посещаемость"}
                     </button>
+                    {notice ? <span className="points-notice">{notice}</span> : null}
                 </div>
 
                 <section className="points-panel" aria-label="Начисление баллов">
+                    {isLoading ? <p className="points-status">Загрузка...</p> : null}
+                    {error ? <p className="points-status">{error}</p> : null}
                     <div className="points-table" role="table" aria-label="Участники">
                         <div className="points-table__header" role="row">
                             <span>Команда</span>
@@ -162,7 +192,12 @@ export function ExtracurricularPointsAddPage() {
                                     <button
                                         className={`points-visit-toggle points-clickable${team.visited ? " points-visit-toggle--active" : ""}`}
                                         type="button"
-                                        onClick={() => updateTeam(team.id, { visited: !team.visited, points: team.visited ? 0 : team.points })}
+                                        onClick={() =>
+                                            updateTeam(team.id, {
+                                                visited: !team.visited,
+                                                points: team.visited ? 0 : defaultPoints,
+                                            })
+                                        }
                                         aria-label={team.visited ? "Присутствует" : "Отсутствует"}
                                     >
                                         <img src={team.visited ? "/present.svg" : "/absent.svg"} alt="" />
@@ -171,7 +206,7 @@ export function ExtracurricularPointsAddPage() {
                                         className="points-input"
                                         value={team.points}
                                         inputMode="numeric"
-                                        onChange={(event) => updateTeam(team.id, { points: Number(event.target.value) || 0 })}
+                                        readOnly
                                     />
                                     <button className="points-dropdown-button points-clickable" type="button" aria-label="Открыть">
                                         <img src="/Dropdown.svg" alt="" />

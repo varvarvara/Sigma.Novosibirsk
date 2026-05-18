@@ -1,11 +1,4 @@
-import {
-    calculateMemberPoints,
-    CHARGE_TYPES,
-    type ChargeType,
-    type MemberScoreEntry,
-    getMemberScoreKey,
-    parseRawPoints,
-} from "./team-scoring";
+import { type MemberScoreEntry, getMemberScoreKey } from "./team-scoring";
 
 type TableMember = {
     id: number;
@@ -43,9 +36,7 @@ export function TeamMembersTable({
             <div className="team-table__body">
                 {members.map((member, index) => {
                     const scoreKey = getMemberScoreKey(teamId, member.id);
-                    const entry = memberScores[scoreKey] ?? { rawPoints: "", chargeType: "Участник" as ChargeType };
-                    const rawPoints = parseRawPoints(entry.rawPoints);
-                    const calculatedPoints = calculateMemberPoints(rawPoints, entry.chargeType);
+                    const entry = memberScores[scoreKey] ?? { rawPoints: "" };
 
                     return (
                         <button
@@ -81,30 +72,6 @@ export function TeamMembersTable({
                                         onScoreChange(teamId, member.id, { rawPoints: event.target.value })
                                     }
                                 />
-
-                                {rawPoints > 0 ? (
-                                    <span className="team-score-slots" aria-label="Начисление">
-                                        <span className="team-score-slot team-score-slot--points">
-                                            +{calculatedPoints}
-                                        </span>
-                                        <select
-                                            className="team-score-slot team-score-slot--type"
-                                            value={entry.chargeType}
-                                            aria-label={`Тип начисления для ${member.name}`}
-                                            onChange={(event) =>
-                                                onScoreChange(teamId, member.id, {
-                                                    chargeType: event.target.value as ChargeType,
-                                                })
-                                            }
-                                        >
-                                            {CHARGE_TYPES.map((chargeType) => (
-                                                <option key={chargeType} value={chargeType}>
-                                                    {chargeType}
-                                                </option>
-                                            ))}
-                                        </select>
-                                    </span>
-                                ) : null}
                             </span>
 
                             <span

@@ -1,5 +1,24 @@
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
+import { AuthApiError, getAuthSession } from "../../../api/auth";
+import {
+    createExtracurricularActivity,
+    DEFAULT_EXTRACURRICULAR_ACTIVITY_SCORE,
+} from "../../../api/organizer/extracurricular";
+import { getSeasonStaff, getSeasonStudents, type SeasonStaffMember, type SeasonStudent } from "../../../api/organizer/season";
+import { DEFAULT_SEASON_ID } from "../../../features/auth/student-registration";
+import {
+    extractActivityDateDigits,
+    extractActivityTimeDigits,
+    formatActivityDateDigits,
+    formatActivityTimeDigits,
+    validateActivityDate,
+    validateActivityDateLive,
+    validateActivityTime,
+    validateActivityTimeLive,
+} from "../../../features/organizer/activity-schedule-validation";
+import { OrgSidebar } from "../../../shared/ui/org-sidebar";
+import "../../../styles/field-error.css";
 import "./org-extracurricular-page.css";
 
 type EventFormat = "offline" | "online";
@@ -18,8 +37,12 @@ const initialSchedule: ScheduleItem[] = [
 ];
 
 const categories = ["Волонтерство", "Медиа", "Спорт", "Проекты", "Дизайн", "Наука"];
-const organizers = ["А. И. Смирнова", "И. О. Петров", "М. С. Волкова", "Е. А. Морозова", "Д. Р. Ким"];
-const participants = ["Иван Алексеев", "Мария Соколова", "Андрей Петров", "Ева Морозова", "Дмитрий Волков", "Анна Орлова"];
+
+const formatStaffLabel = (staff: SeasonStaffMember) =>
+    `${staff.last_name} ${staff.first_name[0] ?? ""}.`.trim();
+
+const formatStudentLabel = (student: SeasonStudent) =>
+    `${student.first_name} ${student.last_name}`.trim();
 
 const formatPersonName = (name: string) => {
     const parts = name.trim().split(" ").filter(Boolean);
@@ -31,31 +54,74 @@ const formatPersonName = (name: string) => {
     return `${parts[1] ?? parts[0]} ${parts[0]?.[0] ?? ""}.`;
 };
 
+function FieldErrorMessage({ id, message }: { id?: string; message?: string | null }) {
+    if (!message) {
+        return null;
+    }
+
+    return (
+        <p className="field-error" id={id}>
+            {message}
+        </p>
+    );
+}
+
 export function OrgExtracurricularPage() {
     const navigate = useNavigate();
-    const sidebarAvatarSrc = localStorage.getItem("orgProfileAvatar") ?? "/teacher/profile/avatar-profile.png";
     const [title, setTitle] = useState("");
     const [description, setDescription] = useState("");
-    const [date, setDate] = useState("");
-    const [time, setTime] = useState("");
+    const [dateDigits, setDateDigits] = useState("");
+    const [timeDigits, setTimeDigits] = useState("");
+    const [dateError, setDateError] = useState<string | null>(null);
+    const [timeError, setTimeError] = useState<string | null>(null);
     const [organizer, setOrganizer] = useState("");
+    const [selectedStaffId, setSelectedStaffId] = useState<number | null>(null);
+    const [staffMembers, setStaffMembers] = useState<SeasonStaffMember[]>([]);
+    const [students, setStudents] = useState<SeasonStudent[]>([]);
     const [isOrganizerListOpen, setIsOrganizerListOpen] = useState(false);
     const [selectedCategories, setSelectedCategories] = useState<string[]>(["Проекты", "Медиа"]);
-    const [selectedParticipants, setSelectedParticipants] = useState<string[]>(["Иван Алексеев", "Мария Соколова"]);
+    const [selectedParticipants, setSelectedParticipants] = useState<string[]>([]);
     const [isParticipantsOpen, setIsParticipantsOpen] = useState(false);
     const [schedule, setSchedule] = useState(initialSchedule);
     const [activeScheduleId, setActiveScheduleId] = useState(initialSchedule[0].id);
+    const [isSaving, setIsSaving] = useState(false);
+    const [saveError, setSaveError] = useState<string | null>(null);
+
+    const loadReferenceData = useCallback(async () => {
+        try {
+            const [staff, seasonStudents] = await Promise.all([
+                getSeasonStaff(DEFAULT_SEASON_ID),
+                getSeasonStudents(DEFAULT_SEASON_ID),
+            ]);
+            setStaffMembers(staff);
+            setStudents(seasonStudents);
+
+            const session = getAuthSession();
+            const currentStaff = staff.find((member) => member.id === session?.userId);
+            if (currentStaff) {
+                setOrganizer(formatStaffLabel(currentStaff));
+                setSelectedStaffId(currentStaff.id);
+            }
+        } catch {
+            setStaffMembers([]);
+            setStudents([]);
+        }
+    }, []);
+
+    useEffect(() => {
+        void loadReferenceData();
+    }, [loadReferenceData]);
 
     const selectedCount = useMemo(() => selectedCategories.length, [selectedCategories]);
     const filteredOrganizers = useMemo(() => {
         const value = organizer.trim().toLowerCase();
 
         if (!value) {
-            return organizers;
+            return staffMembers;
         }
 
-        return organizers.filter((item) => item.toLowerCase().includes(value));
-    }, [organizer]);
+        return staffMembers.filter((item) => formatStaffLabel(item).toLowerCase().includes(value));
+    }, [organizer, staffMembers]);
 
     const toggleCategory = (category: string) => {
         setSelectedCategories((items) =>
@@ -91,47 +157,51 @@ export function OrgExtracurricularPage() {
         setSelectedParticipants((items) => items.filter((item) => item !== participant));
     };
 
-    const saveEvent = () => {
-        const savedActivities = JSON.parse(localStorage.getItem("orgExtracurricularActivities") ?? "[]");
+    const saveEvent = async () => {
+        const nextDateError = validateActivityDate(dateDigits);
+        const nextTimeError = validateActivityTime(timeDigits);
 
-        localStorage.setItem(
-            "orgExtracurricularActivities",
-            JSON.stringify([
-                ...savedActivities,
-                {
-                    id: Date.now(),
-                    title: title || "Новая активность",
-                    date: date || "18 июня",
-                    time: time || "10:00",
-                    organizer: organizer || "Анна Смирнова",
-                    email: "organizer@sigma.ru",
-                    attendanceSet: false,
-                    status: "draft",
-                    description,
-                    categories: selectedCategories,
-                    participants: selectedParticipants,
-                    schedule,
-                },
-            ]),
-        );
-        navigate({ to: "/org-extracurricular" });
+        setDateError(nextDateError);
+        setTimeError(nextTimeError);
+        setSaveError(null);
+
+        if (nextDateError || nextTimeError) {
+            return;
+        }
+
+        const session = getAuthSession();
+        const staffId = selectedStaffId ?? session?.userId;
+        if (!staffId) {
+            setSaveError("Не удалось определить ответственного организатора");
+            return;
+        }
+
+        setIsSaving(true);
+
+        try {
+            await createExtracurricularActivity({
+                ex_course_name: title.trim() || "Новая активность",
+                staff_id: staffId,
+                ex_course_score: DEFAULT_EXTRACURRICULAR_ACTIVITY_SCORE,
+                season_id: DEFAULT_SEASON_ID,
+            });
+            navigate({ to: "/org-extracurricular" });
+        } catch (error) {
+            if (error instanceof AuthApiError) {
+                setSaveError(error.message);
+            } else {
+                setSaveError("Не удалось создать мероприятие");
+            }
+        } finally {
+            setIsSaving(false);
+        }
     };
 
     return (
-        <main className="org-extra-page" aria-label="Создание активности">
-            <aside className="org-extra-sidebar" aria-label="Навигация">
-                <img className="org-extra-sidebar__reference" src="/sidebar-navigation.svg" alt="" aria-hidden="true" />
-                <img className="org-extra-sidebar__avatar" src={sidebarAvatarSrc} alt="" aria-hidden="true" />
-                <button className="org-extra-sidebar__hotspot org-extra-sidebar__hotspot--logo org-extra-clickable" type="button" aria-label="Главная" />
-                <button className="org-extra-sidebar__hotspot org-extra-sidebar__hotspot--users org-extra-clickable" type="button" aria-label="Участники" />
-                <button className="org-extra-sidebar__hotspot org-extra-sidebar__hotspot--calendar org-extra-clickable" type="button" aria-label="Мероприятия" />
-                <button className="org-extra-sidebar__hotspot org-extra-sidebar__hotspot--courses org-extra-clickable" type="button" aria-label="Курсы" />
-                <button className="org-extra-sidebar__hotspot org-extra-sidebar__hotspot--teams org-extra-clickable" type="button" aria-label="Команды" />
-                <button className="org-extra-sidebar__hotspot org-extra-sidebar__hotspot--settings org-extra-clickable" type="button" aria-label="Настройки" />
-                <button className="org-extra-sidebar__hotspot org-extra-sidebar__hotspot--profile org-extra-clickable" type="button" aria-label="Профиль" onClick={() => navigate({ to: "/org-profile" })} />
-            </aside>
+        <main className="org-layout org-extra-page" aria-label="Создание активности">
+            <OrgSidebar />
 
-            <section className="org-extra-workspace">
+            <section className="org-layout__workspace org-extra-workspace">
                 <header className="org-extra-header">
                     <div className="org-extra-header__left">
                         <h1>Создание активности</h1>
@@ -141,13 +211,14 @@ export function OrgExtracurricularPage() {
                         <button className="org-extra-light-button org-extra-clickable" type="button" onClick={() => navigate({ to: "/org-extracurricular" })}>
                             Отмена
                         </button>
-                        <button className="org-extra-primary-button org-extra-clickable" type="button" onClick={saveEvent}>
-                            Сохранить
+                        <button className="org-extra-primary-button org-extra-clickable" type="button" onClick={() => void saveEvent()} disabled={isSaving}>
+                            {isSaving ? "Сохранение..." : "Сохранить"}
                         </button>
                     </div>
                 </header>
 
                 <section className="org-extra-layout">
+                    {saveError ? <p className="field-error">{saveError}</p> : null}
                     <form className="org-extra-form" aria-label="Параметры внеучебки" onSubmit={(event) => event.preventDefault()}>
                         <div className="org-extra-card org-extra-card--main">
 
@@ -159,11 +230,43 @@ export function OrgExtracurricularPage() {
                             <div className="org-extra-grid">
                                 <label className="org-extra-field">
                                     <span>Дата</span>
-                                    <input type="date" value={date} onChange={(event) => setDate(event.target.value)} />
+                                    <input
+                                        className={`org-extra-field__schedule-input${dateError ? " field-input--error" : ""}`}
+                                        type="text"
+                                        inputMode="numeric"
+                                        autoComplete="off"
+                                        value={formatActivityDateDigits(dateDigits)}
+                                        placeholder="ДД.ММ.ГГ"
+                                        aria-invalid={dateError ? "true" : "false"}
+                                        aria-describedby={dateError ? "org-extra-date-error" : undefined}
+                                        onChange={(event) => {
+                                            const nextDigits = extractActivityDateDigits(event.target.value);
+                                            setDateDigits(nextDigits);
+                                            setDateError(validateActivityDateLive(nextDigits));
+                                        }}
+                                        onBlur={() => setDateError(validateActivityDate(dateDigits))}
+                                    />
+                                    <FieldErrorMessage id="org-extra-date-error" message={dateError} />
                                 </label>
                                 <label className="org-extra-field">
                                     <span>Время</span>
-                                    <input type="time" value={time} onChange={(event) => setTime(event.target.value)} />
+                                    <input
+                                        className={`org-extra-field__schedule-input${timeError ? " field-input--error" : ""}`}
+                                        type="text"
+                                        inputMode="numeric"
+                                        autoComplete="off"
+                                        value={formatActivityTimeDigits(timeDigits)}
+                                        placeholder="ЧЧ:ММ"
+                                        aria-invalid={timeError ? "true" : "false"}
+                                        aria-describedby={timeError ? "org-extra-time-error" : undefined}
+                                        onChange={(event) => {
+                                            const nextDigits = extractActivityTimeDigits(event.target.value);
+                                            setTimeDigits(nextDigits);
+                                            setTimeError(validateActivityTimeLive(nextDigits));
+                                        }}
+                                        onBlur={() => setTimeError(validateActivityTime(timeDigits))}
+                                    />
+                                    <FieldErrorMessage id="org-extra-time-error" message={timeError} />
                                 </label>
                                 <label className="org-extra-field">
                                     <span>Ответственный организатор</span>
@@ -176,19 +279,20 @@ export function OrgExtracurricularPage() {
                                             setIsOrganizerListOpen(true);
                                         }}
                                     />
-                                    {isOrganizerListOpen && organizer !== filteredOrganizers.find((item) => item === organizer) && (
+                                    {isOrganizerListOpen && (
                                         <div className="org-extra-search-list" aria-label="Организаторы">
                                             {filteredOrganizers.map((item) => (
                                                 <button
                                                     className="org-extra-search-item org-extra-clickable"
                                                     type="button"
-                                                    key={item}
+                                                    key={item.id}
                                                     onClick={() => {
-                                                        setOrganizer(formatPersonName(item));
+                                                        setOrganizer(formatStaffLabel(item));
+                                                        setSelectedStaffId(item.id);
                                                         setIsOrganizerListOpen(false);
                                                     }}
                                                 >
-                                                    {formatPersonName(item)}
+                                                    {formatStaffLabel(item)}
                                                 </button>
                                             ))}
                                         </div>
@@ -202,12 +306,8 @@ export function OrgExtracurricularPage() {
                             </label>
                             
                             <section className="org-extra-participants" aria-label="Участники / Состав команды">
-                                <div className="org-extra-participants__head">
-                                    <span>Участники / Состав команды</span>
-                                    <button className="org-extra-add-list-button org-extra-clickable" type="button" aria-label="Добавить из списка" onClick={() => setIsParticipantsOpen((value) => !value)}>
-                                        <img src="/Button-add-from-list.svg" alt="" />
-                                    </button>
-                                </div>
+                                <span className="org-extra-participants__title">Участники / Состав команды</span>
+                                <div className="org-extra-participants__toolbar">
                                 <div className="org-extra-member-tags" aria-label="Участники команды">
                                     {selectedParticipants.map((participant) => (
                                         <button className="org-extra-member-tag org-extra-clickable" type="button" key={participant} onClick={() => removeParticipant(participant)}>
@@ -216,19 +316,32 @@ export function OrgExtracurricularPage() {
                                         </button>
                                     ))}
                                 </div>
+                                    <button
+                                        className="org-extra-add-list-button org-extra-clickable"
+                                        type="button"
+                                        aria-label="Добавить из списка"
+                                        aria-expanded={isParticipantsOpen}
+                                        onClick={() => setIsParticipantsOpen((value) => !value)}
+                                    >
+                                        + Добавить из списка
+                                    </button>
+                                </div>
                                 {isParticipantsOpen && (
                                     <div className="org-extra-participants-list" aria-label="Список участников">
-                                        {participants.map((participant) => (
+                                        {students.map((participant) => {
+                                            const label = formatStudentLabel(participant);
+                                            return (
                                             <button
-                                                className={`org-extra-participant-row org-extra-clickable${selectedParticipants.includes(participant) ? " org-extra-participant-row--selected" : ""}`}
+                                                className={`org-extra-participant-row org-extra-clickable${selectedParticipants.includes(label) ? " org-extra-participant-row--selected" : ""}`}
                                                 type="button"
-                                                key={participant}
-                                                onClick={() => (selectedParticipants.includes(participant) ? removeParticipant(participant) : addParticipant(participant))}
+                                                key={participant.id}
+                                                onClick={() => (selectedParticipants.includes(label) ? removeParticipant(label) : addParticipant(label))}
                                             >
-                                                {formatPersonName(participant)}
-                                                <span>{selectedParticipants.includes(participant) ? "×" : "+"}</span>
+                                                {formatPersonName(label)}
+                                                <span>{selectedParticipants.includes(label) ? "×" : "+"}</span>
                                             </button>
-                                        ))}
+                                            );
+                                        })}
                                     </div>
                                 )}
                             </section>
