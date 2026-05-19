@@ -6,7 +6,7 @@ from app.modules.users.repository import UsersRepository
 from app.modules.users.schemas import (
     AvatarUploadOut,
     StaffInCreate,
-    StaffMeUpdate,
+    ProfileMeUpdate,
     StaffOutput,
     StudentInCreate,
     StudentOutput,
@@ -41,13 +41,7 @@ class UsersService:
             return self._student_output(current_user["user"])
         return self._staff_output(current_user["user"])
 
-    def update_me(self, current_user: dict, payload: StaffMeUpdate) -> StaffOutput:
-        if current_user["user_type"] != "staff":
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Profile update is available only for staff users",
-            )
-
+    def update_me(self, current_user: dict, payload: ProfileMeUpdate) -> StudentOutput | StaffOutput:
         updates = payload.model_dump(exclude_unset=True, mode="json")
         if not updates:
             raise HTTPException(
@@ -55,8 +49,60 @@ class UsersService:
                 detail="No fields to update",
             )
 
+        if current_user["user_type"] == "student":
+            allowed_student_fields = {
+                "first_name",
+                "last_name",
+                "partonymic",
+                "birth_date",
+                "year_of_study",
+                "city",
+                "school",
+                "phone",
+                "tg_nickname",
+                "parent_name",
+                "parent_phone",
+            }
+            student_updates = {
+                field: value
+                for field, value in updates.items()
+                if field in allowed_student_fields
+            }
+            if not student_updates:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="No student profile fields to update",
+                )
+
+            student: Student = current_user["user"]
+            updated_student = self._users_repository.update_student(student.id, student_updates)
+            if updated_student is None:
+                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Student not found")
+
+            return self._student_output(updated_student)
+
+        allowed_staff_fields = {
+            "first_name",
+            "last_name",
+            "partonymic",
+            "birth_date",
+            "university",
+            "study_direction",
+            "study_year",
+        }
+        staff_updates = {
+            field: value
+            for field, value in updates.items()
+            if field in allowed_staff_fields
+        }
+        if not staff_updates:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="No staff fields to update",
+            )
+
         staff: Staff = current_user["user"]
-        updated = self._users_repository.update_staff(staff.id, updates)
+        updated = self._users_repository.update_staff(staff.id, staff_updates)
         if updated is None:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Staff user not found")
 

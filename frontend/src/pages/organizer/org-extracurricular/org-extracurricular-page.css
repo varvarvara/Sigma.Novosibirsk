@@ -478,7 +478,9 @@
     border: 1px solid #E5E5E5;
     border-radius: 8px;
     overflow-y: auto;
+    overflow-x: hidden;
     background: #FFFFFF;
+    padding-bottom: 1px;
 }
 
 .org-extra-participant-row {

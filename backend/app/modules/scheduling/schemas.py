@@ -54,6 +54,7 @@ class GeneratedScheduleItem(BaseModel):
     class_number: int
     lesson_date: date
     lesson_time: time
+    classroom: str | None = None
     slot_id: int | None = None
 
 
@@ -100,4 +101,5 @@ class TimetableItemOut(BaseModel):
     teacher_name: str
     lesson_date: date
     lesson_time: time
+    classroom: str | None = None
     slot_id: int | None = None

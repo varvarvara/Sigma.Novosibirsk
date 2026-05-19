@@ -137,8 +137,6 @@ class SchedulingRepository:
 
     @staticmethod
     def _subject_key(title: str) -> str:
-        # Heuristic: first meaningful token in title is treated as subject key.
-        # Example: "Biology Advanced" and "Biology Basic" => "biology"
         if not title:
             return ""
 
@@ -246,6 +244,7 @@ class SchedulingRepository:
         lesson_date: date,
         lesson_time: time,
         season_id: int | None = None,
+        classroom: str | None = None,
     ) -> Schedule:
         if season_id is None and slot_id is not None:
             slot = self.db.query(Slot).filter(Slot.id == slot_id).first()
@@ -261,6 +260,7 @@ class SchedulingRepository:
             slot_id=slot_id,
             lesson_date=lesson_date,
             lesson_time=lesson_time,
+            classroom=classroom,
             season_id=season_id,
         )
         self.db.add(schedule)
@@ -289,6 +289,7 @@ class SchedulingRepository:
         lesson_date,
         lesson_time,
         season_id: int,
+        classroom: str | None = None,
     ):
         from app.modules.scheduling.models import ScheduleGenerationItem
 
@@ -299,6 +300,7 @@ class SchedulingRepository:
             slot_id=slot_id,
             lesson_date=lesson_date,
             lesson_time=lesson_time,
+            classroom=classroom,
             season_id=season_id,
         )
         self.db.add(item)
@@ -349,6 +351,7 @@ class SchedulingRepository:
             slot_id=item.slot_id,
             lesson_date=item.lesson_date,
             lesson_time=item.lesson_time,
+            classroom=item.classroom,
             season_id=item.season_id,
         )
         self.db.add(schedule)

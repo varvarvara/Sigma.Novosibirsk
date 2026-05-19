@@ -39,6 +39,11 @@ export type ExtracurricularTeamMember = {
   student_id: number;
 };
 
+export type ExtracurricularTeamMemberName = {
+  student_id: number;
+  full_name: string;
+};
+
 export type ExtracurricularScoreCreate = {
   team_id: number;
   ex_course_id: number;
@@ -92,6 +97,15 @@ export function addExtracurricularTeamMember(data: ExtracurricularTeamMemberCrea
     headers: authHeaders(),
     body: JSON.stringify(data),
   });
+}
+
+export function listExtracurricularTeamMembers(teamId: number, seasonId = buildSeasonId()) {
+  return request<ExtracurricularTeamMemberName[]>(
+    `/gamification/team/${teamId}/members?season_id=${seasonId}`,
+    {
+      headers: authHeaders(),
+    },
+  );
 }
 
 export function listExtracurricularScores() {

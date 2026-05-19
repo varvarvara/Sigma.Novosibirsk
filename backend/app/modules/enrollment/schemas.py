@@ -5,7 +5,6 @@ from pydantic import BaseModel
 
 ALLOWED_SLOT_HOURS = [9, 10, 11]
 
-# Час начала занятия в расписании → id слота записи.
 SCHEDULE_HOUR_TO_ENROLLMENT_SLOT = {10: 9, 11: 10, 12: 11}
 
 

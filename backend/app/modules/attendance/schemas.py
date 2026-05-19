@@ -139,9 +139,34 @@ class AchievementOut(BaseModel):
     course_id: int
     achievement_score: int
     season_id: int
+    icon_image_key: str | None = None
+    icon_url: str | None = None
 
     class Config:
         from_attributes = True
+
+
+class CourseAchievementStateOut(BaseModel):
+    achievement_id: int
+    assigned: bool
+    student_achievement_id: int | None = None
+
+
+class CourseAchievementStudentOut(BaseModel):
+    student_id: int
+    first_name: str
+    last_name: str
+    email: str
+    achievements: list[CourseAchievementStateOut]
+
+
+class CourseAchievementMatrixOut(BaseModel):
+    course_id: int
+    course_title: str
+    staff_id: int
+    teacher_name: str
+    achievements: list[AchievementOut]
+    students: list[CourseAchievementStudentOut]
 
 from datetime import datetime
 from pydantic import BaseModel
@@ -169,3 +194,5 @@ class StudentAchievementDetailedOut(BaseModel):
     achievement_name: str
     achievement_description: str
     achievement_score: int
+    icon_image_key: str | None = None
+    icon_url: str | None = None

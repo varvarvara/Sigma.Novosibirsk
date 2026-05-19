@@ -1,8 +1,10 @@
 from datetime import date, datetime, time
 
+from sqlalchemy import func
 from sqlalchemy.orm import Session, joinedload
 
 from app.modules.courses.models import Course, CourseClass
+from app.modules.course_feedback.models import Feedback
 from app.modules.scheduling.models import Schedule, Slot
 from app.modules.users.models import IntakeControl, Staff
 
@@ -45,6 +47,17 @@ class CourseRepository:
 
     def get_staff_by_id(self, staff_id: int) -> Staff | None:
         return self.db.query(Staff).filter(Staff.id == staff_id).first()
+
+    def get_course_rating_stats(self, course_id: int) -> tuple[float | None, int]:
+        average_rating, feedback_count = (
+            self.db.query(func.avg(Feedback.rating), func.count(Feedback.id))
+            .filter(Feedback.course_id == course_id)
+            .one()
+        )
+        return (
+            round(float(average_rating), 2) if average_rating is not None else None,
+            int(feedback_count or 0),
+        )
 
     def create_course(
         self,

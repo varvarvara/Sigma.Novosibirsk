@@ -117,6 +117,7 @@ class CourseFeedbackService:
             student_id=student_id,
             rating=data.rating,
             comment=data.comment,
+            season_id=data.season_id,
         )
         return self._to_feedback_output(feedback=created)
 

@@ -1,8 +1,7 @@
 .extracurricular-page {
-    width: 100%;
-    max-width: 100%;
+    width: 360px;
     min-height: 100dvh;
-    margin: 0;
+    margin: 0 auto;
     padding: 72px 16px 104px;
     background: #2A2730;
     color: #2A282F;
@@ -13,13 +12,12 @@
 .extracurricular-header {
     position: fixed;
     top: 0;
-    left: 0;
-    right: 0;
+    left: 50%;
     z-index: 10;
-    width: 100%;
-    max-width: 100%;
+    width: 360px;
     height: 72px;
     padding: 0 20px 0 var(--back-chevron-offset);
+    transform: translateX(-50%);
     display: flex;
     align-items: center;
     gap: 8px;
@@ -47,17 +45,35 @@
 .team-card {
     width: 100%;
     max-width: 100%;
-    min-height: 211px;
+    min-height: 188px;
     position: relative;
-    border-radius: 12px;
+    border-radius: 24px;
     overflow: hidden;
-    background: #8C9CF7;
+    background:
+        radial-gradient(circle at 90% 10%, rgba(255, 255, 255, 0.28), transparent 88px),
+        linear-gradient(135deg, #8A98FF 0%, #7584F2 100%);
+    box-shadow: 0 16px 34px rgba(31, 28, 38, 0.24);
+    transition: transform 0.24s ease, box-shadow 0.24s ease, filter 0.24s ease;
+}
+
+.team-card::after {
+    content: "";
+    position: absolute;
+    inset: 1px;
+    border-radius: 23px;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    pointer-events: none;
 }
 
 .team-content {
-    height: 100%;
-    padding: 24px 26px 24px;
+    min-height: 188px;
+    padding: 24px;
     position: relative;
+    z-index: 1;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 106px;
+    align-items: center;
+    gap: 18px;
 }
 
 .team-avatars {
@@ -80,12 +96,12 @@
 }
 
 .team-text h1 {
-    max-width: 145px;
-    margin: 0 0 12px;
+    max-width: none;
+    margin: 0 0 14px;
     color: #FFFFFF;
     font-family: 'Inter SemiBold';
-    font-size: 16px;
-    line-height: 20px;
+    font-size: 18px;
+    line-height: 22px;
     font-weight: 600;
 }
 
@@ -97,24 +113,23 @@
 
 .team-members p {
     margin: 0;
-    color: rgba(255, 255, 255, 0.5);
+    color: rgba(255, 255, 255, 0.68);
     font-family: 'Inter Regular';
     font-size: 12px;
     line-height: 17px;
+    font-weight: 400;
 }
 
 .team-stats {
-    position: absolute;
-    top: 54px;
-    left: 176px;
+    position: static;
     display: flex;
     flex-direction: column;
-    gap: 38px;
+    gap: 18px;
 }
 
 .team-stats div {
     display: grid;
-    grid-template-columns: 32px 76px;
+    grid-template-columns: 32px minmax(0, 1fr);
     align-items: center;
     gap: 8px;
 }
@@ -128,18 +143,18 @@
 .team-stats p {
     margin: 0;
     color: #FFFFFF;
-    font-family: 'Inter SemiBold';
+    font-family: 'Inter Medium';
     font-size: 12px;
-    line-height: 15px;
-    font-weight: 600;
+    line-height: 16px;
+    font-weight: 500;
 }
 
 .team-stats span {
     display: block;
     color: #FFFFFF;
     font-family: 'Inter SemiBold';
-    font-size: 16px;
-    line-height: 20px;
+    font-size: 19px;
+    line-height: 22px;
     font-weight: 600;
 }
 
@@ -183,8 +198,8 @@
     margin: 0;
     color: #FFFFFF;
     font-family: 'Inter SemiBold';
-    font-size: 14px;
-    line-height: 17px;
+    font-size: 16px;
+    line-height: 20px;
     font-weight: 600;
 }
 
@@ -198,27 +213,30 @@
 .activity-row {
     width: 100%;
     max-width: 100%;
-    min-height: 55px;
-    padding: 10px 20px;
-    border-radius: 12px;
+    min-height: 82px;
+    padding: 14px 16px;
+    border-radius: 20px;
     background: #F7F6FA;
     display: grid;
-    grid-template-columns: 44px 1fr 20px;
+    grid-template-columns: 42px minmax(0, 1fr);
     align-items: center;
-    gap: 14px;
+    gap: 12px;
+    box-shadow: 0 10px 26px rgba(20, 18, 26, 0.12);
+    transition: transform 0.22s ease, box-shadow 0.22s ease, background-color 0.22s ease;
 }
 
 .rating-place {
-    width: 44px;
-    height: 20px;
+    width: 42px;
+    min-height: 42px;
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 4px;
     color: #2A282F;
-    font-family: 'Inter SemiBold';
-    font-size: 14px;
-    line-height: 17px;
-    font-weight: 600;
+    font-family: 'Inter Medium';
+    font-size: 16px;
+    line-height: 20px;
+    font-weight: 500;
 }
 
 .rating-place img {
@@ -236,17 +254,19 @@
     color: #2A282F;
     font-family: 'Inter SemiBold';
     font-size: 14px;
-    line-height: 17px;
+    line-height: 18px;
     font-weight: 600;
+    overflow-wrap: anywhere;
 }
 
 .rating-info p {
-    margin: 3px 0 0;
+    margin: 4px 0 0;
     color: #A8A6AC;
-    font-family: 'Inter SemiBold';
-    font-size: 10px;
-    line-height: 12px;
-    font-weight: 600;
+    font-family: 'Inter Medium';
+    font-size: 11px;
+    line-height: 15px;
+    font-weight: 500;
+    overflow-wrap: anywhere;
 }
 
 .activity-row img {
@@ -258,6 +278,22 @@
 .charges-panel {
     margin-top: 20px;
     scroll-margin-top: 60px;
+}
+
+.charges-panel__header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.charges-panel__header span {
+    color: #A8A6AC;
+    font-family: 'Inter Medium';
+    font-size: 12px;
+    line-height: 15px;
+    font-weight: 500;
+    text-align: right;
 }
 
 .charges-list {
@@ -285,14 +321,16 @@
 .charge-row {
     width: 100%;
     max-width: 100%;
-    min-height: 55px;
-    padding: 10px 16px 10px 20px;
-    border-radius: 12px;
+    min-height: 94px;
+    padding: 14px 16px;
+    border-radius: 20px;
     background: #F7F6FA;
     display: grid;
     grid-template-columns: 1fr auto;
     align-items: center;
-    gap: 14px;
+    gap: 12px;
+    box-shadow: 0 10px 26px rgba(20, 18, 26, 0.12);
+    transition: transform 0.22s ease, box-shadow 0.22s ease, background-color 0.22s ease;
 }
 
 .charge-info {
@@ -303,31 +341,44 @@
     margin: 0;
     color: #2A282F;
     font-family: 'Inter SemiBold';
-    font-size: 12px;
-    line-height: 15px;
+    font-size: 13px;
+    line-height: 17px;
     font-weight: 600;
+    overflow-wrap: anywhere;
 }
 
 .charge-info p {
-    margin: 3px 0 0;
+    margin: 5px 0 0;
     color: #A8A6AC;
-    font-family: 'Inter SemiBold';
-    font-size: 10px;
-    line-height: 12px;
-    font-weight: 600;
+    font-family: 'Inter Medium';
+    font-size: 11px;
+    line-height: 15px;
+    font-weight: 500;
+}
+
+.charge-info__student-delta {
+    margin-top: 4px !important;
+    color: #7949FF !important;
+    font-family: 'Inter SemiBold' !important;
+    font-weight: 600 !important;
 }
 
 .charge-coins {
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: 5px;
+    min-width: 66px;
+    justify-content: flex-end;
+    padding: 6px 8px;
+    border-radius: 999px;
+    background: #ECE6FF;
 }
 
 .charge-coins span {
     color: #2A282F;
     font-family: 'Inter SemiBold';
-    font-size: 12px;
-    line-height: 15px;
+    font-size: 13px;
+    line-height: 16px;
     font-weight: 600;
 }
 
@@ -341,6 +392,28 @@
     margin: 4px 0 0;
     color: #6f6b78;
     font-family: 'Inter Medium', Inter, sans-serif;
-    font-size: 12px;
+    font-size: 11px;
     line-height: 15px;
+    font-weight: 500;
+}
+
+@media (hover: hover) {
+    .team-card:hover {
+        transform: translateY(-2px);
+        filter: saturate(1.04);
+        box-shadow: 0 20px 42px rgba(31, 28, 38, 0.3);
+    }
+
+    .activity-row:hover,
+    .charge-row:hover {
+        transform: translateY(-2px);
+        background: #FFFFFF;
+        box-shadow: 0 16px 32px rgba(20, 18, 26, 0.18);
+    }
+}
+
+.team-card:active,
+.activity-row:active,
+.charge-row:active {
+    transform: translateY(1px) scale(0.995);
 }

@@ -1,228 +1,316 @@
-import { useMemo, useState } from 'react';
-import { useLocation, useNavigate } from '@tanstack/react-router';
+import { type CSSProperties, useEffect, useMemo, useState } from 'react';
+import { getMyTeacherCourses, type TeacherCourse } from '../../../api/teacher/courses';
+import {
+  bulkMarkAttendance,
+  getCourseAttendanceSummary,
+  getCourseStudentAttendanceDetail,
+  type TeacherCourseAttendanceSummary,
+  type TeacherCourseStudentAttendanceDetail,
+  type TeacherLessonAttendanceItem,
+} from '../../../api/teacher/attendance';
+import { TeacherAppShell } from '../../../shared/ui/teacher_sidebar/teacher-app-shell';
 import './attendance-page.css';
 
-type Student = {
-  id: number;
-  name: string;
-  email: string;
-  attendance: boolean[];
-};
-
-const navItems = [
-  {
-    id: 'attendance',
-    label: 'Посещаемость',
-    path: '/teacher/attendance',
-    icon: '/teacher/sidebar/check-square.svg',
-  },
-  {
-    id: 'achievements',
-    label: 'Ачивки',
-    path: '/teacher/achievements',
-    icon: '/teacher/sidebar/sub_nav_courses/puls.svg',
-  },
-];
-
-const initialStudents: Student[] = [
-  { id: 1, name: 'Иванов Иван', email: 'ivanov@sigma.ru', attendance: [true, true, false, true, false, true] },
-  { id: 2, name: 'Петрова Анна', email: 'petrova@sigma.ru', attendance: [false, true, false, true, true, false] },
-  { id: 3, name: 'Смирнов Даниил', email: 'smirnov@sigma.ru', attendance: [true, false, true, true, false, true] },
-  { id: 4, name: 'Соколова Мария', email: 'sokolova@sigma.ru', attendance: [true, true, true, false, true, true] },
-  { id: 5, name: 'Орлов Никита', email: 'orlov@sigma.ru', attendance: [false, false, true, false, true, false] },
-  { id: 6, name: 'Морозова Ева', email: 'morozova@sigma.ru', attendance: [true, true, false, true, true, true] },
-  { id: 7, name: 'Волков Дмитрий', email: 'volkov@sigma.ru', attendance: [true, false, false, true, false, true] },
-  { id: 8, name: 'Лебедева Анна', email: 'lebedeva@sigma.ru', attendance: [true, true, true, true, false, false] },
-  { id: 9, name: 'Кузнецов Артем', email: 'kuznetsov@sigma.ru', attendance: [false, true, true, false, true, true] },
-  { id: 10, name: 'Федорова Софья', email: 'fedorova@sigma.ru', attendance: [true, false, true, true, true, false] },
-  { id: 11, name: 'Алексеев Павел', email: 'alekseev@sigma.ru', attendance: [false, false, true, true, false, true] },
-  { id: 12, name: 'Николаева Елена', email: 'nikolaeva@sigma.ru', attendance: [true, true, false, false, true, true] },
-  { id: 13, name: 'Громов Михаил', email: 'gromov@sigma.ru', attendance: [true, false, true, false, true, false] },
-  { id: 14, name: 'Романова Алиса', email: 'romanova@sigma.ru', attendance: [false, true, false, true, true, true] },
-  { id: 15, name: 'Ким Даниил', email: 'kim@sigma.ru', attendance: [true, true, true, false, false, true] },
-  { id: 16, name: 'Попова Кира', email: 'popova@sigma.ru', attendance: [false, true, true, true, false, false] },
-  { id: 17, name: 'Зайцев Максим', email: 'zaytsev@sigma.ru', attendance: [true, false, false, true, true, false] },
-  { id: 18, name: 'Беляева Дарья', email: 'belyaeva@sigma.ru', attendance: [true, true, false, true, false, true] },
-  { id: 19, name: 'Семенов Илья', email: 'semenov@sigma.ru', attendance: [false, false, true, false, true, true] },
-  { id: 20, name: 'Васильева Полина', email: 'vasilyeva@sigma.ru', attendance: [true, true, true, true, true, false] },
-  { id: 21, name: 'Макаров Роман', email: 'makarov@sigma.ru', attendance: [true, false, true, true, false, true] },
-  { id: 22, name: 'Егорова Милана', email: 'egorova@sigma.ru', attendance: [false, true, false, true, true, false] },
-  { id: 23, name: 'Павлов Кирилл', email: 'pavlov@sigma.ru', attendance: [true, true, false, false, true, true] },
-  { id: 24, name: 'Тихонова Арина', email: 'tikhonova@sigma.ru', attendance: [false, true, true, true, false, true] },
-  { id: 25, name: 'Мельникова Варвара', email: 'melnikova@sigma.ru', attendance: [true, false, true, true, false, true] },
-];
-
-const attendanceColumns = ['Дата', 'Дата', 'Дата', 'Дата', 'Дата', 'Дата'];
 const pageSize = 10;
 
+function formatStudentName(student: { first_name: string; last_name: string }) {
+  return `${student.last_name} ${student.first_name}`.trim();
+}
+
+function formatDateHeader(value: string) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
+
+  return new Intl.DateTimeFormat('ru-RU', {
+    day: '2-digit',
+    month: '2-digit',
+  }).format(date);
+}
+
+function formatLessonTime(value: string) {
+  return value.slice(0, 5);
+}
+
+function buildDraft(details: TeacherCourseStudentAttendanceDetail[]) {
+  return details.reduce<Record<number, Record<number, boolean>>>((acc, detail) => {
+    acc[detail.student_id] = detail.lessons.reduce<Record<number, boolean>>((lessonAcc, lesson) => {
+      lessonAcc[lesson.schedule_id] = lesson.attendance_status === true;
+      return lessonAcc;
+    }, {});
+    return acc;
+  }, {});
+}
+
 export function TeacherAttendancePage() {
-  const navigate = useNavigate();
-  const location = useLocation();
-  const [students, setStudents] = useState(initialStudents);
+  const [courses, setCourses] = useState<TeacherCourse[]>([]);
+  const [selectedCourseId, setSelectedCourseId] = useState<number | null>(null);
+  const [summary, setSummary] = useState<TeacherCourseAttendanceSummary | null>(null);
+  const [details, setDetails] = useState<TeacherCourseStudentAttendanceDetail[]>([]);
+  const [attendanceDraft, setAttendanceDraft] = useState<Record<number, Record<number, boolean>>>({});
   const [currentPage, setCurrentPage] = useState(1);
-  const [isAttendanceSaved, setIsAttendanceSaved] = useState(false);
-  const [editableStudentIds, setEditableStudentIds] = useState<number[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [statusMessage, setStatusMessage] = useState<string | null>(null);
 
-  const filteredStudents = useMemo(() => {
-    const startIndex = (currentPage - 1) * pageSize;
+  useEffect(() => {
+    let isMounted = true;
 
-    return students.slice(startIndex, startIndex + pageSize);
-  }, [currentPage, students]);
-  const pageCount = Math.ceil(students.length / pageSize);
-  const goToPreviousPage = () => setCurrentPage((page) => Math.max(1, page - 1));
-  const goToNextPage = () => setCurrentPage((page) => Math.min(pageCount, page + 1));
+    async function loadCourses() {
+      try {
+        setIsLoading(true);
+        setError(null);
+        const teacherCourses = await getMyTeacherCourses();
+        if (!isMounted) {
+          return;
+        }
 
-  const toggleAttendance = (id: number, columnIndex: number) => {
-    if (isAttendanceSaved && !editableStudentIds.includes(id)) {
+        setCourses(teacherCourses);
+        setSelectedCourseId((currentCourseId) => currentCourseId ?? teacherCourses[0]?.id ?? null);
+      } catch (loadError) {
+        if (isMounted) {
+          setError(loadError instanceof Error ? loadError.message : 'Не удалось загрузить курсы преподавателя');
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    }
+
+    void loadCourses();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!selectedCourseId) {
+      setSummary(null);
+      setDetails([]);
+      setAttendanceDraft({});
       return;
     }
 
-    setStudents((items) =>
-      items.map((student) =>
-        student.id === id
-          ? {
-              ...student,
-              attendance: student.attendance.map((checked, index) => (index === columnIndex ? !checked : checked)),
-            }
-          : student,
-      ),
-    );
+    let isMounted = true;
+
+    async function loadAttendance() {
+      try {
+        setIsLoading(true);
+        setError(null);
+        setStatusMessage(null);
+        setCurrentPage(1);
+
+        const courseSummary = await getCourseAttendanceSummary(selectedCourseId as number);
+        const studentDetails = await Promise.all(
+          courseSummary.students.map((student) =>
+            getCourseStudentAttendanceDetail(selectedCourseId as number, student.student_id),
+          ),
+        );
+
+        if (!isMounted) {
+          return;
+        }
+
+        setSummary(courseSummary);
+        setDetails(studentDetails);
+        setAttendanceDraft(buildDraft(studentDetails));
+      } catch (loadError) {
+        if (isMounted) {
+          setError(loadError instanceof Error ? loadError.message : 'Не удалось загрузить посещаемость');
+          setSummary(null);
+          setDetails([]);
+          setAttendanceDraft({});
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    }
+
+    void loadAttendance();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [selectedCourseId]);
+
+  const lessons = useMemo<TeacherLessonAttendanceItem[]>(() => details[0]?.lessons ?? [], [details]);
+  const students = summary?.students ?? [];
+  const pageCount = Math.max(1, Math.ceil(students.length / pageSize));
+  const filteredStudents = useMemo(() => {
+    const startIndex = (currentPage - 1) * pageSize;
+    return students.slice(startIndex, startIndex + pageSize);
+  }, [currentPage, students]);
+
+  const tableStyle = {
+    '--attendance-lesson-count': lessons.length,
+  } as CSSProperties;
+
+  const goToPreviousPage = () => setCurrentPage((page) => Math.max(1, page - 1));
+  const goToNextPage = () => setCurrentPage((page) => Math.min(pageCount, page + 1));
+
+  const toggleAttendance = (studentId: number, scheduleId: number) => {
+    setStatusMessage(null);
+    setAttendanceDraft((draft) => ({
+      ...draft,
+      [studentId]: {
+        ...(draft[studentId] ?? {}),
+        [scheduleId]: !(draft[studentId]?.[scheduleId] ?? false),
+      },
+    }));
   };
 
-  const clearAttendance = (id: number) => {
-    setStudents((items) =>
-      items.map((student) =>
-        student.id === id
-          ? { ...student, attendance: student.attendance.map(() => false) }
-          : student,
-      ),
-    );
-  };
+  const saveAttendance = async () => {
+    if (!lessons.length || !students.length) {
+      return;
+    }
 
-  const editAttendance = (id: number) => {
-    setEditableStudentIds((ids) => (ids.includes(id) ? ids : [...ids, id]));
-  };
+    try {
+      setIsSaving(true);
+      setError(null);
+      setStatusMessage(null);
 
-  const saveAttendance = () => {
-    setIsAttendanceSaved(true);
-    setEditableStudentIds([]);
+      await Promise.all(
+        lessons.map((lesson) =>
+          bulkMarkAttendance(
+            lesson.schedule_id,
+            students.map((student) => ({
+              student_id: student.student_id,
+              attendance_status: attendanceDraft[student.student_id]?.[lesson.schedule_id] ?? false,
+            })),
+          ),
+        ),
+      );
+
+      if (selectedCourseId) {
+        const courseSummary = await getCourseAttendanceSummary(selectedCourseId);
+        const studentDetails = await Promise.all(
+          courseSummary.students.map((student) => getCourseStudentAttendanceDetail(selectedCourseId, student.student_id)),
+        );
+        setSummary(courseSummary);
+        setDetails(studentDetails);
+        setAttendanceDraft(buildDraft(studentDetails));
+      }
+
+      setStatusMessage('Посещаемость сохранена. За отмеченное присутствие студентам начислится по 3 балла.');
+    } catch (saveError) {
+      setError(saveError instanceof Error ? saveError.message : 'Не удалось сохранить посещаемость');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
-    <main className="attendance-page" aria-label="Посещаемость">
-      <aside className="attendance-sidebar" aria-label="Основная навигация">
-        <img className="attendance-sidebar__reference" src="/sidebar-teacher.svg" alt="" aria-hidden="true" />
-        <button className="attendance-sidebar__hotspot attendance-sidebar__hotspot--logo attendance-clickable" type="button" aria-label="Главная" />
-        <button className="attendance-sidebar__hotspot attendance-sidebar__hotspot--profile attendance-clickable" type="button" aria-label="Профиль" onClick={() => navigate({ to: '/teacher/profile' })} />
-        <button className="attendance-sidebar__hotspot attendance-sidebar__hotspot--courses attendance-clickable" type="button" aria-label="Курсы" onClick={() => navigate({ to: '/teacher/courses' })} />
-        <button className="attendance-sidebar__hotspot attendance-sidebar__hotspot--attendance attendance-sidebar__hotspot--active attendance-clickable" type="button" aria-label="Посещаемость" />
-        <button className="attendance-sidebar__hotspot attendance-sidebar__hotspot--calendar attendance-clickable" type="button" aria-label="Расписание" />
-        <button className="attendance-sidebar__hotspot attendance-sidebar__hotspot--settings attendance-clickable" type="button" aria-label="Настройки" onClick={() => navigate({ to: '/teacher/settings' })} />
-        <button className="attendance-sidebar__hotspot attendance-sidebar__hotspot--avatar attendance-clickable" type="button" aria-label="Профиль" onClick={() => navigate({ to: '/teacher/profile' })} />
-      </aside>
-
-      <aside className="courses-subnav attendance-subnav" aria-label="Навигация раздела">
-        <img className="attendance-subnav__reference" src="/subnav-teacher.svg" alt="" aria-hidden="true" />
-        {navItems.map((item, index) => (
-          <button
-            key={item.id}
-            className={`attendance-subnav__hotspot attendance-subnav__hotspot--${item.id} attendance-clickable${location.pathname === item.path && item.id === 'attendance' ? ' attendance-subnav__hotspot--active' : ''}`}
-            type="button"
-            onClick={() => navigate({ to: item.path })}
-            aria-label={item.label}
-            style={{ top: 36 + index * 56 }}
-          />
-        ))}
-        <div className="attendance-subnav-user">
-          <span>Имя фамилия</span>
-          <span>teacher@sigma.ru</span>
-        </div>
-        <button className="attendance-subnav__hotspot attendance-subnav__hotspot--logout attendance-clickable" type="button" aria-label="Выход" />
-      </aside>
-
-      <section className="attendance-workspace">
-        <header className="attendance-header">
-          <div>
-            <h1>Посещаемость</h1>
-            <div className="attendance-course-title-row">
-              <p>Название курса</p>
-              <span>{students.length} учеников</span>
+    <TeacherAppShell>
+      <main className="attendance-page" aria-label="Посещаемость">
+        <section className="attendance-workspace">
+          <header className="attendance-header">
+            <div>
+              <h1>Посещаемость</h1>
+              <div className="attendance-course-title-row">
+                <p>{summary?.course_title ?? 'Выберите курс'}</p>
+                <span>{students.length} учеников</span>
+              </div>
             </div>
-          </div>
-        </header>
+            <label className="attendance-course-select">
+              <span>Курс</span>
+              <select
+                value={selectedCourseId ?? ''}
+                onChange={(event) => setSelectedCourseId(Number(event.target.value) || null)}
+                disabled={isLoading || courses.length === 0}
+              >
+                {courses.map((course) => (
+                  <option value={course.id} key={course.id}>
+                    {course.title}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </header>
 
-        <section className="attendance-panel" aria-label="Таблица посещаемости">
-          <div className="attendance-table" role="table">
-            <div className="attendance-table-header" role="row">
-              <span>Ученик</span>
-              <span>Почта</span>
-              {attendanceColumns.map((column, index) => (
-                <span key={`${column}-${index}`}>{column}</span>
-              ))}
-              <span aria-hidden="true" />
-            </div>
-            <div className="attendance-table-body">
-              {filteredStudents.map((student) => (
-                <div className="attendance-row" role="row" key={student.id}>
-                  <div className="attendance-student">
-                    <img src="/teacher/sidebar/avatar.png" alt="" />
-                    <div>
-                      <strong>{student.name}</strong>
+          {error && <div className="attendance-alert attendance-alert--error">{error}</div>}
+          {statusMessage && <div className="attendance-alert attendance-alert--success">{statusMessage}</div>}
+
+          <section className="attendance-panel" aria-label="Таблица посещаемости">
+              <div className="attendance-table" role="table" style={tableStyle}>
+              <div className="attendance-table-header" role="row">
+                <span>Ученик</span>
+                {lessons.map((lesson) => (
+                  <span className="attendance-date-head" key={lesson.schedule_id}>
+                    <strong>{formatDateHeader(lesson.lesson_date)}</strong>
+                    <small>{formatLessonTime(lesson.lesson_time)}</small>
+                  </span>
+                ))}
+              </div>
+              <div className="attendance-table-body">
+                {isLoading && <div className="attendance-empty">Загружаю данные из базы...</div>}
+                {!isLoading && students.length === 0 && <div className="attendance-empty">На этом курсе пока нет назначенных учеников.</div>}
+                {!isLoading && students.length > 0 && lessons.length === 0 && (
+                  <div className="attendance-empty">У курса пока нет занятий в расписании.</div>
+                )}
+                {!isLoading &&
+                  filteredStudents.map((student) => (
+                    <div className="attendance-row" role="row" key={student.student_id}>
+                      <div className="attendance-student">
+                        <img src="/teacher/sidebar/avatar.png" alt="" />
+                        <div>
+                          <strong>{formatStudentName(student)}</strong>
+                        </div>
+                      </div>
+                      {lessons.map((lesson) => (
+                        <label className="attendance-check" key={`${student.student_id}-${lesson.schedule_id}`}>
+                          <input
+                            type="checkbox"
+                            checked={attendanceDraft[student.student_id]?.[lesson.schedule_id] ?? false}
+                            onChange={() => toggleAttendance(student.student_id, lesson.schedule_id)}
+                          />
+                          <span />
+                        </label>
+                      ))}
                     </div>
-                  </div>
-                  <span className="attendance-email">{student.email}</span>
-                  {student.attendance.map((checked, index) => (
-                    <label className="attendance-check" key={`${student.id}-${index}`}>
-                      <input
-                        type="checkbox"
-                        checked={checked}
-                        disabled={isAttendanceSaved && !editableStudentIds.includes(student.id)}
-                        onChange={() => toggleAttendance(student.id, index)}
-                      />
-                      <span />
-                    </label>
                   ))}
-                  <div className="attendance-actions">
-                    <button className="attendance-icon-button attendance-clickable" type="button" aria-label="Удалить" onClick={() => clearAttendance(student.id)}>
-                      <img src="/Bin.svg" alt="" />
-                    </button>
-                    <button className="attendance-icon-button attendance-clickable" type="button" aria-label="Редактировать" onClick={() => editAttendance(student.id)}>
-                      <img src="/Pen.svg" alt="" />
-                    </button>
-                  </div>
-                </div>
-              ))}
+              </div>
             </div>
+          </section>
+
+          <div className="attendance-pagination-row">
+            <button className="attendance-pagination-control attendance-clickable" type="button" onClick={goToPreviousPage} disabled={currentPage === 1}>
+              Назад
+            </button>
+            <nav className="attendance-pagination" aria-label="Страницы">
+              {Array.from({ length: pageCount }, (_, index) => index + 1).map((page) => (
+                <button
+                  className={`attendance-page-button attendance-clickable${currentPage === page ? ' attendance-page-button--active' : ''}`}
+                  type="button"
+                  key={page}
+                  onClick={() => setCurrentPage(page)}
+                >
+                  {page}
+                </button>
+              ))}
+            </nav>
+            <button className="attendance-pagination-control attendance-clickable" type="button" onClick={goToNextPage} disabled={currentPage === pageCount}>
+              Вперед
+            </button>
+          </div>
+
+          <div className="attendance-button-row">
+            <button
+              className="attendance-primary-button attendance-clickable"
+              type="button"
+              onClick={saveAttendance}
+              disabled={isSaving || isLoading || students.length === 0 || lessons.length === 0}
+            >
+              {isSaving ? 'Сохраняю...' : 'Сохранить посещаемость'}
+            </button>
           </div>
         </section>
-
-        <div className="attendance-pagination-row">
-          <button className="attendance-pagination-control attendance-clickable" type="button" onClick={goToPreviousPage}>
-            Назад
-          </button>
-          <nav className="attendance-pagination" aria-label="Страницы">
-            {Array.from({ length: pageCount }, (_, index) => index + 1).map((page) => (
-              <button
-                className={`attendance-page-button attendance-clickable${currentPage === page ? ' attendance-page-button--active' : ''}`}
-                type="button"
-                key={page}
-                onClick={() => setCurrentPage(page)}
-              >
-                {page}
-              </button>
-            ))}
-          </nav>
-          <button className="attendance-pagination-control attendance-clickable" type="button" onClick={goToNextPage}>
-            Вперед
-          </button>
-        </div>
-
-        <div className="attendance-button-row">
-        <button className="attendance-primary-button attendance-clickable" type="button" onClick={saveAttendance}>
-          Сохранить посещаемость
-        </button>
-        </div>
-      </section>
-    </main>
+      </main>
+    </TeacherAppShell>
   );
 }

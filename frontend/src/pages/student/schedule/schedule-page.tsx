@@ -30,7 +30,7 @@ function toScheduleItem(event: ScheduleEvent): ScheduleItem {
     title: event.extendedProps.course_title,
     topic: `Занятие ${event.extendedProps.class_number}`,
     teacher: event.extendedProps.teacher_name,
-    room: event.extendedProps.slot_id ? `Слот #${event.extendedProps.slot_id}` : 'Кабинет не указан',
+    room: event.extendedProps.classroom ? `Кабинет ${event.extendedProps.classroom}` : 'Кабинет не указан',
   }
 }
 
@@ -223,25 +223,27 @@ export function SchedulePage() {
       <header className="schedule-header">
         <h1 className="schedule-header__title">{monthTitle}</h1>
 
-        <div className="schedule-days-mask">
-          <div className="schedule-days-row" ref={daysRowRef} onScroll={handleDaysScroll}>
-            {days.map((date, index) => (
-              <button
-                key={toDateKey(date)}
-                ref={(node) => {
-                  chipRefs.current[index] = node
-                }}
-                className={`schedule-day-chip ${index === activeIndex ? 'schedule-day-chip--active' : ''}`}
-                type="button"
-                onClick={() => {
-                  setActiveIndex(index)
-                  centerChip(index, 'smooth')
-                }}
-              >
-                <span className="schedule-day-chip__weekday">{getDayLabel(date).toUpperCase()}</span>
-                <span className="schedule-day-chip__number">{date.getDate()}</span>
-              </button>
-            ))}
+        <div className="schedule-days-shell">
+          <div className="schedule-days-mask">
+            <div className="schedule-days-row" ref={daysRowRef} onScroll={handleDaysScroll}>
+              {days.map((date, index) => (
+                <button
+                  key={toDateKey(date)}
+                  ref={(node) => {
+                    chipRefs.current[index] = node
+                  }}
+                  className={`schedule-day-chip ${index === activeIndex ? 'schedule-day-chip--active' : ''}`}
+                  type="button"
+                  onClick={() => {
+                    setActiveIndex(index)
+                    centerChip(index, 'smooth')
+                  }}
+                >
+                  <span className="schedule-day-chip__weekday">{getDayLabel(date).toUpperCase()}</span>
+                  <span className="schedule-day-chip__number">{date.getDate()}</span>
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       </header>

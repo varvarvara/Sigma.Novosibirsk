@@ -1,4 +1,4 @@
-import { getAccessToken, request } from "../auth";
+import { AuthApiError, getAccessToken, request } from "../auth";
 
 export type Student = {
   id: number;
@@ -8,6 +8,7 @@ export type Student = {
   email: string;
   phone: string;
   tg_nickname?: string | null;
+  birth_date?: string | null;
   year_of_study: number;
   city?: string | null;
   school?: string | null;
@@ -92,14 +93,89 @@ export type StaffMeUpdate = {
   last_name?: string;
   partonymic?: string | null;
   birth_date?: string | null;
+  university?: string | null;
+  study_direction?: string | null;
+  study_year?: number | null;
 };
 
-export function updateMyStaffProfile(payload: StaffMeUpdate) {
+export type StudentMeUpdate = {
+  first_name?: string;
+  last_name?: string;
+  partonymic?: string | null;
+  birth_date?: string | null;
+  year_of_study?: number;
+  city?: string | null;
+  school?: string | null;
+  phone?: string;
+  tg_nickname?: string | null;
+  parent_name?: string;
+  parent_phone?: string;
+};
+
+async function patchMyStaffProfile(payload: StaffMeUpdate) {
   return request<StaffProfile>("/users/me", {
     method: "PATCH",
     headers: authHeaders(),
     body: JSON.stringify(payload),
   });
+}
+
+export async function updateMyStaffProfile(payload: StaffMeUpdate) {
+  try {
+    return await patchMyStaffProfile(payload);
+  } catch (error) {
+    if (!(error instanceof AuthApiError) || error.status !== 405) {
+      throw error;
+    }
+
+    try {
+      return await request<StaffProfile>("/users/me", {
+        method: "PUT",
+        headers: authHeaders(),
+        body: JSON.stringify(payload),
+      });
+    } catch (putError) {
+      if (putError instanceof AuthApiError && putError.status === 405) {
+        throw new AuthApiError(
+          "Сервер не принимает обновление профиля. Перезапустите backend: docker compose up -d --build",
+          405,
+          putError.details,
+        );
+      }
+      throw putError;
+    }
+  }
+}
+
+export async function updateMyStudentProfile(payload: StudentMeUpdate) {
+  try {
+    return await request<Student>("/users/me", {
+      method: "PATCH",
+      headers: authHeaders(),
+      body: JSON.stringify(payload),
+    });
+  } catch (error) {
+    if (!(error instanceof AuthApiError) || error.status !== 405) {
+      throw error;
+    }
+
+    try {
+      return await request<Student>("/users/me", {
+        method: "PUT",
+        headers: authHeaders(),
+        body: JSON.stringify(payload),
+      });
+    } catch (putError) {
+      if (putError instanceof AuthApiError && putError.status === 405) {
+        throw new AuthApiError(
+          "Сервер не принимает обновление профиля. Перезапустите backend: docker compose up -d --build",
+          405,
+          putError.details,
+        );
+      }
+      throw putError;
+    }
+  }
 }
 
 export function getStudentGamification(studentId: number) {

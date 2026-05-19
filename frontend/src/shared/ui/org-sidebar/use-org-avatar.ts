@@ -1,34 +1,55 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react';
+import {
+  getOrgProfileSyncDetail,
+  ORG_AVATAR_UPDATED_EVENT,
+  ORG_DEFAULT_AVATAR_SRC,
+  ORG_PROFILE_UPDATED_EVENT,
+  readPersistedOrgAvatarUrl,
+} from '../../org-profile-events';
 
-const DEFAULT_AVATAR = '/teacher/profile/avatar-profile.png'
-export const ORG_AVATAR_UPDATED_EVENT = 'org-profile-avatar-updated'
+export { ORG_AVATAR_UPDATED_EVENT } from '../../org-profile-events';
 
 export function readOrgAvatar(override?: string | null) {
   if (override !== undefined && override !== null && override !== '') {
-    return override
+    return override;
   }
 
-  return localStorage.getItem('orgProfileAvatar') ?? DEFAULT_AVATAR
+  const persisted = readPersistedOrgAvatarUrl();
+  if (persisted) {
+    return persisted;
+  }
+
+  return ORG_DEFAULT_AVATAR_SRC;
 }
 
 export function useOrgAvatar(override?: string | null) {
-  const [avatar, setAvatar] = useState(() => readOrgAvatar(override))
+  const [avatar, setAvatar] = useState(() => readOrgAvatar(override));
 
   useEffect(() => {
-    setAvatar(readOrgAvatar(override))
-  }, [override])
+    setAvatar(readOrgAvatar(override));
+  }, [override]);
 
   useEffect(() => {
-    const sync = () => setAvatar(readOrgAvatar(override))
+    const sync = (event: Event) => {
+      const detail = getOrgProfileSyncDetail(event);
+      if (detail?.avatarUrl !== undefined) {
+        setAvatar(detail.avatarUrl || ORG_DEFAULT_AVATAR_SRC);
+        return;
+      }
 
-    window.addEventListener(ORG_AVATAR_UPDATED_EVENT, sync)
-    window.addEventListener('storage', sync)
+      setAvatar(readOrgAvatar(override));
+    };
+
+    window.addEventListener(ORG_AVATAR_UPDATED_EVENT, sync);
+    window.addEventListener(ORG_PROFILE_UPDATED_EVENT, sync);
+    window.addEventListener('storage', sync);
 
     return () => {
-      window.removeEventListener(ORG_AVATAR_UPDATED_EVENT, sync)
-      window.removeEventListener('storage', sync)
-    }
-  }, [override])
+      window.removeEventListener(ORG_AVATAR_UPDATED_EVENT, sync);
+      window.removeEventListener(ORG_PROFILE_UPDATED_EVENT, sync);
+      window.removeEventListener('storage', sync);
+    };
+  }, [override]);
 
-  return avatar
+  return avatar;
 }

@@ -1,6 +1,5 @@
-import { type ChangeEvent, type MouseEvent, useEffect, useRef, useState } from "react";
+import { type MouseEvent, useEffect, useState } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { CameraPlus } from "@untitledui/icons/CameraPlus";
 import { LogOut01 } from "@untitledui/icons/LogOut01";
 import {
     AuthApiError,
@@ -13,14 +12,12 @@ import {
     getCurrentStudent,
     getStudentGamification,
     getStudentTeam,
-    uploadMyAvatar,
     type CurrentUser,
     type Student,
 } from "../../../api/students/profile";
 import "./profile-page.css";
 
 const DEFAULT_AVATAR_SRC = "/default-avatar.svg";
-const AVATAR_MAX_SIZE_BYTES = 5 * 1024 * 1024;
 
 function isStudentProfile(user: CurrentUser): user is Student {
     return "year_of_study" in user;
@@ -50,7 +47,6 @@ export function ProfilePage() {
     const navigate = useNavigate();
     const [isLoggingOut, setIsLoggingOut] = useState(false);
     const [avatarSrc, setAvatarSrc] = useState(DEFAULT_AVATAR_SRC);
-    const [isAvatarUploading, setIsAvatarUploading] = useState(false);
     const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
     const [isProfileLoading, setIsProfileLoading] = useState(true);
     const [stats, setStats] = useState({
@@ -59,8 +55,6 @@ export function ProfilePage() {
         sigmaCoins: 0,
     });
     const [teamName, setTeamName] = useState<string | null>(null);
-
-    const avatarInputRef = useRef<HTMLInputElement | null>(null);
 
     useEffect(() => {
         const loadProfile = async () => {
@@ -129,41 +123,6 @@ export function ProfilePage() {
         void loadProfile();
     }, [navigate]);
 
-    const handleAvatarChange = async (event: ChangeEvent<HTMLInputElement>) => {
-        const selectedFile = event.target.files?.[0];
-        if (!selectedFile) {
-            return;
-        }
-
-        if (!selectedFile.type.startsWith("image/")) {
-            alert("Нужно выбрать файл изображения.");
-            event.target.value = "";
-            return;
-        }
-
-        if (selectedFile.size > AVATAR_MAX_SIZE_BYTES) {
-            alert("Максимальный размер аватара: 5 МБ.");
-            event.target.value = "";
-            return;
-        }
-
-        setIsAvatarUploading(true);
-
-        try {
-            const uploaded = await uploadMyAvatar(selectedFile);
-            setAvatarSrc(uploaded.avatar_url || DEFAULT_AVATAR_SRC);
-        } catch (error) {
-            if (error instanceof AuthApiError) {
-                alert(error.message);
-            } else {
-                alert("Не удалось загрузить аватар.");
-            }
-        } finally {
-            setIsAvatarUploading(false);
-            event.target.value = "";
-        }
-    };
-
     const handleLogout = async () => {
         if (isLoggingOut) {
             return;
@@ -215,36 +174,50 @@ export function ProfilePage() {
                         onClick={handleLogout}
                         disabled={isLoggingOut}
                     >
-                        <LogOut01 size={20} color="#2A282F" />
+                        <LogOut01 className="profile-action-icon profile-action-icon--logout" size={24} color="currentColor" />
                     </button>
                 </div>
 
-                <button
-                    className="profile-avatar-button"
-                    type="button"
-                    aria-label="Загрузить фото профиля"
-                    disabled={isAvatarUploading}
-                    onClick={() => avatarInputRef.current?.click()}
+                <Link
+                    className="profile-settings-link"
+                    to="/profile-settings"
+                    aria-label="Открыть настройки профиля"
                 >
+                    <svg
+                        width="20"
+                        height="20"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        xmlns="http://www.w3.org/2000/svg"
+                        aria-hidden="true"
+                        className="profile-action-icon profile-action-icon--edit"
+                    >
+                        <path
+                            d="M4.75 19.25H8.3L18.61 8.94C19.39 8.16 19.39 6.89 18.61 6.11L17.89 5.39C17.11 4.61 15.84 4.61 15.06 5.39L4.75 15.7V19.25Z"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                        />
+                        <path
+                            d="M13.75 6.75L17.25 10.25"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                        />
+                    </svg>
+                </Link>
+
+                <div className="profile-avatar-wrap">
                     <img
                         className="profile-image"
                         src={avatarSrc}
                         alt="Аватар пользователя"
                         onError={() => setAvatarSrc(DEFAULT_AVATAR_SRC)}
                     />
-                    <span className="profile-avatar-edit" aria-hidden="true">
-                        <CameraPlus size={14} color="#FFFFFF" />
-                    </span>
-                </button>
-                <input
-                    ref={avatarInputRef}
-                    className="profile-avatar-input"
-                    type="file"
-                    accept="image/*"
-                    onChange={handleAvatarChange}
-                />
+                </div>
 
-                <h1 className="user-fullname semi-bold-text">
+                <h1 className="user-fullname">
                     {currentUser ? (
                         <>
                             {currentUser.last_name}
@@ -260,11 +233,11 @@ export function ProfilePage() {
                     )}
                 </h1>
 
-                <p className="user-role semi-bold-text">{getRoleLabel(currentUser)}</p>
+                <p className="user-role">{getRoleLabel(currentUser)}</p>
                 <div className="user-stats">
                     <div className="stats-item">
                         <div className="stats-value">
-                            <img src="/star.svg" alt="" />
+                            <img src="/raster-icons/star.png" alt="" />
                             <p>{isProfileLoading ? "..." : stats.achievements}</p>
                         </div>
                         <p className="stats-label">ачивок</p>
@@ -272,7 +245,7 @@ export function ProfilePage() {
 
                     <div className="stats-item">
                         <div className="stats-value">
-                            <img src="/flash.svg" alt="" />
+                            <img src="/raster-icons/flash.png" alt="" />
                             <p>{isProfileLoading ? "..." : stats.points}</p>
                         </div>
                         <p className="stats-label">баллов</p>
@@ -280,7 +253,7 @@ export function ProfilePage() {
 
                     <div className="stats-item">
                         <div className="stats-value">
-                            <img src="/sigmacoins.svg" alt="" />
+                            <img src="/raster-icons/sigmacoins.png" alt="" />
                             <p>{isProfileLoading ? "..." : stats.sigmaCoins}</p>
                         </div>
                         <p className="stats-label">сигмакойнов</p>
@@ -303,7 +276,7 @@ export function ProfilePage() {
                             }
                         }}
                     >
-                        <img className="activity-image" src="/star.svg" alt="" />
+                        <img className="activity-image" src="/student/activity-learning.png" alt="" />
 
                         <div className="activity-info">
                             <h3>Учебная активность</h3>
@@ -327,7 +300,7 @@ export function ProfilePage() {
                             }
                         }}
                     >
-                        <img className="activity-image" src="/flash.svg" alt="" />
+                        <img className="activity-image" src="/student/activity-extracurricular.png" alt="" />
 
                         <div className="activity-info">
                             <h3>Внеучебка</h3>

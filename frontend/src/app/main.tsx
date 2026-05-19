@@ -1,4 +1,3 @@
-// src/main.jsx
 import React from 'react'
 import ReactDom from 'react-dom/client'
 import Providers from './providers.tsx'

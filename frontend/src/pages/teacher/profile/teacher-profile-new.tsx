@@ -1,109 +1,205 @@
-import { useNavigate } from '@tanstack/react-router';
-import { TeacherSidebar } from '../../../shared/ui/teacher_sidebar/teacher-sidebar';
-import '../../../shared/ui/teacher_sidebar/teacher-sidebar-styles.css';
+import { TeacherAppShell } from '../../../shared/ui/teacher_sidebar/teacher-app-shell';
+import '../../../styles/field-error.css';
+import { getTeacherFullName, TEACHER_DEFAULT_AVATAR_SRC, TEACHER_STUDY_YEAR_OPTIONS } from '../../../features/teacher/teacher-profile';
+import { useTeacherProfile } from '../../../features/teacher/use-teacher-profile';
 import './teacher-profile-new-styles.css';
 
 export const TeacherProfileNewPage = () => {
-  const navigate = useNavigate();
+  const {
+    birthDateError,
+    avatarSrc,
+    profileData,
+    draftProfileData,
+    isEditing,
+    startEditing,
+    isProfileLoading,
+    isProfileSaving,
+    isAvatarUploading,
+    isLoggingOut,
+    profileError,
+    saveNotice,
+    saveError,
+    handleFieldChange,
+    handleBirthChange,
+    uploadAvatarFile,
+    handleAvatarChange,
+    handleDeleteAvatar,
+    saveProfile,
+    handleLogout,
+  } = useTeacherProfile();
 
-  // Временные данные профиля
-  const profileData = {
-    firstName: 'Оливия',
-    lastName: 'Ричардсон',
-    patronymic: '',
-    email: 'olivia@untitledui.com',
-    birthDay: '15',
-    birthMonth: '03',
-    birthYear: '1998',
-    phoneCountry: 'RUS',
-    phoneNumber: '+7 (555) 000-00-00',
-    university: 'МГУ им. М.В. Ломоносова',
-    direction: 'Информатика и вычислительная техника',
-    course: '',
-    socialNick: '',
-  };
-
-  const handleLogout = () => {
-    navigate({ to: '/login' });
-  };
+  const fullName = getTeacherFullName(profileData);
+  const formValues = isEditing ? draftProfileData : profileData;
+  const isFormDisabled = isProfileLoading || isProfileSaving || !isEditing;
 
   return (
-    <div className="teacher-profile-container">
-      <TeacherSidebar />
-      
+    <TeacherAppShell avatarSrc={avatarSrc ?? undefined} className="teacher-profile-container">
       <main className="teacher-profile-content">
-        {/* Градиент заголовок */}
-        <div className="profile-header-gradient">
-          <div className="profile-header-card">
-            <div className="profile-header-content">
+        <header className="teacher-profile-hero">
+          <div className="teacher-profile-hero__banner" aria-hidden="true" />
+          <div className="teacher-profile-hero__panel">
+            <div className="teacher-profile-hero__main">
               <img
-                src="/teacher/profile/avatar-profile.png"
+                src={avatarSrc ?? TEACHER_DEFAULT_AVATAR_SRC}
                 alt="Аватар профиля"
-                className="profile-avatar-large"
+                className="teacher-profile-hero__avatar"
               />
-              <div className="profile-user-info">
-                <h1>ФИО</h1>
-                <p>{profileData.email}</p>
+              <div className="teacher-profile-hero__info">
+                <h1>{fullName || 'ФИО'}</h1>
+                <p>{profileData.email || 'Почта'}</p>
               </div>
             </div>
-            <button className="btn-logout" onClick={handleLogout}>
+            <button
+              className="teacher-profile-hero__logout"
+              type="button"
+              onClick={() => void handleLogout()}
+              disabled={isLoggingOut}
+            >
               Выйти из аккаунта
             </button>
           </div>
-        </div>
+        </header>
 
-        {/* Основной контент */}
+        {isProfileLoading ? <p className="teacher-profile-status">Загрузка...</p> : null}
+        {profileError ? <p className="teacher-profile-status teacher-profile-status--error">{profileError}</p> : null}
+        {saveError ? <p className="teacher-profile-status teacher-profile-status--error">{saveError}</p> : null}
+        {saveNotice ? <p className="teacher-profile-status teacher-profile-status--success">{saveNotice}</p> : null}
+
         <div className="profile-card">
           <section className="profile-section">
             <h2>Личная информация</h2>
             <div className="form-row">
               <div className="form-group">
-                <label>Имя</label>
-                <input type="text" value={profileData.firstName} readOnly />
+                <label htmlFor="teacher-profile-first-name">Имя</label>
+                <input
+                  id="teacher-profile-first-name"
+                  type="text"
+                  value={formValues.firstName}
+                  readOnly={!isEditing}
+                  placeholder="Имя"
+                  disabled={isFormDisabled}
+                  onChange={(event) => handleFieldChange('firstName', event.target.value)}
+                />
               </div>
               <div className="form-group">
-                <label>Фамилия</label>
-                <input type="text" value={profileData.lastName} readOnly />
+                <label htmlFor="teacher-profile-last-name">Фамилия</label>
+                <input
+                  id="teacher-profile-last-name"
+                  type="text"
+                  value={formValues.lastName}
+                  readOnly={!isEditing}
+                  placeholder="Фамилия"
+                  disabled={isFormDisabled}
+                  onChange={(event) => handleFieldChange('lastName', event.target.value)}
+                />
               </div>
             </div>
             <div className="form-row">
               <div className="form-group">
-                <label>Отчество</label>
-                <input type="text" value={profileData.patronymic} readOnly />
+                <label htmlFor="teacher-profile-patronymic">Отчество</label>
+                <input
+                  id="teacher-profile-patronymic"
+                  type="text"
+                  value={formValues.patronymic}
+                  readOnly={!isEditing}
+                  placeholder="Отчество"
+                  disabled={isFormDisabled}
+                  onChange={(event) => handleFieldChange('patronymic', event.target.value)}
+                />
               </div>
             </div>
             <div className="form-row birth-row">
               <div className="form-group small">
-                <label>Дата рождения</label>
-                <input type="text" value={profileData.birthDay} readOnly />
+                <label htmlFor="teacher-profile-birth-day">Дата рождения</label>
+                <input
+                  id="teacher-profile-birth-day"
+                  type="text"
+                  value={formValues.birthDay}
+                  readOnly={!isEditing}
+                  placeholder="День"
+                  disabled={isFormDisabled}
+                  onChange={(event) => handleBirthChange('birthDay', event.target.value)}
+                  inputMode="numeric"
+                />
               </div>
               <div className="form-group small">
-                <label className="sr-only">Месяц</label>
-                <input type="text" value={profileData.birthMonth} readOnly />
+                <label className="sr-only" htmlFor="teacher-profile-birth-month">
+                  Месяц
+                </label>
+                <input
+                  id="teacher-profile-birth-month"
+                  type="text"
+                  value={formValues.birthMonth}
+                  readOnly={!isEditing}
+                  placeholder="Месяц"
+                  disabled={isFormDisabled}
+                  onChange={(event) => handleBirthChange('birthMonth', event.target.value)}
+                  inputMode="numeric"
+                />
               </div>
               <div className="form-group small">
-                <label className="sr-only">Год</label>
-                <input type="text" value={profileData.birthYear} readOnly />
+                <label className="sr-only" htmlFor="teacher-profile-birth-year">
+                  Год
+                </label>
+                <input
+                  id="teacher-profile-birth-year"
+                  type="text"
+                  value={formValues.birthYear}
+                  readOnly={!isEditing}
+                  placeholder="Год"
+                  disabled={isFormDisabled}
+                  onChange={(event) => handleBirthChange('birthYear', event.target.value)}
+                  inputMode="numeric"
+                />
               </div>
             </div>
+            {birthDateError ? <p className="field-error">{birthDateError}</p> : null}
           </section>
 
           <section className="profile-section">
             <h2>Место обучения</h2>
             <div className="form-row">
               <div className="form-group">
-                <label>Университет</label>
-                <input type="text" value={profileData.university} readOnly />
+                <label htmlFor="teacher-profile-university">Университет</label>
+                <input
+                  id="teacher-profile-university"
+                  type="text"
+                  value={formValues.university}
+                  readOnly={!isEditing}
+                  placeholder="Университет"
+                  disabled={isFormDisabled}
+                  onChange={(event) => handleFieldChange('university', event.target.value)}
+                />
               </div>
               <div className="form-group">
-                <label>Направление</label>
-                <input type="text" value={profileData.direction} readOnly />
+                <label htmlFor="teacher-profile-direction">Направление</label>
+                <input
+                  id="teacher-profile-direction"
+                  type="text"
+                  value={formValues.direction}
+                  readOnly={!isEditing}
+                  placeholder="Направление"
+                  disabled={isFormDisabled}
+                  onChange={(event) => handleFieldChange('direction', event.target.value)}
+                />
               </div>
             </div>
             <div className="form-row">
-              <div className="form-group select">
-                <label>Курс обучения</label>
-                <input type="text" value={profileData.course} readOnly />
+              <div className="form-group">
+                <label htmlFor="teacher-profile-course">Курс обучения</label>
+                <select
+                  id="teacher-profile-course"
+                  value={formValues.course}
+                  disabled={isFormDisabled}
+                  onChange={(event) => handleFieldChange('course', event.target.value)}
+                >
+                  <option value="">Выберите</option>
+                  {TEACHER_STUDY_YEAR_OPTIONS.map((year) => (
+                    <option key={year} value={year}>
+                      {year} курс
+                    </option>
+                  ))}
+                </select>
               </div>
             </div>
           </section>
@@ -111,48 +207,76 @@ export const TeacherProfileNewPage = () => {
           <section className="profile-section">
             <h2>Контакты</h2>
             <div className="form-row">
-              <div className="form-group phone">
-                <label>Номер телефона</label>
-                <div className="phone-input">
-                  <input type="text" value={profileData.phoneCountry} readOnly />
-                  <input type="text" value={profileData.phoneNumber} readOnly />
-                </div>
-              </div>
-            </div>
-            <div className="form-row">
               <div className="form-group">
-                <label>Email</label>
-                <input type="text" value={profileData.email} readOnly />
-              </div>
-            </div>
-            <div className="form-row">
-              <div className="form-group">
-                <label>Ник в ТГ / ВК</label>
-                <input type="text" value={profileData.socialNick} readOnly />
+                <label htmlFor="teacher-profile-email">Email</label>
+                <input id="teacher-profile-email" type="text" value={formValues.email} placeholder="Почта" readOnly />
               </div>
             </div>
           </section>
 
-          <section className="profile-section upload-section">
-            <div className="upload-row">
-              <img
-                className="upload-avatar"
-                src="/teacher/profile/avatar-profile.png"
-                alt="Аватар"
-              />
-              <div className="upload-dropzone">
-                <img
-                  className="upload-icon"
-                  src="/teacher/profile/upload-cloud.svg"
-                  alt="Загрузка"
-                />
-                <p>Нажмите или перетащите</p>
-                <span>SVG, PNG, JPG or GIF (max. 800x400px)</span>
+          {isEditing ? (
+            <section className="profile-section upload-section">
+              <div className="upload-row">
+                <img className="upload-avatar" src={avatarSrc ?? TEACHER_DEFAULT_AVATAR_SRC} alt="Аватар" />
+                <label
+                  className="upload-dropzone"
+                  onDragOver={(event) => event.preventDefault()}
+                  onDrop={(event) => {
+                    event.preventDefault();
+                    const file = event.dataTransfer.files[0];
+                    if (!file) {
+                      return;
+                    }
+                    void uploadAvatarFile(file);
+                  }}
+                >
+                  <input
+                    className="upload-input"
+                    type="file"
+                    accept="image/svg+xml,image/png,image/jpeg,image/gif"
+                    disabled={isAvatarUploading || isFormDisabled}
+                    onChange={(event) => void handleAvatarChange(event)}
+                  />
+                  <img className="upload-icon" src="/teacher/profile/upload-cloud.svg" alt="Загрузка" />
+                  <p>Нажмите или перетащите</p>
+                  <span>SVG, PNG, JPG or GIF (max. 5 MB)</span>
+                </label>
               </div>
-            </div>
-          </section>
+            </section>
+          ) : null}
+          <div className="profile-actions">
+            {!isEditing ? (
+              <button
+                className="profile-edit-button"
+                type="button"
+                onClick={startEditing}
+                disabled={isProfileLoading || Boolean(profileError)}
+              >
+                Изменить данные в профиле
+              </button>
+            ) : (
+              <>
+                <button
+                  className="profile-delete-button"
+                  type="button"
+                  onClick={() => void handleDeleteAvatar()}
+                  disabled={isAvatarUploading || isFormDisabled}
+                >
+                  Удалить
+                </button>
+                <button
+                  className="profile-save-button"
+                  type="button"
+                  onClick={() => void saveProfile()}
+                  disabled={isFormDisabled || isAvatarUploading}
+                >
+                  {isProfileSaving ? 'Сохранение...' : 'Сохранить'}
+                </button>
+              </>
+            )}
+          </div>
         </div>
       </main>
-    </div>
+    </TeacherAppShell>
   );
 };

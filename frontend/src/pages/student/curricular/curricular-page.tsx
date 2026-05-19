@@ -6,8 +6,10 @@ import {
     getMyAttendanceCharges,
     getMyAttendanceDashboard,
     getMyAttendanceFilterOptions,
+    getMyAchievements,
     getMyEnrollments,
     type StudentAttendanceChargeOut,
+    type StudentAchievementDetailedOut,
 } from "../../../api/students/learning";
 import { getCurrentStudent, getStudentGamification, type Student } from "../../../api/students/profile";
 import {
@@ -29,6 +31,9 @@ type ChargeGroup = {
         title: string;
         value: string;
         points: string;
+        iconSrc: string;
+        kind: "attendance" | "achievement";
+        description?: string;
     }>;
 };
 
@@ -74,12 +79,87 @@ function groupChargesByDate(charges: StudentAttendanceChargeOut[]): ChargeGroup[
             title: charge.course_title,
             value: charge.teacher_name,
             points: `+${charge.points}`,
+            iconSrc: "/raster-icons/magic.png",
+            kind: "attendance",
         });
 
         groups.set(charge.lesson_date, existing);
     }
 
     return Array.from(groups.values()).sort((left, right) => left.dateKey.localeCompare(right.dateKey));
+}
+
+function applyAchievementFilter(
+    achievements: StudentAchievementDetailedOut[],
+    filter: ReturnType<typeof readCurricularChargesFilter>,
+) {
+    if (!filter) {
+        return achievements;
+    }
+
+    const courseIds = new Set(filter.courseIds);
+    const dates = new Set(filter.dates);
+    const hasCourseFilter = courseIds.size > 0;
+    const hasDateFilter = dates.size > 0;
+
+    return achievements.filter((item) => {
+        const awardedDate = item.awarded_at.slice(0, 10);
+
+        if (hasCourseFilter && !courseIds.has(item.course_id)) {
+            return false;
+        }
+
+        if (hasDateFilter && !dates.has(awardedDate)) {
+            return false;
+        }
+
+        return true;
+    });
+}
+
+function groupLearningCharges(
+    attendanceCharges: StudentAttendanceChargeOut[],
+    achievements: StudentAchievementDetailedOut[],
+): ChargeGroup[] {
+    const groups = new Map<string, ChargeGroup>();
+
+    for (const group of groupChargesByDate(attendanceCharges)) {
+        groups.set(group.dateKey, group);
+    }
+
+    for (const achievement of achievements) {
+        const awardedDate = achievement.awarded_at.slice(0, 10);
+        const existing = groups.get(awardedDate) ?? {
+            dateKey: awardedDate,
+            dateLabel: formatFilterDateLabel(awardedDate),
+            items: [],
+        };
+
+        existing.items.push({
+            id: `achievement-${achievement.id}`,
+            title: achievement.achievement_name,
+            value: achievement.course_title,
+            description: achievement.achievement_description,
+            points: `+${achievement.achievement_score}`,
+            iconSrc: "/raster-icons/star.png",
+            kind: "achievement",
+        });
+
+        groups.set(awardedDate, existing);
+    }
+
+    return Array.from(groups.values())
+        .map((group) => ({
+            ...group,
+            items: [...group.items].sort((left, right) => {
+                if (left.kind !== right.kind) {
+                    return left.kind === "achievement" ? -1 : 1;
+                }
+
+                return left.title.localeCompare(right.title);
+            }),
+        }))
+        .sort((left, right) => right.dateKey.localeCompare(left.dateKey));
 }
 
 export function CurricularPage() {
@@ -138,15 +218,18 @@ export function CurricularPage() {
                 setAchievementPoints(achievementScore);
 
                 if (hasEnrollments) {
-                    const [filterOptions, charges] = await Promise.all([
+                    const [filterOptions, charges, achievements] = await Promise.all([
                         getMyAttendanceFilterOptions(),
                         getMyAttendanceCharges(),
+                        getMyAchievements(),
                     ]);
 
                     setHasActiveEnrollments(filterOptions.courses.length > 0);
 
-                    const filteredCharges = applyChargesFilter(charges, readCurricularChargesFilter());
-                    setChargeGroups(groupChargesByDate(filteredCharges));
+                    const filter = readCurricularChargesFilter();
+                    const filteredCharges = applyChargesFilter(charges, filter);
+                    const filteredAchievements = applyAchievementFilter(achievements, filter);
+                    setChargeGroups(groupLearningCharges(filteredCharges, filteredAchievements));
                 } else {
                     setChargeGroups([]);
                 }
@@ -177,7 +260,7 @@ export function CurricularPage() {
 
             <section className="curricular-summary">
                 <div className="summary-main">
-                    <img src="/flash.svg" alt="" />
+                    <img src="/raster-icons/flash.png" alt="" />
                     <p>{isLoading ? "..." : totalPoints}</p>
                 </div>
 
@@ -185,14 +268,14 @@ export function CurricularPage() {
                     <div>
                         <h2>посещаемость</h2>
                         <p>
-                            <img src="/magic.svg" alt="" />
+                            <img src="/raster-icons/magic.png" alt="" />
                             <span>{isLoading ? "..." : attendancePoints}</span>
                         </p>
                     </div>
                     <div>
                         <h2>ачивки</h2>
                         <p>
-                            <img src="/star.svg" alt="" />
+                            <img src="/raster-icons/star.png" alt="" />
                             <span>{isLoading ? "..." : achievementPoints}</span>
                         </p>
                     </div>
@@ -225,17 +308,22 @@ export function CurricularPage() {
                                         <div className="curricular-charge-info">
                                             <h3>{item.title}</h3>
                                             <p>{item.value}</p>
-                                            <Link
-                                                className="curricular-achievement-link"
-                                                to="/curricular-achievements"
-                                                aria-label="Открыть список ачивок"
-                                            >
-                                                Ачивки
-                                            </Link>
+                                            {item.description ? (
+                                                <p className="curricular-charge-description">{item.description}</p>
+                                            ) : null}
+                                            {item.kind === "achievement" ? (
+                                                <Link
+                                                    className="curricular-achievement-link"
+                                                    to="/curricular-achievements"
+                                                    aria-label="Открыть список ачивок"
+                                                >
+                                                    Ачивки
+                                                </Link>
+                                            ) : null}
                                         </div>
                                         <div className="curricular-charge-points">
                                             <span>{item.points}</span>
-                                            <img src="/magic.svg" alt="" />
+                                            <img src={item.iconSrc} alt="" />
                                         </div>
                                     </article>
                                 ))}

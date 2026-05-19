@@ -77,6 +77,8 @@ export type StudentAchievementDetailedOut = {
   achievement_name: string;
   achievement_description: string;
   achievement_score: number;
+  icon_image_key: string | null;
+  icon_url: string | null;
 };
 
 export type ScheduleEvent = {
@@ -95,6 +97,7 @@ export type ScheduleEvent = {
     slot_id: number | null;
     lesson_date: string;
     lesson_time: string;
+    classroom: string | null;
   };
 };
 

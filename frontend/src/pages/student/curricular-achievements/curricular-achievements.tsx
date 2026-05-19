@@ -12,9 +12,22 @@ type SubjectGroup = {
         title: string;
         text: string;
         icon: string;
-        tone: "violet";
     }>;
 };
+
+const LEGACY_ICON_URLS: Record<string, string> = {
+    "/star.svg": "/raster-icons/star.png",
+    "/magic.svg": "/raster-icons/magic.png",
+    "/flash.svg": "/raster-icons/flash.png",
+    "/sigmacoins.svg": "/raster-icons/sigmacoins.png",
+};
+
+function normalizeIconUrl(iconUrl: string | null | undefined) {
+    if (!iconUrl) {
+        return "/raster-icons/star.png";
+    }
+    return LEGACY_ICON_URLS[iconUrl] ?? iconUrl;
+}
 
 function formatAchievementDate(value: string) {
     const date = new Date(value);
@@ -37,8 +50,7 @@ function mapAchievementsToSubjects(items: StudentAchievementDetailedOut[]): Subj
             id: `achievement-${item.id}`,
             title: item.achievement_name,
             text: formatAchievementDate(item.awarded_at),
-            icon: "/star.svg",
-            tone: "violet",
+            icon: normalizeIconUrl(item.icon_url),
         });
 
         grouped.set(item.course_title, group);
@@ -124,8 +136,14 @@ export function CurricularAchievementsPage() {
                                     className={`achievement-card${highlightedAchievementId === achievement.id ? " achievement-card-highlighted" : ""}`}
                                     key={`${subject.title}-${achievement.title}-${index}`}
                                 >
-                                    <div className={`achievement-image achievement-image-${achievement.tone}`}>
-                                        <img src={achievement.icon} alt="" />
+                                    <div className="achievement-image">
+                                        <img
+                                            src={achievement.icon}
+                                            alt=""
+                                            onError={(event) => {
+                                                event.currentTarget.hidden = true;
+                                            }}
+                                        />
                                     </div>
                                     <h3>{achievement.title}</h3>
                                     <p>{achievement.text}</p>

@@ -15,9 +15,8 @@ from app.modules.courses.router import courseRouter
 from app.modules.enrollment.router import enrollmentRouter
 from app.modules.scheduling.router import schedulingRouter
 from app.modules.users.router import usersRouter
-from app.modules.gamification.router import gamificationRouter
 from app.modules.season.router import seasonRouter
-#from app.modules.solver.router import schedulingmakerRouter
+from app.modules.gamification.router import gamificationRouter
 
 from app.modules.attendance import models as attendance_models  # noqa: F401
 from app.modules.course_feedback import models as course_feedback_models  # noqa: F401
@@ -90,4 +89,3 @@ app.include_router(gamificationRouter)
 app.include_router(courseFeedbackRouter)
 app.include_router(certificatesRouter)
 app.include_router(seasonRouter)
-#app.include_router(schedulingmakerRouter)

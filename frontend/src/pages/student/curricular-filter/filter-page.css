@@ -82,26 +82,50 @@
 
 .filter-row {
     width: 320px;
-    height: 44px;
+    min-height: 44px;
     border: 0;
+    outline: 2px solid transparent;
+    outline-offset: -2px;
     border-radius: 10px;
-    padding: 0 16px;
+    padding: 8px 16px;
     background: #F7F6FA;
     display: flex;
     align-items: center;
     justify-content: space-between;
+    gap: 14px;
     color: #2A282F;
     font-family: 'Inter Regular';
     cursor: pointer;
+    transition:
+        background-color 0.24s ease,
+        color 0.24s ease,
+        outline-color 0.24s ease,
+        transform 0.18s ease,
+        box-shadow 0.24s ease;
+    -webkit-tap-highlight-color: transparent;
 }
 
-.filter-row span:first-child {
-    font-size: 14px;
-    line-height: 17px;
+.filter-row:hover {
+    background: #F0EBFF;
+    box-shadow: 0 8px 20px rgba(121, 73, 255, 0.14);
+}
+
+.filter-row:active {
+    transform: scale(0.985);
+}
+
+.filter-row__title {
+    flex: 1;
+    min-width: 0;
+    text-align: left;
+    font-size: 12px;
+    line-height: 15px;
     font-weight: 600;
 }
 
-.filter-row span:last-child {
+.filter-row__teacher {
+    flex: 0 0 92px;
+    text-align: right;
     color: #A8A6AC;
     font-size: 12px;
     line-height: 15px;
@@ -109,11 +133,12 @@
 }
 
 .filter-row-selected {
-    border: 2px solid #7949FF;
+    outline-color: #7949FF;
     background: #E9E1FF;
+    box-shadow: 0 8px 22px rgba(121, 73, 255, 0.16);
 }
 
-.filter-row-selected span:last-child {
+.filter-row-selected .filter-row__teacher {
     color: #7949FF;
 }
 
@@ -132,6 +157,8 @@
 .period-chip {
     height: 36px;
     border: 0;
+    outline: 2px solid transparent;
+    outline-offset: -2px;
     border-radius: 18px;
     background: #F7F6FA;
     color: #2A282F;
@@ -140,12 +167,29 @@
     line-height: 15px;
     font-weight: 600;
     cursor: pointer;
+    transition:
+        background-color 0.24s ease,
+        color 0.24s ease,
+        outline-color 0.24s ease,
+        transform 0.18s ease,
+        box-shadow 0.24s ease;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.period-chip:hover {
+    background: #F0EBFF;
+    box-shadow: 0 8px 18px rgba(121, 73, 255, 0.14);
+}
+
+.period-chip:active {
+    transform: scale(0.975);
 }
 
 .period-chip-selected {
-    border: 2px solid #7949FF;
+    outline-color: #7949FF;
     background: #E9E1FF;
     color: #7949FF;
+    box-shadow: 0 8px 18px rgba(121, 73, 255, 0.14);
 }
 
 .filter-save-panel {
@@ -176,8 +220,21 @@
     line-height: 20px;
     font-weight: 600;
     cursor: pointer;
+    transition:
+        background-color 0.24s ease,
+        color 0.24s ease,
+        opacity 0.24s ease,
+        transform 0.18s ease,
+        box-shadow 0.24s ease;
 }
 
 .filter-save-button:hover {
     background: #5A4BD6;
+}
+
+.filter-save-button:disabled,
+.filter-save-button[aria-disabled="true"] {
+    background: #E2DEE9;
+    color: #A8A6AC;
+    box-shadow: none;
 }

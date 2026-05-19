@@ -242,6 +242,39 @@
     font-size: 14px;
 }
 
+.team-creation-search-result__person {
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.team-creation-search-result__person > span:last-child {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.team-creation-search-result__avatar {
+    width: 30px;
+    height: 30px;
+    flex: 0 0 30px;
+    border-radius: 50%;
+    object-fit: cover;
+    background: #F1F5F9;
+}
+
+.team-creation-search-result__avatar--fallback {
+    display: grid;
+    place-items: center;
+    background: #7C3AED;
+    color: #FFFFFF;
+    font-family: 'Inter SemiBold';
+    font-size: 13px;
+    line-height: 17px;
+}
+
 .team-creation-remove {
     width: 28px;
     height: 28px;

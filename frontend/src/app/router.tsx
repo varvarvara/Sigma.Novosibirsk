@@ -24,6 +24,7 @@ import { RegisterPage } from '../pages/common/register'
 import { SetupStudentPage } from '../pages/common/setup-student'
 import { SetupTeacherNewPage, SetupTeacherSuccessPage } from '../pages/common/setup-teacher'
 import { ProfilePage } from '../pages/student/profile'
+import { ProfileSettingsPage } from '../pages/student/profile-settings'
 import { CurricularPage } from '../pages/student/curricular'
 import { CurricularAchievementsPage } from '../pages/student/curricular-achievements'
 import { ExtracurricularPage } from '../pages/student/extracurricular'
@@ -52,7 +53,6 @@ import { TeacherCourseEditPage } from '../pages/teacher/course-edit'
 import { TeacherAttendancePage } from '../pages/teacher/attendance'
 import { TeacherAchievementsPage } from '../pages/teacher/achievements'
 import { TeacherSchedulePage } from '../pages/teacher/schedule'
-import { TeacherSettingsPage } from '../pages/teacher/settings'
 
 const rootRoute = createRootRoute({
   component: RootLayout,
@@ -105,7 +105,7 @@ function requireTeacher() {
   if (!session) {
     throw redirect({ to: '/login' })
   }
-  if (session.userType !== 'staff' || session.staffRole === 'Admin') {
+  if (session.userType !== 'staff' || session.staffRole !== 'Teacher') {
     throw redirect({ to: getRoleHomePath() })
   }
 }
@@ -204,6 +204,13 @@ const ProfileRoute = createRoute({
   path: '/profile',
   beforeLoad: requireAuth,
   component: ProfilePage,
+})
+
+const ProfileSettingsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/profile-settings',
+  beforeLoad: requireAuth,
+  component: ProfileSettingsPage,
 })
 
 const ExtracurricularRoute = createRoute({
@@ -480,13 +487,6 @@ const TeacherScheduleRoute = createRoute({
   component: TeacherSchedulePage,
 })
 
-const TeacherSettingsRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: '/teacher/settings',
-  beforeLoad: requireTeacher,
-  component: TeacherSettingsPage,
-})
-
 const routeTree = rootRoute.addChildren([
   WelcomeRootRoute,
   EnterRoute,
@@ -500,6 +500,7 @@ const routeTree = rootRoute.addChildren([
   SetupTeacherRoute,
   SetupTeacherSuccessRoute,
   ProfileRoute,
+  ProfileSettingsRoute,
   ExtracurricularRoute,
   CurricularRoute,
   CurricularAchievementsRoute,
@@ -531,7 +532,6 @@ const routeTree = rootRoute.addChildren([
   TeacherAttendanceRoute,
   TeacherAchievementsRoute,
   TeacherScheduleRoute,
-  TeacherSettingsRoute,
 ])
 
 export const router = createRouter({

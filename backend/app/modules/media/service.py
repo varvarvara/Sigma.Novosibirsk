@@ -109,6 +109,9 @@ class MediaAssetService:
     def course_cover_key(self, season_id: int, course_id: int, extension: str) -> str:
         return f"{self.media_folder}/courses/{season_id}/{course_id}/cover{extension}"
 
+    def achievement_icon_key(self, season_id: int, slug: str, extension: str) -> str:
+        return f"{self.media_folder}/achievements/{season_id}/{slug}{extension}"
+
     def student_avatar_key(self, student_id: int, extension: str) -> str:
         return f"{self.profiles_folder}/students/{student_id}/avatar{extension}"
 

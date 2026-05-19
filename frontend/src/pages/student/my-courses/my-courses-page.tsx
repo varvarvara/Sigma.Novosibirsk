@@ -1,5 +1,6 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { ChevronLeft } from "@untitledui/icons/ChevronLeft";
 import { AuthApiError } from "../../../api/auth";
 import { getMyEnrollments, type EnrollmentOutput } from "../../../api/students/learning";
 import { Button } from "../../../components/base/buttons/button";
@@ -81,15 +82,7 @@ export function MyCoursesPage() {
         <main className="my-courses-page">
             <header className="my-courses-header">
                 <Link className="back-button app-back-button app-back-button--dark" to="/profile" aria-label="Назад">
-                    <svg className="app-back-button__icon my-courses-back-chevron" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <rect width="24" height="24" rx="12" fill="#3A3651" fillOpacity="0.5" />
-                        <path
-                            fillRule="evenodd"
-                            clipRule="evenodd"
-                            d="M14.1599 7.48755C14.4981 7.85179 14.477 8.42125 14.1128 8.75947L10.623 12L14.1128 15.2404C14.477 15.5787 14.4981 16.1481 14.1599 16.5124C13.8217 16.8766 13.2522 16.8977 12.888 16.5595L8.68798 12.6595C8.50459 12.4892 8.40039 12.2502 8.40039 12C8.40039 11.7497 8.50459 11.5107 8.68798 11.3404L12.888 7.44044C13.2522 7.10222 13.8217 7.12331 14.1599 7.48755Z"
-                            fill="white"
-                        />
-                    </svg>
+                    <ChevronLeft className="app-back-button__icon" size={24} color="#F7F6FA" />
                 </Link>
                 <div className="my-courses-header-title">
                     <h1>Мои курсы</h1>
@@ -113,7 +106,20 @@ export function MyCoursesPage() {
                     const expanded = expandedIds.includes(course.id);
 
                     return (
-                        <article className={`my-course-card${expanded ? " my-course-card--expanded" : ""}`} key={course.id}>
+                        <article
+                            className={`my-course-card${expanded ? " my-course-card--expanded" : ""}`}
+                            key={course.id}
+                            onClick={() => toggleCourse(course.id)}
+                            onKeyDown={(event) => {
+                                if (event.key === "Enter" || event.key === " ") {
+                                    event.preventDefault();
+                                    toggleCourse(course.id);
+                                }
+                            }}
+                            role="button"
+                            tabIndex={0}
+                            aria-expanded={expanded}
+                        >
                             <div className="my-course-card__top">
                                 <div className="my-course-card__title-group">
                                     <h2>{course.title}</h2>
@@ -126,16 +132,36 @@ export function MyCoursesPage() {
                                 {course.details}
                             </p>
 
-                            <button className={`my-course-details${expanded ? " my-course-details--active" : ""}`} type="button" onClick={() => toggleCourse(course.id)}>
+                            <button
+                                className={`my-course-details${expanded ? " my-course-details--active" : ""}`}
+                                type="button"
+                                onClick={(event) => {
+                                    event.stopPropagation();
+                                    toggleCourse(course.id);
+                                }}
+                            >
                                 {expanded ? "Скрыть" : "Подробнее"}
                             </button>
 
                             {course.status === "finished" && (
                                 <div className="my-course-actions">
-                                    <Button color="primary" size="md" className="my-course-feedback" onClick={() => navigate({ to: "/feedback" })}>
+                                    <Button
+                                        color="primary"
+                                        size="md"
+                                        className="my-course-feedback"
+                                        onClick={(event) => {
+                                            event.stopPropagation();
+                                            navigate({ to: "/feedback" });
+                                        }}
+                                    >
                                         Оставить фидбэк
                                     </Button>
-                                    <Button color="secondary" size="md" className="my-course-certificate">
+                                    <Button
+                                        color="secondary"
+                                        size="md"
+                                        className="my-course-certificate"
+                                        onClick={(event) => event.stopPropagation()}
+                                    >
                                         Скачать сертификат
                                     </Button>
                                 </div>

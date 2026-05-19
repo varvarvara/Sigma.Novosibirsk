@@ -2,7 +2,7 @@ import re
 from datetime import datetime
 
 from fastapi import HTTPException, status
-from pydantic import BaseModel, EmailStr, field_validator, model_validator
+from pydantic import BaseModel, EmailStr, Field, field_validator, model_validator
 
 from app.security.password_policy import validate_password_strength
 from enums import StaffRoles
@@ -28,6 +28,7 @@ class StaffCreateByAdminIn(BaseModel):
     email: EmailStr
     password: str
     staff_role: StaffRoles
+    season_id: int = Field(default=1, gt=0)
 
     @model_validator(mode="before")
     @classmethod

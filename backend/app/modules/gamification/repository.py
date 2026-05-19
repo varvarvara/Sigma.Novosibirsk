@@ -2,6 +2,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import desc, func, text
 from sqlalchemy.exc import IntegrityError
 from typing import Optional, List
+from app.modules.attendance.models import Attendance, Achievement, StudentAchievement
 from app.modules.gamification.models import Gamification, GamificationLevel, ExtracurricularActivity, ExtracurricularTeam, ExtracurricularTeamMember, ExtracurricularScore
 from app.modules.gamification.schemas import GamificationLevelCreate, ExtracurricularActivityUpdate
 from app.modules.users.models import Student
@@ -21,17 +22,69 @@ class GamificationRepository:
             .first()
         )
 
-    def create(self, student_id: int) -> Gamification:
-        obj = Gamification(student_id=student_id)
+    def create(self, student_id: int, season_id: int = 1) -> Gamification:
+        obj = Gamification(student_id=student_id, season_id=season_id)
         self.session.add(obj)
         self.session.commit()
         self.session.refresh(obj)
         return obj
 
-    def get_or_create(self, student_id: int) -> Gamification:
+    def get_or_create(self, student_id: int, season_id: int = 1) -> Gamification:
         obj = self.get_by_student_id(student_id)
         if not obj:
-            obj = self.create(student_id)
+            obj = self.create(student_id, season_id)
+        return obj
+
+    def recalculate_student(self, student_id: int, season_id: int = 1) -> Gamification:
+        attendance_score = (
+            self.session.query(Attendance.id)
+            .filter(
+                Attendance.student_id == student_id,
+                Attendance.attendance_status.is_(True),
+            )
+            .count()
+            * 3
+        )
+
+        achievement_score = (
+            self.session.query(func.coalesce(func.sum(Achievement.achievement_score), 0))
+            .join(StudentAchievement, StudentAchievement.achievement_id == Achievement.id)
+            .filter(StudentAchievement.student_id == student_id)
+            .scalar()
+            or 0
+        )
+
+        extracurricular_score = (
+            self.session.query(func.coalesce(func.sum(ExtracurricularScore.ex_team_score), 0))
+            .join(ExtracurricularTeamMember, ExtracurricularTeamMember.team_id == ExtracurricularScore.team_id)
+            .filter(
+                ExtracurricularTeamMember.student_id == student_id,
+                ExtracurricularTeamMember.season_id == season_id,
+                ExtracurricularScore.season_id == season_id,
+            )
+            .scalar()
+            or 0
+        )
+
+        total_score = int(attendance_score or 0) + int(achievement_score or 0) + int(extracurricular_score or 0)
+        level = (
+            self.session.query(GamificationLevel.gamification_level)
+            .filter(GamificationLevel.gamification_level_score <= total_score)
+            .order_by(GamificationLevel.gamification_level_score.desc())
+            .limit(1)
+            .scalar()
+            or 0
+        )
+
+        obj = self.get_or_create(student_id=student_id, season_id=season_id)
+        obj.attendance_score = int(attendance_score or 0)
+        obj.achievement_score = int(achievement_score or 0)
+        obj.extracurricular_score = int(extracurricular_score or 0)
+        obj.total_score = total_score
+        obj.level = int(level or 0)
+        obj.season_id = season_id
+        self.session.commit()
+        self.session.refresh(obj)
         return obj
 
     def get_leaderboard(self, limit: int = 10) -> List[Gamification]:
@@ -383,7 +436,8 @@ class ExtracurricularTeamMemberRepository():
 
         member = ExtracurricularTeamMember(
             team_id=team_id,
-            student_id=student_id
+            student_id=student_id,
+            season_id=team.season_id,
         )
 
         self.session.add(member)
@@ -402,6 +456,26 @@ class ExtracurricularTeamMemberRepository():
             .filter_by(team_id=team_id)
             .all()
         )
+
+    def list_members_with_names(self, team_id: int, season_id: int) -> list[dict]:
+        rows = (
+            self.session.query(Student.id, Student.first_name, Student.last_name)
+            .join(ExtracurricularTeamMember, ExtracurricularTeamMember.student_id == Student.id)
+            .filter(
+                ExtracurricularTeamMember.team_id == team_id,
+                ExtracurricularTeamMember.season_id == season_id,
+            )
+            .order_by(Student.last_name.asc(), Student.first_name.asc())
+            .all()
+        )
+
+        return [
+            {
+                "student_id": row.id,
+                "full_name": f"{row.last_name} {row.first_name}".strip(),
+            }
+            for row in rows
+        ]
 
     def get_by_student(self, student_id: int):
         return (

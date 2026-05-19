@@ -11,11 +11,14 @@ import {
 } from '../../../api/students/profile';
 import { validateBirthDate } from '../../../features/auth/birth-date-validation';
 import { OrgSidebar } from '../../../shared/ui/org-sidebar';
-import { ORG_AVATAR_UPDATED_EVENT } from '../../../shared/ui/org-sidebar/use-org-avatar';
+import {
+  dispatchOrgProfileUpdated,
+  ORG_DEFAULT_AVATAR_SRC,
+} from '../../../shared/org-profile-events';
 import '../../../styles/field-error.css';
 import './org-profile-new-styles.css';
 
-const DEFAULT_AVATAR_SRC = '/teacher/profile/avatar-profile.png';
+const DEFAULT_AVATAR_SRC = ORG_DEFAULT_AVATAR_SRC;
 const AVATAR_MAX_SIZE_BYTES = 5 * 1024 * 1024;
 
 type ProfileData = {
@@ -85,6 +88,8 @@ export const OrgProfileNewPage = () => {
   const [birthDateError, setBirthDateError] = useState<string | null>(null);
   const [avatarSrc, setAvatarSrc] = useState<string | null>(DEFAULT_AVATAR_SRC);
   const [profileData, setProfileData] = useState<ProfileData>(emptyProfileData);
+  const [draftProfileData, setDraftProfileData] = useState<ProfileData>(emptyProfileData);
+  const [isEditing, setIsEditing] = useState(false);
   const [isProfileLoading, setIsProfileLoading] = useState(true);
   const [isProfileSaving, setIsProfileSaving] = useState(false);
   const [isAvatarUploading, setIsAvatarUploading] = useState(false);
@@ -96,10 +101,49 @@ export const OrgProfileNewPage = () => {
   const updateProfileField =
     (field: keyof ProfileData) =>
     (event: ChangeEvent<HTMLInputElement>) => {
-      setProfileData((current) => ({ ...current, [field]: event.target.value }));
+      if (!isEditing) {
+        return;
+      }
+
+      setDraftProfileData((current) => ({ ...current, [field]: event.target.value }));
       setSaveNotice(null);
       setSaveError(null);
     };
+
+  const handleBirthChange =
+    (field: 'birthDay' | 'birthMonth' | 'birthYear') =>
+    (event: ChangeEvent<HTMLInputElement>) => {
+      const digits = event.target.value.replace(/\D/g, '');
+      const maxLength = field === 'birthYear' ? 4 : 2;
+      const nextValue = digits.slice(0, maxLength);
+
+      if (field === 'birthDay' && nextValue.length === 2) {
+        const day = Number(nextValue);
+        if (day < 1 || day > 31) {
+          return;
+        }
+      }
+
+      if (field === 'birthMonth' && nextValue.length === 2) {
+        const month = Number(nextValue);
+        if (month < 1 || month > 12) {
+          return;
+        }
+      }
+
+      setDraftProfileData((current) => ({ ...current, [field]: nextValue }));
+      setBirthDateError(null);
+      setSaveNotice(null);
+      setSaveError(null);
+    };
+
+  const startEditing = () => {
+    setDraftProfileData(profileData);
+    setBirthDateError(null);
+    setSaveError(null);
+    setSaveNotice(null);
+    setIsEditing(true);
+  };
 
   const loadProfile = useCallback(async () => {
     const accessToken = getAccessToken();
@@ -114,13 +158,23 @@ export const OrgProfileNewPage = () => {
     try {
       const user = await getCurrentStudent();
       if (!isStaffProfile(user)) {
-        setProfileError('Профиль организатора доступен только для staff');
+        setProfileError('Эта страница доступна только организаторам');
         return;
       }
 
       const mapped = mapStaffProfile(user);
       setProfileData(mapped);
-      setAvatarSrc(user.avatar_url ?? DEFAULT_AVATAR_SRC);
+      setDraftProfileData(mapped);
+      const nextAvatar = user.avatar_url ?? DEFAULT_AVATAR_SRC;
+      setAvatarSrc(nextAvatar);
+      dispatchOrgProfileUpdated({
+        avatarUrl: nextAvatar,
+        firstName: mapped.firstName,
+        lastName: mapped.lastName,
+        patronymic: mapped.patronymic,
+        email: mapped.email,
+      });
+      setIsEditing(false);
     } catch (error) {
       if (error instanceof AuthApiError && error.status === 401) {
         clearAuthTokens();
@@ -140,9 +194,14 @@ export const OrgProfileNewPage = () => {
 
   const birthInputClass = birthDateError ? 'field-input--error' : '';
   const fullName = getFullName(profileData);
-  const isFormDisabled = isProfileLoading || isProfileSaving;
+  const formValues = isEditing ? draftProfileData : profileData;
+  const isFormDisabled = isProfileLoading || isProfileSaving || !isEditing;
 
   const handleAvatarChange = async (event: ChangeEvent<HTMLInputElement>) => {
+    if (!isEditing) {
+      return;
+    }
+
     const selectedFile = event.target.files?.[0];
     if (!selectedFile) {
       return;
@@ -164,9 +223,9 @@ export const OrgProfileNewPage = () => {
 
     try {
       const uploaded = await uploadMyAvatar(selectedFile);
-      setAvatarSrc(uploaded.avatar_url || DEFAULT_AVATAR_SRC);
-      localStorage.setItem('orgProfileAvatar', uploaded.avatar_url || DEFAULT_AVATAR_SRC);
-      window.dispatchEvent(new Event(ORG_AVATAR_UPDATED_EVENT));
+      const nextAvatar = uploaded.avatar_url || DEFAULT_AVATAR_SRC;
+      setAvatarSrc(nextAvatar);
+      dispatchOrgProfileUpdated({ avatarUrl: nextAvatar });
       setSaveNotice('Аватар обновлён');
       setSaveError(null);
     } catch (error) {
@@ -182,14 +241,17 @@ export const OrgProfileNewPage = () => {
   };
 
   const handleDeleteAvatar = async () => {
+    if (!isEditing) {
+      return;
+    }
+
     setIsAvatarUploading(true);
 
     try {
       const user = await deleteMyAvatar();
       const nextAvatar = isStaffProfile(user) ? user.avatar_url ?? DEFAULT_AVATAR_SRC : DEFAULT_AVATAR_SRC;
       setAvatarSrc(nextAvatar);
-      localStorage.removeItem('orgProfileAvatar');
-      window.dispatchEvent(new Event(ORG_AVATAR_UPDATED_EVENT));
+      dispatchOrgProfileUpdated({ avatarUrl: nextAvatar });
       setSaveNotice('Аватар удалён');
       setSaveError(null);
     } catch (error) {
@@ -204,15 +266,15 @@ export const OrgProfileNewPage = () => {
   };
 
   const saveProfile = async () => {
-    const firstName = profileData.firstName.trim();
-    const lastName = profileData.lastName.trim();
+    const firstName = draftProfileData.firstName.trim();
+    const lastName = draftProfileData.lastName.trim();
 
     if (!firstName || !lastName) {
       setSaveError('Укажите имя и фамилию');
       return;
     }
 
-    const { birthDay, birthMonth, birthYear } = profileData;
+    const { birthDay, birthMonth, birthYear } = draftProfileData;
     const hasBirthInput = Boolean(birthDay || birthMonth || birthYear);
 
     if (hasBirthInput) {
@@ -232,12 +294,24 @@ export const OrgProfileNewPage = () => {
       const updated = await updateMyStaffProfile({
         first_name: firstName,
         last_name: lastName,
-        partonymic: profileData.patronymic.trim() || null,
+        partonymic: draftProfileData.patronymic.trim() || null,
         birth_date: hasBirthInput ? formatBirthDateForApi(birthDay, birthMonth, birthYear) : null,
       });
 
-      setProfileData(mapStaffProfile(updated));
+      const mapped = mapStaffProfile(updated);
+      setProfileData(mapped);
+      setDraftProfileData(mapped);
+      const nextAvatar = updated.avatar_url ?? avatarSrc ?? DEFAULT_AVATAR_SRC;
+      setAvatarSrc(nextAvatar);
+      dispatchOrgProfileUpdated({
+        avatarUrl: nextAvatar,
+        firstName: mapped.firstName,
+        lastName: mapped.lastName,
+        patronymic: mapped.patronymic,
+        email: mapped.email,
+      });
       setSaveNotice('Изменения сохранены');
+      setIsEditing(false);
     } catch (error) {
       if (error instanceof AuthApiError) {
         setSaveError(error.message);
@@ -296,10 +370,14 @@ export const OrgProfileNewPage = () => {
           </div>
         </header>
 
-        {isProfileLoading ? <p className="org-profile-status">Загрузка...</p> : null}
-        {profileError ? <p className="org-profile-status org-profile-status--error">{profileError}</p> : null}
-        {saveError ? <p className="org-profile-status org-profile-status--error">{saveError}</p> : null}
-        {saveNotice ? <p className="org-profile-status org-profile-status--success">{saveNotice}</p> : null}
+        {isProfileLoading || profileError || saveError || saveNotice ? (
+          <div className="org-profile-status-stack" role="status">
+            {isProfileLoading ? <p className="org-profile-status">Загрузка...</p> : null}
+            {profileError ? <p className="org-profile-status org-profile-status--error">{profileError}</p> : null}
+            {saveError ? <p className="org-profile-status org-profile-status--error">{saveError}</p> : null}
+            {saveNotice ? <p className="org-profile-status org-profile-status--success">{saveNotice}</p> : null}
+          </div>
+        ) : null}
 
         <div className="profile-card">
           <section className="profile-section">
@@ -310,8 +388,9 @@ export const OrgProfileNewPage = () => {
                 <input
                   id="org-profile-first-name"
                   type="text"
-                  value={profileData.firstName}
+                  value={formValues.firstName}
                   placeholder="Имя"
+                  readOnly={!isEditing}
                   disabled={isFormDisabled}
                   onChange={updateProfileField('firstName')}
                 />
@@ -321,8 +400,9 @@ export const OrgProfileNewPage = () => {
                 <input
                   id="org-profile-last-name"
                   type="text"
-                  value={profileData.lastName}
+                  value={formValues.lastName}
                   placeholder="Фамилия"
+                  readOnly={!isEditing}
                   disabled={isFormDisabled}
                   onChange={updateProfileField('lastName')}
                 />
@@ -334,8 +414,9 @@ export const OrgProfileNewPage = () => {
                 <input
                   id="org-profile-patronymic"
                   type="text"
-                  value={profileData.patronymic}
+                  value={formValues.patronymic}
                   placeholder="Отчество"
+                  readOnly={!isEditing}
                   disabled={isFormDisabled}
                   onChange={updateProfileField('patronymic')}
                 />
@@ -348,12 +429,13 @@ export const OrgProfileNewPage = () => {
                   id="org-profile-birth-day"
                   type="text"
                   inputMode="numeric"
-                  value={profileData.birthDay}
+                  value={formValues.birthDay}
+                  readOnly={!isEditing}
                   placeholder="ДД"
                   maxLength={2}
                   className={birthInputClass}
                   disabled={isFormDisabled}
-                  onChange={updateProfileField('birthDay')}
+                  onChange={handleBirthChange('birthDay')}
                 />
               </div>
               <div className="form-group small">
@@ -364,12 +446,13 @@ export const OrgProfileNewPage = () => {
                   id="org-profile-birth-month"
                   type="text"
                   inputMode="numeric"
-                  value={profileData.birthMonth}
+                  value={formValues.birthMonth}
+                  readOnly={!isEditing}
                   placeholder="ММ"
                   maxLength={2}
                   className={birthInputClass}
                   disabled={isFormDisabled}
-                  onChange={updateProfileField('birthMonth')}
+                  onChange={handleBirthChange('birthMonth')}
                 />
               </div>
               <div className="form-group small">
@@ -380,12 +463,13 @@ export const OrgProfileNewPage = () => {
                   id="org-profile-birth-year"
                   type="text"
                   inputMode="numeric"
-                  value={profileData.birthYear}
+                  value={formValues.birthYear}
+                  readOnly={!isEditing}
                   placeholder="ГГГГ"
                   maxLength={4}
                   className={birthInputClass}
                   disabled={isFormDisabled}
-                  onChange={updateProfileField('birthYear')}
+                  onChange={handleBirthChange('birthYear')}
                 />
               </div>
             </div>
@@ -403,60 +487,75 @@ export const OrgProfileNewPage = () => {
             </div>
           </section>
 
-          <section className="profile-section upload-section">
-            <div className="upload-row">
-              {avatarSrc ? (
-                <img className="upload-avatar" src={avatarSrc} alt="Аватар" />
-              ) : (
-                <div className="upload-avatar upload-avatar--empty" aria-hidden="true" />
-              )}
-              <label
-                className="upload-dropzone"
-                onDragOver={(event) => event.preventDefault()}
-                onDrop={(event) => {
-                  event.preventDefault();
-                  const file = event.dataTransfer.files[0];
-                  if (!file) {
-                    return;
-                  }
-                  const input = document.createElement('input');
-                  input.type = 'file';
-                  const dataTransfer = new DataTransfer();
-                  dataTransfer.items.add(file);
-                  input.files = dataTransfer.files;
-                  void handleAvatarChange({ target: input } as ChangeEvent<HTMLInputElement>);
-                }}
-              >
-                <input
-                  className="upload-input"
-                  type="file"
-                  accept="image/svg+xml,image/png,image/jpeg,image/gif"
-                  disabled={isAvatarUploading || isFormDisabled}
-                  onChange={(event) => void handleAvatarChange(event)}
-                />
-                <img className="upload-icon" src="/teacher/profile/upload-cloud.svg" alt="Загрузка" />
-                <p>{isAvatarUploading ? 'Загрузка...' : 'Нажмите или перетащите'}</p>
-                <span>SVG, PNG, JPG or GIF (max. 5 MB)</span>
-              </label>
-            </div>
-          </section>
+          {isEditing ? (
+            <section className="profile-section upload-section">
+              <div className="upload-row">
+                {avatarSrc ? (
+                  <img className="upload-avatar" src={avatarSrc} alt="Аватар" />
+                ) : (
+                  <div className="upload-avatar upload-avatar--empty" aria-hidden="true" />
+                )}
+                <label
+                  className="upload-dropzone"
+                  onDragOver={(event) => event.preventDefault()}
+                  onDrop={(event) => {
+                    event.preventDefault();
+                    const file = event.dataTransfer.files[0];
+                    if (!file) {
+                      return;
+                    }
+                    const input = document.createElement('input');
+                    input.type = 'file';
+                    const dataTransfer = new DataTransfer();
+                    dataTransfer.items.add(file);
+                    input.files = dataTransfer.files;
+                    void handleAvatarChange({ target: input } as ChangeEvent<HTMLInputElement>);
+                  }}
+                >
+                  <input
+                    className="upload-input"
+                    type="file"
+                    accept="image/svg+xml,image/png,image/jpeg,image/gif"
+                    disabled={isAvatarUploading || isFormDisabled}
+                    onChange={(event) => void handleAvatarChange(event)}
+                  />
+                  <img className="upload-icon" src="/teacher/profile/upload-cloud.svg" alt="Загрузка" />
+                  <p>{isAvatarUploading ? 'Загрузка...' : 'Нажмите или перетащите'}</p>
+                  <span>SVG, PNG, JPG or GIF (max. 5 MB)</span>
+                </label>
+              </div>
+            </section>
+          ) : null}
           <div className="profile-actions">
-            <button
-              className="profile-delete-button org-profile-clickable"
-              type="button"
-              onClick={() => void handleDeleteAvatar()}
-              disabled={isAvatarUploading || isFormDisabled}
-            >
-              Удалить
-            </button>
-            <button
-              className="profile-save-button org-profile-clickable"
-              type="button"
-              onClick={() => void saveProfile()}
-              disabled={isFormDisabled}
-            >
-              {isProfileSaving ? 'Сохранение...' : 'Сохранить'}
-            </button>
+            {!isEditing ? (
+              <button
+                className="profile-edit-button org-profile-clickable"
+                type="button"
+                onClick={startEditing}
+                disabled={isProfileLoading || Boolean(profileError)}
+              >
+                Изменить данные в профиле
+              </button>
+            ) : (
+              <>
+                <button
+                  className="profile-delete-button org-profile-clickable"
+                  type="button"
+                  onClick={() => void handleDeleteAvatar()}
+                  disabled={isAvatarUploading || isFormDisabled}
+                >
+                  Удалить
+                </button>
+                <button
+                  className="profile-save-button org-profile-clickable"
+                  type="button"
+                  onClick={() => void saveProfile()}
+                  disabled={isFormDisabled || isAvatarUploading}
+                >
+                  {isProfileSaving ? 'Сохранение...' : 'Сохранить'}
+                </button>
+              </>
+            )}
           </div>
         </div>
       </main>

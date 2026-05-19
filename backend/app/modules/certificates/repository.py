@@ -38,12 +38,14 @@ class CertificatesRepository:
         )
 
         if certificate is None:
+            course = self.get_course_by_id(course_id)
             certificate = StudentCertificate(
                 student_id=student_id,
                 course_id=course_id,
                 issued_by=issued_by,
                 certificate_url=certificate_url,
                 certificate_status="Issued",
+                season_id=course.season_id if course is not None else 1,
             )
             self.db.add(certificate)
         else:
@@ -70,12 +72,14 @@ class CertificatesRepository:
         )
 
         if certificate is None:
+            course = self.get_course_by_id(course_id)
             certificate = TeacherCertificate(
                 user_id=user_id,
                 course_id=course_id,
                 issued_by=issued_by,
                 certificate_url=certificate_url,
                 certificate_status="Issued",
+                season_id=course.season_id if course is not None else 1,
             )
             self.db.add(certificate)
         else:

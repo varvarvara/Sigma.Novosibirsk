@@ -256,6 +256,7 @@ class S3StorageService:
         self,
         object_name: str,
         expiration: int = 3600,
+        download_filename: str | None = None,
     ) -> Optional[str]:
         if not self.bucket_name:
             return None
@@ -264,6 +265,8 @@ class S3StorageService:
             "Bucket": self.bucket_name,
             "Key": object_name,
         }
+        if download_filename:
+            params["ResponseContentDisposition"] = f'attachment; filename="{download_filename}"'
 
         clients = [client for client in (self.s3_client, self._virtual_s3_client) if client is not None]
         last_error: ClientError | None = None

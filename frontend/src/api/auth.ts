@@ -206,7 +206,7 @@ export async function request<TResponse>(
     response = await fetch(withApiBase(path), requestOptions);
   } catch (error) {
     throw new AuthApiError(
-      "Не удалось подключиться к серверу. Проверьте, что backend запущен.",
+      "Не удалось подключиться к серверу. Попробуйте позже.",
       0,
       error,
     );
@@ -225,7 +225,7 @@ export async function request<TResponse>(
         });
       } catch (error) {
         throw new AuthApiError(
-          "Не удалось подключиться к серверу. Проверьте, что backend запущен.",
+          "Не удалось подключиться к серверу. Попробуйте позже.",
           0,
           error,
         );

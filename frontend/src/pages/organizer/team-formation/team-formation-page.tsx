@@ -6,15 +6,23 @@ import {
     listExtracurricularTeams,
     type ExtracurricularTeam as ApiTeam,
 } from "../../../api/organizer/extracurricular";
-import { TeamMembersTable } from "./team-members-table";
-import { formatTeamPointsLabel, getMemberScoreKey, type MemberScoreEntry } from "./team-scoring";
+import {
+    getSeasonExtracurricularTeamMembers,
+    getSeasonStudents,
+    type SeasonStudent,
+    type SeasonTeamMember,
+} from "../../../api/organizer/season";
+import { DEFAULT_SEASON_ID } from "../../../features/auth/student-registration";
 import { OrgPanelState } from "../../../shared/ui/org-panel-state";
 import { OrgSidebar } from "../../../shared/ui/org-sidebar";
+import { TeamMembersTable } from "./team-members-table";
+import { formatTeamPointsLabel, getMemberScoreKey, type MemberScoreEntry } from "./team-scoring";
 import "./team-formation-page.css";
 
-type Member = {
+type TeamMember = {
     id: number;
     name: string;
+    avatarUrl?: string | null;
 };
 
 type Team = {
@@ -24,13 +32,55 @@ type Team = {
     captain: string;
     count: string;
     color: string;
-    members: string[];
+    members: TeamMember[];
     totalPoints: number;
 };
 
 const memberColors = ["#7C3AED", "#EC4899", "#10B981", "#F59E0B", "#6366F1", "#0EA5E9", "#EF4444"];
 
-function mapTeam(apiTeam: ApiTeam, index: number, teamPoints: Map<number, number>): Team {
+function formatParticipantsCount(count: number) {
+    const mod10 = count % 10;
+    const mod100 = count % 100;
+
+    if (mod10 === 1 && mod100 !== 11) {
+        return `${count} участник`;
+    }
+
+    if (mod10 >= 2 && mod10 <= 4 && (mod100 < 10 || mod100 >= 20)) {
+        return `${count} участника`;
+    }
+
+    return `${count} участников`;
+}
+
+function formatStudentName(student: SeasonStudent) {
+    return `${student.last_name} ${student.first_name}`.trim();
+}
+
+function buildMembersForTeam(
+    teamId: number,
+    memberships: SeasonTeamMember[],
+    studentsById: Map<number, SeasonStudent>,
+): TeamMember[] {
+    return memberships
+        .filter((membership) => membership.team_id === teamId)
+        .map((membership) => {
+            const student = studentsById.get(membership.student_id);
+
+            return {
+                id: membership.student_id,
+                name: student ? formatStudentName(student) : `Студент #${membership.student_id}`,
+                avatarUrl: student?.avatar_url ?? null,
+            };
+        });
+}
+
+function mapTeam(
+    apiTeam: ApiTeam,
+    index: number,
+    teamPoints: Map<number, number>,
+    members: TeamMember[],
+): Team {
     const totalPoints = teamPoints.get(apiTeam.id) ?? 0;
 
     return {
@@ -38,9 +88,9 @@ function mapTeam(apiTeam: ApiTeam, index: number, teamPoints: Map<number, number
         title: apiTeam.ex_team_name,
         direction: `Команда №${apiTeam.ex_team_number}`,
         captain: "—",
-        count: "0 участников",
+        count: formatParticipantsCount(members.length),
         color: memberColors[index % memberColors.length],
-        members: [],
+        members,
         totalPoints,
     };
 }
@@ -61,17 +111,24 @@ export function TeamFormationPage() {
         setError(null);
 
         try {
-            const [apiTeams, scores] = await Promise.all([
+            const [apiTeams, scores, memberships, students] = await Promise.all([
                 listExtracurricularTeams(),
                 listExtracurricularScores(),
+                getSeasonExtracurricularTeamMembers(DEFAULT_SEASON_ID),
+                getSeasonStudents(DEFAULT_SEASON_ID),
             ]);
+
+            const studentsById = new Map(students.map((student) => [student.id, student]));
 
             const teamPoints = scores.reduce<Map<number, number>>((acc, score) => {
                 acc.set(score.team_id, (acc.get(score.team_id) ?? 0) + score.score);
                 return acc;
             }, new Map());
 
-            const mapped = apiTeams.map((team, index) => mapTeam(team, index, teamPoints));
+            const mapped = apiTeams.map((team, index) =>
+                mapTeam(team, index, teamPoints, buildMembersForTeam(team.id, memberships, studentsById)),
+            );
+
             setTeamItems(mapped);
             setCollapsedTeamIds(mapped.map((team) => team.id));
             setNotice("");
@@ -119,6 +176,8 @@ export function TeamFormationPage() {
         // TODO: backend has no DELETE /gamification/team endpoint yet
         setNotice("Удаление команды пока недоступно на сервере");
     };
+
+    const normalizedQuery = query.trim().toLowerCase();
 
     return (
         <main className="org-layout team-formation-page" aria-label="Команды внеучебки">
@@ -170,16 +229,16 @@ export function TeamFormationPage() {
                 <section className="team-list" aria-label="Команды">
                     {teamItems.map((team) => {
                         const collapsed = collapsedTeamIds.includes(team.id);
-                        const teamMembers: Member[] = team.members
-                            .filter((member) => member.toLowerCase().includes(query.trim().toLowerCase()))
-                            .map((member, index) => ({ id: index + 1, name: member }));
+                        const teamMembers = team.members.filter((member) =>
+                            member.name.toLowerCase().includes(normalizedQuery),
+                        );
                         const teamTotal = team.totalPoints;
 
                         return (
                             <section className={`team-panel team-panel--main team-list-panel${collapsed ? " team-panel--collapsed" : ""}`} key={team.id}>
                                 <div className="team-panel__head">
                                     <div className="team-panel__icon" style={{ background: team.color }}>
-                                        К
+                                        {team.title.trim()[0]?.toUpperCase() ?? "К"}
                                     </div>
                                     <div>
                                         <h2>{team.title}</h2>
@@ -215,27 +274,33 @@ export function TeamFormationPage() {
 
                                 {!collapsed && (
                                     <div className="team-panel__body">
-                                        <p className="team-formation-status">
-                                            Состав команды: нет GET API для участников; создавайте состав при создании команды.
-                                        </p>
                                         <div className="team-tools">
                                             <div className="team-search">
-                                                <input value={query} placeholder="Поиск участников" onChange={(event) => setQuery(event.target.value)} />
+                                                <input
+                                                    value={query}
+                                                    placeholder="Поиск участников"
+                                                    onChange={(event) => setQuery(event.target.value)}
+                                                />
                                             </div>
                                         </div>
 
-                                        {teamMembers.length > 0 ? (
-                                            <TeamMembersTable
-                                                teamId={team.id}
-                                                members={teamMembers}
-                                                memberColors={memberColors}
-                                                activeMemberId={activeMemberId}
-                                                memberScores={memberScores}
-                                                onSelectMember={setActiveMemberId}
-                                                onRemoveMember={() => setNotice("Удаление участника пока недоступно")}
-                                                onScoreChange={updateMemberScore}
-                                            />
-                                        ) : null}
+                                        <TeamMembersTable
+                                            teamId={team.id}
+                                            members={teamMembers}
+                                            memberColors={memberColors}
+                                            activeMemberId={activeMemberId}
+                                            memberScores={memberScores}
+                                            onSelectMember={setActiveMemberId}
+                                            onRemoveMember={() => setNotice("Удаление участника пока недоступно")}
+                                            onScoreChange={updateMemberScore}
+                                            emptyMessage={
+                                                team.members.length === 0
+                                                    ? "В команде пока нет участников. Добавьте их при создании команды."
+                                                    : normalizedQuery
+                                                      ? "Участники по вашему запросу не найдены."
+                                                      : "Участники не найдены."
+                                            }
+                                        />
                                     </div>
                                 )}
                             </section>

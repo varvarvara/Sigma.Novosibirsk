@@ -5,11 +5,11 @@ import { Button } from "../../../components/base/buttons/button";
 import "./feedback.css";
 
 const ratingOptions = [
-    { icon: "/Worst Style.svg", label: "Ужасно" },
-    { icon: "/It's Just Fine Style.svg", label: "Так себе" },
-    { icon: "/Neutral.svg", label: "Ок" },
-    { icon: "/Good Style.svg", label: "Неплохо" },
-    { icon: "/Love it Style.svg", label: "Сигма" },
+    { icon: "/raster-icons/worst-style.png", label: "Ужасно" },
+    { icon: "/raster-icons/its-just-fine-style.png", label: "Так себе" },
+    { icon: "/raster-icons/neutral.png", label: "Ок" },
+    { icon: "/raster-icons/good-style.png", label: "Неплохо" },
+    { icon: "/raster-icons/love-it-style.png", label: "Сигма" },
 ];
 
 export function FeedbackPage() {

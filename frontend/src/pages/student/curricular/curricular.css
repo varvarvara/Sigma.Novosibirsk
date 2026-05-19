@@ -43,13 +43,15 @@
 
 .curricular-summary {
     width: 302px;
-    height: 123.4px;
+    min-height: 124px;
     margin: 0 auto;
     transform: translateY(12px);
-    border-radius: 12px;
+    border-radius: 22px;
     background: #F7F6FA;
     position: relative;
     overflow: hidden;
+    box-shadow: 0 14px 32px rgba(20, 18, 26, 0.18);
+    transition: transform 0.22s ease, box-shadow 0.22s ease, background-color 0.22s ease;
 }
 
 .summary-main {
@@ -57,7 +59,7 @@
     justify-content: center;
     align-items: center;
     gap: 8px;
-    height: 52px;
+    height: 54px;
 }
 
 .summary-main img,
@@ -72,8 +74,8 @@
     margin: 0;
     color: #2A282F;
     font-family: 'Inter SemiBold';
-    font-size: 14px;
-    line-height: 17px;
+    font-size: 17px;
+    line-height: 21px;
     font-weight: 600;
 }
 
@@ -88,8 +90,8 @@
 }
 
 .summary-details {
-    height: 71.4px;
-    padding: 15px 24px 0;
+    min-height: 70px;
+    padding: 14px 24px 15px;
     display: grid;
     grid-template-columns: 1fr 1fr;
     align-items: start;
@@ -100,16 +102,16 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 6px;
+    gap: 8px;
 }
 
 .summary-details h2 {
     margin: 0;
     color: #2A282F;
-    font-family: 'Inter SemiBold';
-    font-size: 14px;
-    line-height: 17px;
-    font-weight: 600;
+    font-family: 'Inter Medium';
+    font-size: 13px;
+    line-height: 16px;
+    font-weight: 500;
     white-space: nowrap;
 }
 
@@ -121,13 +123,13 @@
     gap: 6px;
     color: #2A282F;
     font-family: 'Inter SemiBold';
-    font-size: 14px;
-    line-height: 17px;
+    font-size: 16px;
+    line-height: 20px;
     font-weight: 600;
 }
 
 .curricular-charges {
-    padding: 25px 29px 0;
+    padding: 28px 29px 0;
     scroll-margin-top: 60px;
 }
 
@@ -142,17 +144,19 @@
     margin: 0;
     color: #FFFFFF;
     font-family: 'Inter SemiBold';
-    font-size: 14px;
-    line-height: 24px;
+    font-size: 16px;
+    line-height: 22px;
     font-weight: 600;
 }
 
 .curricular-filter-button {
-    width: 24px;
-    height: 24px;
+    width: 32px;
+    height: 32px;
     display: grid;
     place-items: center;
+    border-radius: 10px;
     text-decoration: none;
+    transition: background-color 0.22s ease, transform 0.18s ease;
 }
 
 .curricular-filter-button img {
@@ -180,7 +184,7 @@
 
 .curricular-date-row {
     width: 302px;
-    height: 20px;
+    min-height: 20px;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -189,10 +193,10 @@
 .curricular-date-row p,
 .curricular-date-bonus span {
     margin: 0;
-    font-family: 'Inter SemiBold';
+    font-family: 'Inter Medium';
     font-size: 12px;
     line-height: 15px;
-    font-weight: 600;
+    font-weight: 500;
 }
 
 .curricular-date-row p {
@@ -217,14 +221,16 @@
 
 .curricular-charge-row {
     width: 302px;
-    height: 55px;
-    padding: 10px 16px;
-    border-radius: 12px;
+    min-height: 96px;
+    padding: 14px 16px;
+    border-radius: 20px;
     background: #F7F6FA;
     display: grid;
     grid-template-columns: 1fr auto;
     align-items: center;
-    gap: 14px;
+    gap: 12px;
+    box-shadow: 0 10px 26px rgba(20, 18, 26, 0.12);
+    transition: transform 0.22s ease, box-shadow 0.22s ease, background-color 0.22s ease;
 }
 
 .curricular-charge-row-large {
@@ -241,24 +247,30 @@
     margin: 0;
     color: #2A282F;
     font-family: 'Inter SemiBold';
-    font-size: 12px;
-    line-height: 15px;
+    font-size: 13px;
+    line-height: 17px;
     font-weight: 600;
+    overflow-wrap: anywhere;
 }
 
 .curricular-charge-info p {
-    margin: 3px 0 0;
+    margin: 5px 0 0;
     color: #A8A6AC;
-    font-family: 'Inter SemiBold';
-    font-size: 10px;
-    line-height: 12px;
-    font-weight: 600;
+    font-family: 'Inter Medium';
+    font-size: 11px;
+    line-height: 15px;
+    font-weight: 500;
+    overflow-wrap: anywhere;
+}
+
+.curricular-charge-description {
+    color: #625F68 !important;
 }
 
 .curricular-achievement-link {
     width: 85px;
-    height: 28px;
-    margin-top: 13px;
+    height: 24px;
+    margin-top: 10px;
     border-radius: 14px;
     background: #7949FF;
     color: #FFFFFF;
@@ -270,7 +282,8 @@
     place-items: center;
     text-decoration: none;
     user-select: none;
-    transition: background-color 0.15s ease, transform 0.1s ease;
+    box-shadow: 0 8px 18px rgba(121, 73, 255, 0.2);
+    transition: background-color 0.22s ease, transform 0.18s ease, box-shadow 0.22s ease;
 }
 
 .curricular-achievement-link:hover {
@@ -289,10 +302,45 @@
 .curricular-charge-points {
     display: flex;
     align-items: center;
-    gap: 4px;
+    justify-content: flex-end;
+    gap: 5px;
+    min-width: 56px;
+    padding: 6px 8px;
+    border-radius: 999px;
+    background: #ECE6FF;
     color: #2A282F;
     font-family: 'Inter SemiBold';
-    font-size: 12px;
-    line-height: 15px;
+    font-size: 13px;
+    line-height: 16px;
     font-weight: 600;
+}
+
+@media (hover: hover) {
+    .curricular-summary:hover {
+        transform: translateY(10px);
+        background: #FFFFFF;
+        box-shadow: 0 18px 38px rgba(20, 18, 26, 0.23);
+    }
+
+    .curricular-filter-button:hover {
+        background: rgba(247, 246, 250, 0.1);
+        transform: translateY(-1px);
+    }
+
+    .curricular-charge-row:hover {
+        transform: translateY(-2px);
+        background: #FFFFFF;
+        box-shadow: 0 16px 32px rgba(20, 18, 26, 0.18);
+    }
+
+    .curricular-achievement-link:hover {
+        background: #6d3ff5;
+        box-shadow: 0 10px 22px rgba(121, 73, 255, 0.28);
+    }
+}
+
+.curricular-filter-button:active,
+.curricular-charge-row:active,
+.curricular-achievement-link:active {
+    transform: translateY(1px) scale(0.995);
 }

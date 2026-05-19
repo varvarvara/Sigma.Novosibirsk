@@ -1,1 +1,1 @@
-export { SchedulePage as TeacherSchedulePage } from '../../student/schedule/schedule-page'
+export { TeacherSchedulePage } from './teacher-schedule-page'

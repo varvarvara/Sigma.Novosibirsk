@@ -99,6 +99,7 @@ CREATE TABLE students (
     password VARCHAR(255) NOT NULL,
     phone VARCHAR(20) NOT NULL,
     tg_nickname VARCHAR(50),
+    birth_date DATE,
     year_of_study INT CHECK (year_of_study BETWEEN 8 AND 11),
     city VARCHAR(30),
     school VARCHAR(100),
@@ -140,7 +141,7 @@ CREATE TABLE slots (
 CREATE TABLE course (
     id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     title VARCHAR(100) NOT NULL,
-    descriptions VARCHAR(200),
+    descriptions TEXT,
     staff_id BIGINT NOT NULL REFERENCES staff(id) ON DELETE CASCADE,
     course_status course_statuses NOT NULL DEFAULT 'Draft',
     course_duration course_types NOT NULL DEFAULT 'ThreeDays',
@@ -169,8 +170,10 @@ CREATE TABLE schedule (
     slot_id BIGINT REFERENCES slots(id) ON DELETE SET NULL,
     lesson_date DATE NOT NULL DEFAULT CURRENT_DATE,
     lesson_time TIME NOT NULL DEFAULT CURRENT_TIME,
+    classroom VARCHAR(20),
     season_id BIGINT NOT NULL REFERENCES season(id) ON DELETE CASCADE,
-    CONSTRAINT uq_schedule_staff_datetime UNIQUE (staff_id, lesson_date, lesson_time)
+    CONSTRAINT uq_schedule_staff_datetime UNIQUE (staff_id, lesson_date, lesson_time),
+    CONSTRAINT uq_schedule_classroom_datetime UNIQUE (lesson_date, lesson_time, classroom)
 );
 
 CREATE TABLE attendance (
@@ -261,6 +264,7 @@ CREATE TABLE achievement (
     course_id BIGINT NOT NULL REFERENCES course(id) ON DELETE CASCADE,
     achievement_score INT NOT NULL,
     season_id BIGINT NOT NULL REFERENCES season(id) ON DELETE CASCADE,
+    icon_image_key VARCHAR(512),
     CONSTRAINT cn_achievement_unique UNIQUE (course_id, achievement_description)
 );
 
@@ -316,6 +320,7 @@ CREATE TABLE schedule_generation_item (
     slot_id INTEGER REFERENCES slots(id),
     lesson_date DATE NOT NULL,
     lesson_time TIME NOT NULL,
+    classroom VARCHAR(20),
     season_id INTEGER NOT NULL REFERENCES season(id),
 
     CONSTRAINT uq_schedule_generation_staff_datetime
@@ -410,11 +415,10 @@ FROM student_achievement sa
 JOIN achievement a ON sa.achievement_id = a.id
 WHERE sa.student_id = p_student_id;
 
-SELECT COALESCE(SUM(a.ex_course_score),0)
+SELECT COALESCE(SUM(s.ex_team_score),0)
 INTO v_extracurricular_score
 FROM extracurricular_team_members m
 JOIN extracurricular_score s ON m.team_id = s.team_id
-JOIN extracurricular_activity a ON s.ex_course_id = a.id
 WHERE m.student_id = p_student_id;
 
 v_total_score :=
@@ -467,13 +471,13 @@ RETURNS TRIGGER
 LANGUAGE plpgsql
 AS $$
 BEGIN
-PERFORM recalc_gamification(NEW.student_id);
-RETURN NEW;
+PERFORM recalc_gamification(COALESCE(NEW.student_id, OLD.student_id));
+RETURN COALESCE(NEW, OLD);
 END;
 $$;
 
 CREATE TRIGGER trg_recalc_achievement
-AFTER INSERT ON student_achievement
+AFTER INSERT OR UPDATE OR DELETE ON student_achievement
 FOR EACH ROW
 EXECUTE FUNCTION trg_student_achievement_gamification();
 
@@ -497,14 +501,22 @@ CREATE OR REPLACE FUNCTION trg_achievement_gamification()
 RETURNS TRIGGER
 LANGUAGE plpgsql
 AS $$
+DECLARE
+    v_student_id BIGINT;
 BEGIN
-PERFORM recalc_gamification(NEW.student_id);
-RETURN NEW;
+FOR v_student_id IN
+SELECT student_id
+FROM student_achievement
+WHERE achievement_id = COALESCE(NEW.id, OLD.id)
+LOOP
+    PERFORM recalc_gamification(v_student_id);
+END LOOP;
+RETURN COALESCE(NEW, OLD);
 END;
 $$;
 
 CREATE TRIGGER achievement_gamification_trigger
-AFTER INSERT OR UPDATE
+AFTER INSERT OR UPDATE OR DELETE
 ON achievement
 FOR EACH ROW
 EXECUTE FUNCTION trg_achievement_gamification();

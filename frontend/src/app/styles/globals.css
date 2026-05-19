@@ -1,6 +1,7 @@
- :root {
+:root {
     --back-chevron-size: 24px;
     --back-chevron-offset: 24px;
+    --student-bottom-nav-height: 73px;
 }
 
 @font-face {
@@ -38,11 +39,16 @@ body,
     min-height: 100%;
 }
 
+html {
+    overflow-y: auto;
+}
+
 body {
     font-family: 'Inter Regular';
     font-weight: 400;
-    background: #141414
-    
+    background: #141414;
+    overflow-x: hidden;
+    overflow-y: auto;
 }
 
 .semi-bold-text {

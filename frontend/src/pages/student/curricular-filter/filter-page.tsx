@@ -19,6 +19,7 @@ export function FilterPage() {
     const [selectedDates, setSelectedDates] = useState<Set<string>>(new Set());
     const [isLoading, setIsLoading] = useState(true);
     const [errorMessage, setErrorMessage] = useState("");
+    const hasSelectedFilters = selectedCourseIds.size > 0 || selectedDates.size > 0;
 
     useEffect(() => {
         const load = async () => {
@@ -43,14 +44,14 @@ export function FilterPage() {
                     new Set(
                         saved?.courseIds.length
                             ? saved.courseIds.filter((id) => allCourseIds.includes(id))
-                            : allCourseIds,
+                            : [],
                     ),
                 );
                 setSelectedDates(
                     new Set(
                         saved?.dates.length
                             ? saved.dates.filter((date) => allDates.includes(date))
-                            : allDates,
+                            : [],
                     ),
                 );
             } catch (error) {
@@ -125,8 +126,8 @@ export function FilterPage() {
                                     onClick={() => toggleCourse(course.course_id)}
                                     aria-pressed={selectedCourseIds.has(course.course_id)}
                                 >
-                                    <span>{course.course_title}</span>
-                                    <span>{course.teacher_name}</span>
+                                    <span className="filter-row__title">{course.course_title}</span>
+                                    <span className="filter-row__teacher">{course.teacher_name}</span>
                                 </button>
                             ))}
                         </div>
@@ -160,7 +161,7 @@ export function FilterPage() {
                             size="md"
                             className="filter-save-button"
                             onClick={handleSave}
-                            isDisabled={selectedCourseIds.size === 0}
+                            isDisabled={!hasSelectedFilters}
                         >
                             Сохранить
                         </Button>

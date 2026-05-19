@@ -66,6 +66,7 @@ class SchedulingService:
             teacher_name=teacher_name,
             lesson_date=schedule.lesson_date,
             lesson_time=schedule.lesson_time,
+            classroom=schedule.classroom,
             slot_id=schedule.slot_id,
         )
 
@@ -128,6 +129,7 @@ class SchedulingService:
                 "course_class_id": cc.id,
                 "class_number": cc.class_number,
                 "slot_id": slot.id,
+                "classroom": item.get("classroom"),
                 "date": str(slot.slot_date),
                 "start_time": slot.slot_time.strftime("%H:%M:%S"),
                 "end_time": end_dt.time().strftime("%H:%M:%S"),
@@ -164,6 +166,7 @@ class SchedulingService:
                 "slot_id": schedule.slot_id,
                 "lesson_date": str(schedule.lesson_date),
                 "lesson_time": str(schedule.lesson_time),
+                "classroom": schedule.classroom,
             },
         }
 
@@ -458,6 +461,7 @@ class SchedulingService:
             {
                 "course_class_id": item.course_class_id,
                 "slot_id": item.slot_id,
+                "classroom": item.classroom,
                 "date": str(item.lesson_date),
                 "time": str(item.lesson_time),
             }
@@ -649,7 +653,8 @@ class SchedulingService:
             description = self._escape_ics_text(
                 f"Преподаватель: {teacher_name}\n"
                 f"Курс: {course.title}\n"
-                f"Занятие: {course_class.class_number}"
+                f"Занятие: {course_class.class_number}\n"
+                f"Кабинет: {schedule.classroom or 'не назначен'}"
             )
 
             lines.extend(
@@ -707,7 +712,8 @@ class SchedulingService:
             description = self._escape_ics_text(
                 f"Teacher: {teacher_name}\n"
                 f"Course: {course.title}\n"
-                f"Class: {course_class.class_number}"
+                f"Class: {course_class.class_number}\n"
+                f"Room: {schedule.classroom or 'not assigned'}"
             )
 
             lines.extend(
@@ -747,6 +753,7 @@ class SchedulingService:
             "teacher_name",
             "lesson_date",
             "lesson_time",
+            "classroom",
             "slot_id",
         ])
 
@@ -762,6 +769,7 @@ class SchedulingService:
                 teacher_name,
                 schedule.lesson_date.isoformat(),
                 schedule.lesson_time.strftime("%H:%M:%S"),
+                schedule.classroom or "",
                 schedule.slot_id or "",
             ])
 

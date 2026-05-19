@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from app.db.session import get_db
 from app.modules.users.schemas import (
     AvatarUploadOut,
-    StaffMeUpdate,
+    ProfileMeUpdate,
     StaffOutput,
     StudentInCreate,
     StudentOutput,
@@ -20,9 +20,10 @@ def get_me(current_user=Depends(get_current_user), session: Session = Depends(ge
     return UsersService(session=session).get_me(current_user=current_user)
 
 
-@usersRouter.patch("/me", response_model=StaffOutput)
+@usersRouter.patch("/me", response_model=StudentOutput | StaffOutput)
+@usersRouter.put("/me", response_model=StudentOutput | StaffOutput)
 def update_me(
-    payload: StaffMeUpdate,
+    payload: ProfileMeUpdate,
     current_user=Depends(get_current_user),
     session: Session = Depends(get_db),
 ):

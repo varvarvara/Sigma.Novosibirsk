@@ -69,12 +69,13 @@ class CourseFeedbackRepository:
             .first()
         )
 
-    def create_feedback(self, course_id: int, student_id: int, rating: float, comment: str) -> Feedback:
+    def create_feedback(self, course_id: int, student_id: int, rating: float, comment: str, season_id: int) -> Feedback:
         feedback = Feedback(
             course_id=course_id,
             student_id=student_id,
             rating=rating,
             comment=comment,
+            season_id=season_id,
         )
         self.db.add(feedback)
         self.db.commit()

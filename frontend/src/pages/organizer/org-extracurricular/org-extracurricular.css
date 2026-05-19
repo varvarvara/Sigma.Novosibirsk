@@ -23,9 +23,14 @@
     flex-direction: column;
     width: 100%;
     min-width: 0;
+    min-height: 0;
+    height: 100vh;
+    height: 100dvh;
     padding: 32px 40px 40px;
     box-sizing: border-box;
     background: #ffffff;
+    overflow-x: hidden;
+    overflow-y: auto;
 }
 
 .org-header {
@@ -177,7 +182,7 @@
 }
 
 .org-content {
-    flex: 1;
+    flex: 1 1 auto;
     min-height: 0;
     margin-top: 24px;
     display: flex;
@@ -186,12 +191,22 @@
     width: 100%;
 }
 
+.org-extracurricular-page .org-content {
+    flex: 0 0 auto;
+    min-height: auto;
+    overflow: visible;
+}
+
 .org-panel {
     border: 0;
     border-radius: 0;
     background: #FFFFFF;
     overflow: hidden;
     box-shadow: none;
+}
+
+.org-extracurricular-page .org-panel {
+    overflow: visible;
 }
 
 .org-panel--main {
@@ -325,6 +340,11 @@
     max-height: min(560px, calc(100dvh - 300px));
     overflow-x: auto;
     overflow-y: auto;
+}
+
+.org-extracurricular-page .org-table__body {
+    max-height: none;
+    overflow: visible;
 }
 
 .org-activity-row {

@@ -177,7 +177,16 @@ export function TeamCreationPage() {
                     <div className="team-creation-search-results" aria-label="Найденные участники">
                         {filteredCandidates.map((candidate) => (
                             <div className="team-creation-search-result" key={candidate.id}>
-                                <span>{formatStudentName(candidate)}</span>
+                                <span className="team-creation-search-result__person">
+                                    {candidate.avatar_url ? (
+                                        <img className="team-creation-search-result__avatar" src={candidate.avatar_url} alt="" />
+                                    ) : (
+                                        <span className="team-creation-search-result__avatar team-creation-search-result__avatar--fallback">
+                                            {formatStudentName(candidate)[0]}
+                                        </span>
+                                    )}
+                                    <span>{formatStudentName(candidate)}</span>
+                                </span>
                                 {memberIds.includes(candidate.id) ? (
                                     <button
                                         className="team-creation-remove team-creation-clickable"

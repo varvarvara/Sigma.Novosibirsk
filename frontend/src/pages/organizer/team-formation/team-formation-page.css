@@ -1,4 +1,3 @@
-.team-formation-status,
 .team-formation-notice {
   margin: 0 0 12px;
   color: #6b6578;
@@ -16,7 +15,7 @@
 .team-formation-page {
     margin: 0;
     color: #0F172A;
-    font-family: 'Inter SemiBold';
+    font-family: 'Inter', 'Inter Regular', sans-serif;
 }
 
 .team-clickable {
@@ -373,9 +372,21 @@
 }
 
 .team-table__body {
-    height: 250px;
+    min-height: 120px;
+    max-height: 250px;
     overflow-y: auto;
     background: #FFFFFF;
+}
+
+.team-table__empty {
+    margin: 0;
+    padding: 24px 20px;
+    color: #64748B;
+    font-family: 'Inter Regular', 'Inter', sans-serif;
+    font-size: 14px;
+    line-height: 20px;
+    font-weight: 400;
+    text-align: left;
 }
 
 .team-member-row {
@@ -411,8 +422,18 @@
     border-radius: 50%;
     display: grid;
     place-items: center;
+    flex: 0 0 32px;
     color: #FFFFFF;
     font-family: 'Inter SemiBold';
+    font-size: 14px;
+    line-height: 18px;
+    overflow: hidden;
+    object-fit: cover;
+}
+
+.team-member-row__avatar--image {
+    display: block;
+    background: #F1F5F9;
 }
 
 .team-member-row__score {

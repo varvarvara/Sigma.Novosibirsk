@@ -8,9 +8,9 @@ import {
 import "./extracurricular-page.css";
 
 const RATING_ICONS: Record<number, string> = {
-    1: "/rating-1.svg",
-    2: "/rating-2.svg",
-    3: "/rating-3.svg",
+    1: "/raster-icons/rating-1.png",
+    2: "/raster-icons/rating-2.png",
+    3: "/raster-icons/rating-3.png",
 };
 
 function formatCoins(value: number) {
@@ -87,14 +87,14 @@ export function ExtracurricularPage() {
 
                                     <div className="team-stats">
                                         <div>
-                                            <img src="/sigmacoins.svg" alt="" />
+                                            <img src="/raster-icons/sigmacoins.png" alt="" />
                                             <p>
                                                 <span>{myTeam.total_coins}</span> сигмакоинов
                                             </p>
                                         </div>
                                         {myTeam.rating_place != null ? (
                                             <div>
-                                                <img src="/rating-place.svg" alt="" />
+                                                <img src="/raster-icons/rating-place.png" alt="" />
                                                 <p>
                                                     <span>{myTeam.rating_place}</span> место в рейтинге
                                                 </p>
@@ -130,7 +130,10 @@ export function ExtracurricularPage() {
 
                         {showCharges ? (
                             <section className="charges-panel" id="charges">
-                                <h2>Начисления</h2>
+                                <div className="charges-panel__header">
+                                    <h2>Начисления</h2>
+                                    {myTeam ? <span>Итого: {myTeam.total_coins} сигмакоинов</span> : null}
+                                </div>
 
                                 {charges.length === 0 ? (
                                     <p className="extracurricular-status">Начислений по вашей команде пока нет</p>
@@ -140,11 +143,16 @@ export function ExtracurricularPage() {
                                             <article className="charge-row" key={charge.id}>
                                                 <div className="charge-info">
                                                     <h3>{charge.activity_name}</h3>
-                                                    <p>{charge.role_label}</p>
+                                                    <p>
+                                                        Команда «{myTeam?.team_name}» · начислено всем участникам
+                                                    </p>
+                                                    <p className="charge-info__student-delta">
+                                                        В личный счёт студента: {formatCoins(charge.coins)}
+                                                    </p>
                                                 </div>
                                                 <div className="charge-coins">
                                                     <span>{formatCoins(charge.coins)}</span>
-                                                    <img src="/sigmacoins.svg" alt="" />
+                                                    <img src="/raster-icons/sigmacoins.png" alt="" />
                                                 </div>
                                             </article>
                                         ))}

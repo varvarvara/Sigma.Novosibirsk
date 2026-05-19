@@ -154,6 +154,18 @@ class UsersRepository:
         self.session.refresh(staff)
         return staff
 
+    def update_student(self, student_id: int, updates: dict) -> Student | None:
+        student = self.get_student_by_id(student_id)
+        if student is None:
+            return None
+
+        for field, value in updates.items():
+            setattr(student, field, value)
+
+        self.session.commit()
+        self.session.refresh(student)
+        return student
+
     def list_admins(self) -> list[Staff]:
         return (
             self.session.query(Staff)

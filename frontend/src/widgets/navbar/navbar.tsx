@@ -17,6 +17,7 @@ export function Navbar() {
     const profileIsActive =
         pathname === "/" ||
         pathname === "/profile" ||
+        pathname === "/profile-settings" ||
         pathname === "/extracurricular" ||
         pathname === "/curricular" ||
         pathname === "/curricular-achievements" ||

@@ -4,12 +4,19 @@ from sqlalchemy.orm import Session
 from app.modules.attendance.models import Achievement
 from app.modules.attendance.repository import AttendanceRepository, AchievementRepository
 from app.modules.gamification.repository import GamificationRepository
+from app.modules.media.service import get_media_service
 from app.modules.attendance.schemas import (
+    AchievementAssign,
+    AchievementCreate,
+    AchievementOut,
     AttendanceBulkMarkIn,
     AttendanceBulkMarkOut,
     AttendanceMarkIn,
     AttendanceMarkOut,
     CourseAttendanceSummaryOut,
+    CourseAchievementMatrixOut,
+    CourseAchievementStateOut,
+    CourseAchievementStudentOut,
     CourseStudentAttendanceDetailOut,
     CourseStudentAttendanceSummaryOut,
     LessonAttendanceItemOut,
@@ -20,6 +27,7 @@ from app.modules.attendance.schemas import (
     StudentAttendanceFilterOptionsOut,
     StudentCourseAttendanceOut,
     StudentSearchItemOut,
+    StudentAchievementOut,
 )
 
 
@@ -28,6 +36,7 @@ class AttendanceService:
         self.repository = AttendanceRepository(db=db)
         self.achievement_repository = AchievementRepository(db=db)
         self.gam_repo = GamificationRepository(db)
+        self.media = get_media_service()
 
     @staticmethod
     def _is_admin(current_user: dict) -> bool:
@@ -73,21 +82,29 @@ class AttendanceService:
 
         return schedule, course
 
-    def _recalculate_attendance_points(self, student_id: int) -> int:
+    def _recalculate_attendance_points(self, student_id: int, season_id: int) -> int:
         attended_lessons = self.repository.count_student_attended_total(student_id=student_id)
+        attendance_score = attended_lessons * 3
         gamification = self.repository.upsert_gamification_attendance_score(
             student_id=student_id,
-            attendance_score=attended_lessons,
+            attendance_score=attendance_score,
+            season_id=season_id,
         )
         return int(gamification.attendance_score or 0)
 
     def mark_attendance(self, data: AttendanceMarkIn, current_user: dict) -> AttendanceMarkOut:
         self._require_teacher_or_admin(current_user=current_user)
-        _schedule, course = self._ensure_schedule_access(schedule_id=data.schedule_id, current_user=current_user)
+        schedule, course = self._ensure_schedule_access(schedule_id=data.schedule_id, current_user=current_user)
 
         student = self.repository.get_student_by_id(student_id=data.student_id)
         if student is None:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Student not found")
+
+        if data.season_id != schedule.season_id:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Attendance season does not match schedule season",
+            )
 
         if not self.repository.is_student_enrolled_in_course(student_id=data.student_id, course_id=course.id):
             raise HTTPException(
@@ -99,20 +116,19 @@ class AttendanceService:
             student_id=data.student_id,
             schedule_id=data.schedule_id,
             attendance_status=data.attendance_status,
-    )
-
-        self.gam_repo.get_or_create(data.student_id)
-        self.gam_repo.recalculate(data.student_id)
-
-        gamification = self.gam_repo.get_by_student_id(data.student_id)
-
+            season_id=schedule.season_id,
+        )
+        points = self._recalculate_attendance_points(
+            student_id=data.student_id,
+            season_id=schedule.season_id,
+        )
 
         return AttendanceMarkOut(
             attendance_id=attendance.id,
             student_id=attendance.student_id,
             schedule_id=attendance.schedule_id,
             attendance_status=attendance.attendance_status,
-            attendance_points=gamification.attendance_score if gamification else 0,
+            attendance_points=points,
             created=created,
         )
 
@@ -123,7 +139,7 @@ class AttendanceService:
         current_user: dict,
     ) -> AttendanceBulkMarkOut:
         self._require_teacher_or_admin(current_user=current_user)
-        _schedule, course = self._ensure_schedule_access(schedule_id=schedule_id, current_user=current_user)
+        schedule, course = self._ensure_schedule_access(schedule_id=schedule_id, current_user=current_user)
 
         if not data.items:
             raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Items list is empty")
@@ -146,8 +162,12 @@ class AttendanceService:
                 student_id=item.student_id,
                 schedule_id=schedule_id,
                 attendance_status=item.attendance_status,
+                season_id=schedule.season_id,
             )
-            points = self._recalculate_attendance_points(student_id=item.student_id)
+            points = self._recalculate_attendance_points(
+                student_id=item.student_id,
+                season_id=schedule.season_id,
+            )
 
             results.append(
                 AttendanceMarkOut(
@@ -212,7 +232,10 @@ class AttendanceService:
         total_lessons = len(lesson_rows)
         attended_lessons = sum(1 for item in lesson_rows if item["attendance_status"] is True)
         attendance_percent = round((attended_lessons / total_lessons) * 100, 2) if total_lessons else 0.0
-        points = self._recalculate_attendance_points(student_id=student_id)
+        points = self._recalculate_attendance_points(
+            student_id=student_id,
+            season_id=student.season_id,
+        )
 
         return CourseStudentAttendanceDetailOut(
             student_id=student.id,
@@ -298,7 +321,10 @@ class AttendanceService:
                 )
             )
 
-        attendance_points = self._recalculate_attendance_points(student_id=student_id)
+        attendance_points = self._recalculate_attendance_points(
+            student_id=student_id,
+            season_id=student.season_id,
+        )
 
         return StudentAttendanceDashboardOut(
             student_id=student_id,
@@ -346,49 +372,164 @@ class AttendanceService:
                 achievement_name=row.achievement_name,
                 achievement_description=row.achievement_description,
                 achievement_score=row.achievement_score,
+                icon_image_key=row.icon_image_key,
+                icon_url=self.media.resolve_url(row.icon_image_key),
             )
             for row in rows
         ]
         
 class AchievementService:
     def __init__(self, db: Session):
+        self.attendance_repository = AttendanceRepository(db=db)
         self.repository = AchievementRepository(db=db)
         self.gam_repo = GamificationRepository(db)
+        self.media = get_media_service()
 
-    def assign_achievement(self, data, current_user):
-        if current_user["user_type"] not in ["staff", "teacher"]:
+    @staticmethod
+    def _is_admin(current_user: dict) -> bool:
+        return current_user["user_type"] == "staff" and current_user.get("staff_role") == "Admin"
+
+    @staticmethod
+    def _is_teacher(current_user: dict) -> bool:
+        return current_user["user_type"] == "staff" and current_user.get("staff_role") == "Teacher"
+
+    def _ensure_course_access(self, course_id: int, current_user: dict):
+        course_info = self.attendance_repository.get_course_with_staff(course_id=course_id)
+        if course_info is None:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Course not found")
+
+        course, _staff = course_info
+        if self._is_teacher(current_user) and course.staff_id != current_user["user"].id:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
+        if not self._is_teacher(current_user) and not self._is_admin(current_user):
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Teacher/Admin access required")
+
+        return course
+
+    def list_course_achievements(self, course_id: int, current_user: dict) -> list[AchievementOut]:
+        self._ensure_course_access(course_id=course_id, current_user=current_user)
+        return [
+            AchievementOut(
+                id=achievement.id,
+                achievement_name=achievement.achievement_name,
+                achievement_description=achievement.achievement_description,
+                course_id=achievement.course_id,
+                achievement_score=achievement.achievement_score,
+                season_id=achievement.season_id,
+                icon_image_key=achievement.icon_image_key,
+                icon_url=self.media.resolve_url(achievement.icon_image_key),
+            )
+            for achievement in self.repository.list_course_achievements(course_id=course_id)
+        ]
+
+    def get_course_achievement_matrix(self, course_id: int, current_user: dict) -> CourseAchievementMatrixOut:
+        course = self._ensure_course_access(course_id=course_id, current_user=current_user)
+        course_info = self.attendance_repository.get_course_with_staff(course_id=course_id)
+        if course_info is None:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Course not found")
+
+        _course, staff = course_info
+        students = self.attendance_repository.list_course_students(course_id=course_id)
+        achievements = self.repository.list_course_achievements(course_id=course_id)
+        student_ids = [student.id for student in students]
+        assignments = self.repository.list_course_student_achievement_assignments(
+            course_id=course_id,
+            student_ids=student_ids,
+        )
+        assignment_by_student_and_achievement = {
+            (assignment.student_id, assignment.achievement_id): assignment
+            for assignment in assignments
+        }
+
+        achievements_out = [
+            AchievementOut(
+                id=achievement.id,
+                achievement_name=achievement.achievement_name,
+                achievement_description=achievement.achievement_description,
+                course_id=achievement.course_id,
+                achievement_score=achievement.achievement_score,
+                season_id=achievement.season_id,
+                icon_image_key=achievement.icon_image_key,
+                icon_url=self.media.resolve_url(achievement.icon_image_key),
+            )
+            for achievement in achievements
+        ]
+        students_out = [
+            CourseAchievementStudentOut(
+                student_id=student.id,
+                first_name=student.first_name,
+                last_name=student.last_name,
+                email=student.email,
+                achievements=[
+                    CourseAchievementStateOut(
+                        achievement_id=achievement.id,
+                        assigned=(student.id, achievement.id) in assignment_by_student_and_achievement,
+                        student_achievement_id=(
+                            assignment_by_student_and_achievement[(student.id, achievement.id)].id
+                            if (student.id, achievement.id) in assignment_by_student_and_achievement
+                            else None
+                        ),
+                    )
+                    for achievement in achievements
+                ],
+            )
+            for student in students
+        ]
+
+        teacher_name = f"{staff.first_name} {staff.last_name}".strip()
+        return CourseAchievementMatrixOut(
+            course_id=course.id,
+            course_title=course.title,
+            staff_id=staff.id,
+            teacher_name=teacher_name,
+            achievements=achievements_out,
+            students=students_out,
+        )
+
+    def assign_achievement(self, data: AchievementAssign, current_user: dict) -> StudentAchievementOut:
+        if not self._is_teacher(current_user) and not self._is_admin(current_user):
             raise HTTPException(status_code=403, detail="Only staff or teachers are allowed")
 
-        achievement = self.repository.db.query(Achievement).filter(
-            Achievement.id == data.achievement_id
-        ).first()
+        achievement = self.repository.get_achievement_by_id(achievement_id=data.achievement_id)
 
         if not achievement:
             raise HTTPException(status_code=404, detail="Achievement not found")
 
+        self._ensure_course_access(course_id=achievement.course_id, current_user=current_user)
+        if not self.attendance_repository.is_student_enrolled_in_course(
+            student_id=data.student_id,
+            course_id=achievement.course_id,
+        ):
+            raise HTTPException(status_code=409, detail="Student is not enrolled in this course")
+
         obj = self.repository.assign_to_student(
             student_id=data.student_id,
             achievement_id=data.achievement_id,
+            season_id=achievement.season_id,
         )
+        self.gam_repo.recalculate_student(data.student_id, achievement.season_id)
 
         return obj
     
-    def create_achievement(self, data, current_user):
-        if current_user["user_type"] != "staff":
-            raise HTTPException(status_code=403, detail="Only staff allowed")
-
-        achievement = Achievement(
+    def create_achievement(self, data: AchievementCreate, current_user: dict) -> AchievementOut:
+        self._ensure_course_access(course_id=data.course_id, current_user=current_user)
+        achievement = self.repository.create_achievement(
             achievement_name=data.achievement_name,
             achievement_description=data.achievement_description,
             course_id=data.course_id,
             achievement_score=data.achievement_score,
+            season_id=data.season_id,
         )
-
-        self.repository.db.add(achievement)
-        self.repository.db.commit()
-        self.repository.db.refresh(achievement)
-
-        return achievement
+        return AchievementOut(
+            id=achievement.id,
+            achievement_name=achievement.achievement_name,
+            achievement_description=achievement.achievement_description,
+            course_id=achievement.course_id,
+            achievement_score=achievement.achievement_score,
+            season_id=achievement.season_id,
+            icon_image_key=achievement.icon_image_key,
+            icon_url=self.media.resolve_url(achievement.icon_image_key),
+        )
     
     
     def get_student_course_achievements(self, student_id: int, course_id: int):

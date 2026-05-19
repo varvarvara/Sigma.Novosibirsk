@@ -11,7 +11,7 @@ class CourseFeedbackOut(BaseModel):
     id: int
     course_id: int
     student_id: int
-    rating: int
+    rating: float
     comment: str
     created_at: datetime
     updated_at: datetime | None = None

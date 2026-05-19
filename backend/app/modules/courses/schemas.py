@@ -57,6 +57,8 @@ class CourseOutput(BaseModel):
     staff_id: int
     teacher_name: str | None = None
     capacity: int | None = None
+    average_rating: float | None = None
+    feedback_count: int = 0
 
     model_config = {"from_attributes": True}
 

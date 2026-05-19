@@ -4,6 +4,7 @@ import { PageTransition } from "./page-transition";
 
 const STUDENT_NAVBAR_PATHS = new Set([
     "/profile",
+    "/profile-settings",
     "/extracurricular",
     "/curricular",
     "/curricular-achievements",

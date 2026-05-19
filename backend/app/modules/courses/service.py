@@ -59,6 +59,8 @@ class CourseService:
         if staff is not None:
             teacher_name = f"{staff.first_name} {staff.last_name}".strip()
 
+        average_rating, feedback_count = self.repository.get_course_rating_stats(course.id)
+
         return CourseOutput(
             id=course.id,
             title=course.title,
@@ -71,6 +73,8 @@ class CourseService:
             staff_id=course.staff_id,
             teacher_name=teacher_name,
             capacity=course.capacity,
+            average_rating=average_rating,
+            feedback_count=feedback_count,
         )
 
     @staticmethod

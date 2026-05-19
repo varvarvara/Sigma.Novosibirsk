@@ -80,6 +80,20 @@ def add_team_member(
     return service.add(data)
 
 
+@gamificationRouter.get(
+    "/team/{team_id}/members",
+    response_model=list[ExtracurricularTeamMemberOut],
+    summary="List team members with full names",
+)
+def list_team_members(
+    team_id: int,
+    season_id: int = 1,
+    current_user=Depends(require_staff),
+    service: TeamMemberService = Depends(get_team_member_service),
+):
+    return service.list_for_team(team_id, season_id)
+
+
 @gamificationRouter.post("/score", response_model=ExtracurricularScoreRead)
 def mark_ex_team_attendance(data: ExtracurricularScoreCreate, current_user=Depends(require_staff), service: ScoreService = Depends(get_score_service)):
     return service.create(data)

@@ -184,6 +184,9 @@ export function ExtracurricularPointsAddPage() {
                             <span />
                         </div>
                         <div className="points-table__body">
+                            {!isLoading && !error && filteredTeams.length === 0 ? (
+                                <p className="points-table__empty">Команд пока нет. Создайте команду в разделе «Команды».</p>
+                            ) : null}
                             {filteredTeams.map((team) => (
                                 <div className="points-row" role="row" key={team.id}>
                                     <span className="points-row__person">

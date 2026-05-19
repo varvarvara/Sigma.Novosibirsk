@@ -3,26 +3,25 @@ from sqlalchemy.orm import Session
 
 from app.db.session import get_db
 from app.modules.attendance.schemas import (
+    AchievementAssign,
+    AchievementCreate,
+    AchievementOut,
     AttendanceBulkMarkIn,
     AttendanceBulkMarkOut,
     AttendanceMarkIn,
     AttendanceMarkOut,
+    CourseAchievementMatrixOut,
     CourseAttendanceSummaryOut,
     CourseStudentAttendanceDetailOut,
     StudentAttendanceChargeOut,
     StudentAttendanceDashboardOut,
     StudentAttendanceFilterOptionsOut,
     StudentSearchItemOut,
-    StudentCourseAchievementOut,
     StudentAchievementDetailedOut,
-    AchievementOut,
-    AchievementAssign,
     StudentAchievementOut 
 )
 from app.modules.attendance.service import AttendanceService
 from app.security.permissions import require_student, require_teacher_or_admin
-from app.security.permissions import require_teacher_or_admin
-from app.modules.attendance.schemas import AchievementCreate
 from app.modules.attendance.service import AchievementService
 
 attendanceRouter = APIRouter(prefix="/attendance", tags=["attendance"])
@@ -119,3 +118,44 @@ def get_my_achievements(
 ):
     return AttendanceService(db=db).get_my_achievements(current_user=current_user)
 
+
+@attendanceRouter.get("/courses/{course_id}/achievements", response_model=list[AchievementOut])
+def get_course_achievements(
+    course_id: int,
+    current_user: dict = Depends(require_teacher_or_admin),
+    db: Session = Depends(get_db),
+):
+    return AchievementService(db=db).list_course_achievements(
+        course_id=course_id,
+        current_user=current_user,
+    )
+
+
+@attendanceRouter.get("/courses/{course_id}/achievement-matrix", response_model=CourseAchievementMatrixOut)
+def get_course_achievement_matrix(
+    course_id: int,
+    current_user: dict = Depends(require_teacher_or_admin),
+    db: Session = Depends(get_db),
+):
+    return AchievementService(db=db).get_course_achievement_matrix(
+        course_id=course_id,
+        current_user=current_user,
+    )
+
+
+@attendanceRouter.post("/achievements", response_model=AchievementOut, status_code=201)
+def create_achievement(
+    body: AchievementCreate,
+    current_user: dict = Depends(require_teacher_or_admin),
+    db: Session = Depends(get_db),
+):
+    return AchievementService(db=db).create_achievement(data=body, current_user=current_user)
+
+
+@attendanceRouter.post("/achievements/assign", response_model=StudentAchievementOut, status_code=201)
+def assign_achievement(
+    body: AchievementAssign,
+    current_user: dict = Depends(require_teacher_or_admin),
+    db: Session = Depends(get_db),
+):
+    return AchievementService(db=db).assign_achievement(data=body, current_user=current_user)

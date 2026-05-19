@@ -113,48 +113,17 @@
 .achievement-image {
     width: 96px;
     height: 96px;
-    border-radius: 10px;
-    display: grid;
-    place-items: center;
+    border-radius: 18px;
+    display: block;
     overflow: hidden;
-    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+    background: transparent;
 }
 
 .achievement-image img {
-    width: 48px;
-    height: 48px;
-    object-fit: contain;
-    filter: drop-shadow(0 8px 14px rgba(42, 39, 48, 0.18));
-}
-
-.achievement-image-violet {
-    background: radial-gradient(circle at 28% 22%, #C7B6FF 0 18%, transparent 19%),
-        linear-gradient(135deg, #7949FF 0%, #A68BFF 100%);
-}
-
-.achievement-image-blue {
-    background: radial-gradient(circle at 76% 20%, #E8F0FF 0 15%, transparent 16%),
-        linear-gradient(135deg, #4C7DFF 0%, #9DB8FF 100%);
-}
-
-.achievement-image-green {
-    background: radial-gradient(circle at 25% 75%, #E9FFE8 0 18%, transparent 19%),
-        linear-gradient(135deg, #23A66A 0%, #86DDA9 100%);
-}
-
-.achievement-image-pink {
-    background: radial-gradient(circle at 70% 72%, #FFE5F3 0 18%, transparent 19%),
-        linear-gradient(135deg, #EF6AA7 0%, #FFB0C7 100%);
-}
-
-.achievement-image-orange {
-    background: radial-gradient(circle at 74% 24%, #FFF0D9 0 17%, transparent 18%),
-        linear-gradient(135deg, #F28E36 0%, #FFD076 100%);
-}
-
-.achievement-image-cyan {
-    background: radial-gradient(circle at 28% 24%, #E0FCFF 0 18%, transparent 19%),
-        linear-gradient(135deg, #1BA6B9 0%, #8EE4EE 100%);
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
 }
 
 .achievement-card h3 {

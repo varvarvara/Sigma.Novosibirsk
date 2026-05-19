@@ -1,240 +1,305 @@
-import { useMemo, useState } from 'react';
-import { useLocation, useNavigate } from '@tanstack/react-router';
+import { type CSSProperties, useEffect, useMemo, useState } from 'react';
+import { getMyTeacherCourses, type TeacherCourse } from '../../../api/teacher/courses';
+import {
+  assignAchievement,
+  getCourseAchievementMatrix,
+  type TeacherAchievementMatrix,
+} from '../../../api/teacher/attendance';
+import { TeacherAppShell } from '../../../shared/ui/teacher_sidebar/teacher-app-shell';
 import './achievements-page.css';
 
-type Student = {
-  id: number;
-  name: string;
-  email: string;
-  achievement: boolean[];
-};
-
-const navItems = [
-  {
-    id: 'attendance',
-    label: 'Посещаемость',
-    path: '/teacher/attendance',
-    icon: '/teacher/sidebar/check-square.svg',
-  },
-  {
-    id: 'achievements',
-    label: 'Ачивки',
-    path: '/teacher/achievements',
-    icon: '/teacher/sidebar/sub_nav_courses/puls.svg',
-  },
-];
-
-const initialStudents: Student[] = [
-  { id: 1, name: 'Иванов Иван', email: 'ivanov@sigma.ru', achievement: [true, true, false, true, false, true] },
-  { id: 2, name: 'Петрова Анна', email: 'petrova@sigma.ru', achievement: [false, true, false, true, true, false] },
-  { id: 3, name: 'Смирнов Даниил', email: 'smirnov@sigma.ru', achievement: [true, false, true, true, false, true] },
-  { id: 4, name: 'Соколова Мария', email: 'sokolova@sigma.ru', achievement: [true, true, true, false, true, true] },
-  { id: 5, name: 'Орлов Никита', email: 'orlov@sigma.ru', achievement: [false, false, true, false, true, false] },
-  { id: 6, name: 'Морозова Ева', email: 'morozova@sigma.ru', achievement: [true, true, false, true, true, true] },
-  { id: 7, name: 'Волков Дмитрий', email: 'volkov@sigma.ru', achievement: [true, false, false, true, false, true] },
-  { id: 8, name: 'Лебедева Анна', email: 'lebedeva@sigma.ru', achievement: [true, true, true, true, false, false] },
-  { id: 9, name: 'Кузнецов Артем', email: 'kuznetsov@sigma.ru', achievement: [false, true, true, false, true, true] },
-  { id: 10, name: 'Федорова Софья', email: 'fedorova@sigma.ru', achievement: [true, false, true, true, true, false] },
-  { id: 11, name: 'Алексеев Павел', email: 'alekseev@sigma.ru', achievement: [false, false, true, true, false, true] },
-  { id: 12, name: 'Николаева Елена', email: 'nikolaeva@sigma.ru', achievement: [true, true, false, false, true, true] },
-  { id: 13, name: 'Громов Михаил', email: 'gromov@sigma.ru', achievement: [true, false, true, false, true, false] },
-  { id: 14, name: 'Романова Алиса', email: 'romanova@sigma.ru', achievement: [false, true, false, true, true, true] },
-  { id: 15, name: 'Ким Даниил', email: 'kim@sigma.ru', achievement: [true, true, true, false, false, true] },
-  { id: 16, name: 'Попова Кира', email: 'popova@sigma.ru', achievement: [false, true, true, true, false, false] },
-  { id: 17, name: 'Зайцев Максим', email: 'zaytsev@sigma.ru', achievement: [true, false, false, true, true, false] },
-  { id: 18, name: 'Беляева Дарья', email: 'belyaeva@sigma.ru', achievement: [true, true, false, true, false, true] },
-  { id: 19, name: 'Семенов Илья', email: 'semenov@sigma.ru', achievement: [false, false, true, false, true, true] },
-  { id: 20, name: 'Васильева Полина', email: 'vasilyeva@sigma.ru', achievement: [true, true, true, true, true, false] },
-  { id: 21, name: 'Макаров Роман', email: 'makarov@sigma.ru', achievement: [true, false, true, true, false, true] },
-  { id: 22, name: 'Егорова Милана', email: 'egorova@sigma.ru', achievement: [false, true, false, true, true, false] },
-  { id: 23, name: 'Павлов Кирилл', email: 'pavlov@sigma.ru', achievement: [true, true, false, false, true, true] },
-  { id: 24, name: 'Тихонова Арина', email: 'tikhonova@sigma.ru', achievement: [false, true, true, true, false, true] },
-  { id: 25, name: 'Мельникова Варвара', email: 'melnikova@sigma.ru', achievement: [true, false, true, true, false, true] },
-];
-
-const achievementColumns = ['Ачивка 1', 'Ачивка 2', 'Ачивка 3', 'Ачивка 4'];
 const pageSize = 10;
 
+function formatStudentName(student: { first_name: string; last_name: string }) {
+  return `${student.last_name} ${student.first_name}`.trim();
+}
+
+function buildAchievementDraft(matrix: TeacherAchievementMatrix) {
+  return matrix.students.reduce<Record<number, Record<number, boolean>>>((acc, student) => {
+    acc[student.student_id] = student.achievements.reduce<Record<number, boolean>>((achievementAcc, achievement) => {
+      achievementAcc[achievement.achievement_id] = achievement.assigned;
+      return achievementAcc;
+    }, {});
+    return acc;
+  }, {});
+}
+
 export function TeacherAchievementsPage() {
-  const navigate = useNavigate();
-  const location = useLocation();
-  const [students, setStudents] = useState(initialStudents);
+  const [courses, setCourses] = useState<TeacherCourse[]>([]);
+  const [selectedCourseId, setSelectedCourseId] = useState<number | null>(null);
+  const [matrix, setMatrix] = useState<TeacherAchievementMatrix | null>(null);
+  const [achievementDraft, setAchievementDraft] = useState<Record<number, Record<number, boolean>>>({});
+  const [initialAchievementDraft, setInitialAchievementDraft] = useState<Record<number, Record<number, boolean>>>({});
   const [currentPage, setCurrentPage] = useState(1);
-  const [isAchievementSaved, setIsAchievementSaved] = useState(false);
-  const [editableStudentIds, setEditableStudentIds] = useState<number[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [statusMessage, setStatusMessage] = useState<string | null>(null);
 
-  const filteredStudents = useMemo(() => {
-    const startIndex = (currentPage - 1) * pageSize;
+  useEffect(() => {
+    let isMounted = true;
 
-    return students.slice(startIndex, startIndex + pageSize);
-  }, [currentPage, students]);
-  const pageCount = Math.ceil(students.length / pageSize);
-  const goToPreviousPage = () => setCurrentPage((page) => Math.max(1, page - 1));
-  const goToNextPage = () => setCurrentPage((page) => Math.min(pageCount, page + 1));
+    async function loadCourses() {
+      try {
+        setIsLoading(true);
+        setError(null);
+        const teacherCourses = await getMyTeacherCourses();
+        if (!isMounted) {
+          return;
+        }
 
-  const toggleAchievement = (id: number, columnIndex: number) => {
-    if (isAchievementSaved && !editableStudentIds.includes(id)) {
+        setCourses(teacherCourses);
+        setSelectedCourseId((currentCourseId) => currentCourseId ?? teacherCourses[0]?.id ?? null);
+      } catch (loadError) {
+        if (isMounted) {
+          setError(loadError instanceof Error ? loadError.message : 'Не удалось загрузить курсы преподавателя');
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    }
+
+    void loadCourses();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!selectedCourseId) {
+      setMatrix(null);
+      setAchievementDraft({});
+      setInitialAchievementDraft({});
       return;
     }
 
-    setStudents((items) =>
-      items.map((student) =>
-        student.id === id
-          ? {
-              ...student,
-              achievement: student.achievement.map((checked, index) => (index === columnIndex ? !checked : checked)),
-            }
-          : student,
-      ),
+    let isMounted = true;
+
+    async function loadAchievements() {
+      try {
+        setIsLoading(true);
+        setError(null);
+        setStatusMessage(null);
+        setCurrentPage(1);
+
+        const courseMatrix = await getCourseAchievementMatrix(selectedCourseId as number);
+        const draft = buildAchievementDraft(courseMatrix);
+
+        if (!isMounted) {
+          return;
+        }
+
+        setMatrix(courseMatrix);
+        setAchievementDraft(draft);
+        setInitialAchievementDraft(draft);
+      } catch (loadError) {
+        if (isMounted) {
+          setError(loadError instanceof Error ? loadError.message : 'Не удалось загрузить ачивки');
+          setMatrix(null);
+          setAchievementDraft({});
+          setInitialAchievementDraft({});
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    }
+
+    void loadAchievements();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [selectedCourseId]);
+
+  const students = matrix?.students ?? [];
+  const achievements = matrix?.achievements ?? [];
+  const pageCount = Math.max(1, Math.ceil(students.length / pageSize));
+  const filteredStudents = useMemo(() => {
+    const startIndex = (currentPage - 1) * pageSize;
+    return students.slice(startIndex, startIndex + pageSize);
+  }, [currentPage, students]);
+
+  const tableStyle = {
+    '--achievement-count': achievements.length,
+  } as CSSProperties;
+
+  const goToPreviousPage = () => setCurrentPage((page) => Math.max(1, page - 1));
+  const goToNextPage = () => setCurrentPage((page) => Math.min(pageCount, page + 1));
+
+  const toggleAchievement = (studentId: number, achievementId: number) => {
+    if (initialAchievementDraft[studentId]?.[achievementId]) {
+      return;
+    }
+
+    setStatusMessage(null);
+    setAchievementDraft((draft) => ({
+      ...draft,
+      [studentId]: {
+        ...(draft[studentId] ?? {}),
+        [achievementId]: !(draft[studentId]?.[achievementId] ?? false),
+      },
+    }));
+  };
+
+  const saveAchievement = async () => {
+    if (!matrix || !achievements.length || !students.length) {
+      return;
+    }
+
+    const assignmentsToCreate = students.flatMap((student) =>
+      achievements
+        .filter((achievement) => {
+          const wasAssigned = initialAchievementDraft[student.student_id]?.[achievement.id] ?? false;
+          const shouldBeAssigned = achievementDraft[student.student_id]?.[achievement.id] ?? false;
+          return shouldBeAssigned && !wasAssigned;
+        })
+        .map((achievement) => ({ studentId: student.student_id, achievementId: achievement.id })),
     );
-  };
 
-  const clearAchievement = (id: number) => {
-    setStudents((items) =>
-      items.map((student) =>
-        student.id === id
-          ? { ...student, achievement: student.achievement.map(() => false) }
-          : student,
-      ),
-    );
-  };
+    if (assignmentsToCreate.length === 0) {
+      setStatusMessage('Новых ачивок для сохранения нет. Уже выданные ачивки отмечены в таблице.');
+      return;
+    }
 
-  const editAchievement = (id: number) => {
-    setEditableStudentIds((ids) => (ids.includes(id) ? ids : [...ids, id]));
-  };
+    try {
+      setIsSaving(true);
+      setError(null);
+      setStatusMessage(null);
 
-  const saveAchievement = () => {
-    setIsAchievementSaved(true);
-    setEditableStudentIds([]);
+      await Promise.all(
+        assignmentsToCreate.map((assignment) => assignAchievement(assignment.studentId, assignment.achievementId)),
+      );
+
+      if (selectedCourseId) {
+        const updatedMatrix = await getCourseAchievementMatrix(selectedCourseId);
+        const updatedDraft = buildAchievementDraft(updatedMatrix);
+        setMatrix(updatedMatrix);
+        setAchievementDraft(updatedDraft);
+        setInitialAchievementDraft(updatedDraft);
+      }
+
+      setStatusMessage('Ачивки сохранены. За каждую ачивку студент получает 1 балл.');
+    } catch (saveError) {
+      setError(saveError instanceof Error ? saveError.message : 'Не удалось сохранить ачивки');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
-    <main className="achievement-page" aria-label="Ачивки">
-      <aside className="achievement-sidebar" aria-label="Основная навигация">
-        <img className="achievement-sidebar__reference" src="/sidebar-teacher.svg" alt="" aria-hidden="true" />
-        <button className="achievement-sidebar__hotspot achievement-sidebar__hotspot--logo achievement-clickable" type="button" aria-label="Главная" />
-        <button className="achievement-sidebar__hotspot achievement-sidebar__hotspot--profile achievement-clickable" type="button" aria-label="Профиль" onClick={() => navigate({ to: '/teacher/profile' })} />
-        <button className="achievement-sidebar__hotspot achievement-sidebar__hotspot--courses achievement-clickable" type="button" aria-label="Курсы" onClick={() => navigate({ to: '/teacher/courses' })} />
-        <button className="achievement-sidebar__hotspot achievement-sidebar__hotspot--achievement achievement-sidebar__hotspot--active achievement-clickable" type="button" aria-label="Посещаемость" />
-        <button className="achievement-sidebar__hotspot achievement-sidebar__hotspot--calendar achievement-clickable" type="button" aria-label="Расписание" />
-        <button className="achievement-sidebar__hotspot achievement-sidebar__hotspot--settings achievement-clickable" type="button" aria-label="Настройки" onClick={() => navigate({ to: '/teacher/settings' })} />
-        <button className="achievement-sidebar__hotspot achievement-sidebar__hotspot--avatar achievement-clickable" type="button" aria-label="Профиль" onClick={() => navigate({ to: '/teacher/profile' })} />
-      </aside>
-
-      <aside className="courses-subnav achievement-subnav" aria-label="Навигация раздела">
-        <img className="achievement-subnav__reference" src="/subnav-teacher.svg" alt="" aria-hidden="true" />
-        {navItems.map((item, index) => (
-          <button
-            key={item.id}
-            className={`achievement-subnav__hotspot achievement-subnav__hotspot--${item.id} achievement-clickable${location.pathname === item.path && item.id === 'achievements' ? ' achievement-subnav__hotspot--active' : ''}`}
-            type="button"
-            onClick={() => navigate({ to: item.path })}
-            aria-label={item.label}
-            style={{ top: 36 + index * 56 }}
-          />
-        ))}
-        <div className="achievement-subnav-user">
-          <span>Имя фамилия</span>
-          <span>teacher@sigma.ru</span>
-        </div>
-        <button className="achievement-subnav__hotspot achievement-subnav__hotspot--logout achievement-clickable" type="button" aria-label="Выход" />
-      </aside>
-
-      <section className="achievement-workspace">
-        <header className="achievement-header">
-          <div>
-            <h1>Ачивки</h1>
-            <div className="achievement-course-title-row">
-              <p>Название курса</p>
-              <span>{students.length} учеников</span>
+    <TeacherAppShell>
+      <main className="achievement-page" aria-label="Ачивки">
+        <section className="achievement-workspace">
+          <header className="achievement-header">
+            <div>
+              <h1>Ачивки</h1>
+              <div className="achievement-course-title-row">
+                <p>{matrix?.course_title ?? 'Выберите курс'}</p>
+                <span>{students.length} учеников</span>
+              </div>
             </div>
-          </div>
-        </header>
+            <label className="achievement-course-select">
+              <span>Курс</span>
+              <select
+                value={selectedCourseId ?? ''}
+                onChange={(event) => setSelectedCourseId(Number(event.target.value) || null)}
+                disabled={isLoading || courses.length === 0}
+              >
+                {courses.map((course) => (
+                  <option value={course.id} key={course.id}>
+                    {course.title}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </header>
 
-        <section className="achievement-panel" aria-label="Таблица ачивок">
-          <div className="achievement-table" role="table">
-            <div className="achievement-table-header" role="row">
-              <span>Ученик</span>
-              <span>Почта</span>
-              {achievementColumns.map((column, index) => (
-                <span key={`${column}-${index}`}>{column}</span>
-              ))}
-              <span>Ачивка</span>
-              <span aria-hidden="true" />
-            </div>
-            <div className="achievement-table-body">
-              {filteredStudents.map((student) => (
-                <div className="achievement-row" role="row" key={student.id}>
-                  <div className="achievement-student">
-                    <img src="/teacher/sidebar/avatar.png" alt="" />
-                    <div>
-                      <strong>{student.name}</strong>
+          {error && <div className="achievement-alert achievement-alert--error">{error}</div>}
+          {statusMessage && <div className="achievement-alert achievement-alert--success">{statusMessage}</div>}
+
+          <section className="achievement-panel" aria-label="Таблица ачивок">
+              <div className="achievement-table" role="table" style={tableStyle}>
+              <div className="achievement-table-header" role="row">
+                <span>Ученик</span>
+                {achievements.map((achievement) => (
+                  <span className="achievement-name-head" key={achievement.id} title={achievement.achievement_name}>
+                    {achievement.achievement_name}
+                  </span>
+                ))}
+              </div>
+              <div className="achievement-table-body">
+                {isLoading && <div className="achievement-empty">Загружаю данные из базы...</div>}
+                {!isLoading && students.length === 0 && <div className="achievement-empty">На этом курсе пока нет назначенных учеников.</div>}
+                {!isLoading && students.length > 0 && achievements.length === 0 && (
+                  <div className="achievement-empty">У курса пока нет ачивок.</div>
+                )}
+                {!isLoading &&
+                  filteredStudents.map((student) => (
+                    <div className="achievement-row" role="row" key={student.student_id}>
+                      <div className="achievement-student">
+                        <img src="/teacher/sidebar/avatar.png" alt="" />
+                        <div>
+                          <strong>{formatStudentName(student)}</strong>
+                        </div>
+                      </div>
+                      {achievements.map((achievement) => {
+                        const assigned = initialAchievementDraft[student.student_id]?.[achievement.id] ?? false;
+                        return (
+                          <label className="achievement-check" key={`${student.student_id}-${achievement.id}`}>
+                            <input
+                              type="checkbox"
+                              checked={achievementDraft[student.student_id]?.[achievement.id] ?? false}
+                              disabled={assigned}
+                              onChange={() => toggleAchievement(student.student_id, achievement.id)}
+                            />
+                            <span title={assigned ? 'Ачивка уже выдана' : achievement.achievement_name} />
+                          </label>
+                        );
+                      })}
                     </div>
-                  </div>
-                  <span className="achievement-email">{student.email}</span>
-                  {student.achievement.slice(0, 4).map((checked, index) => (
-                    <label className="achievement-check" key={`${student.id}-${index}`}>
-                      <input
-                        type="checkbox"
-                        checked={checked}
-                        disabled={isAchievementSaved && !editableStudentIds.includes(student.id)}
-                        onChange={() => toggleAchievement(student.id, index)}
-                      />
-                      <span />
-                    </label>
                   ))}
-                  <div className="achievement-labels">
-                    {Array.from({ length: Math.min(student.achievement.slice(0, 4).filter(Boolean).length, 3) }, (_, index) => (
-                      <span key={`${student.id}-label-${index}`}>Label</span>
-                    ))}
-                    {Array.from({ length: 3 - Math.min(student.achievement.slice(0, 4).filter(Boolean).length, 3) }, (_, index) => (
-                      <i key={`${student.id}-placeholder-${index}`} aria-hidden="true" />
-                    ))}
-                    {student.achievement.slice(0, 4).filter(Boolean).length > 0 && (
-                      <span>+{student.achievement.slice(0, 4).filter(Boolean).length}</span>
-                    )}
-                  </div>
-                  <div className="achievement-actions">
-                    <button className="achievement-icon-button achievement-clickable" type="button" aria-label="Удалить" onClick={() => clearAchievement(student.id)}>
-                      <img src="/Bin.svg" alt="" />
-                    </button>
-                    <button className="achievement-icon-button achievement-clickable" type="button" aria-label="Редактировать" onClick={() => editAchievement(student.id)}>
-                      <img src="/Pen.svg" alt="" />
-                    </button>
-                  </div>
-                </div>
-              ))}
+              </div>
             </div>
+          </section>
+
+          <div className="achievement-pagination-row">
+            <button className="achievement-pagination-control achievement-clickable" type="button" onClick={goToPreviousPage} disabled={currentPage === 1}>
+              Назад
+            </button>
+            <nav className="achievement-pagination" aria-label="Страницы">
+              {Array.from({ length: pageCount }, (_, index) => index + 1).map((page) => (
+                <button
+                  className={`achievement-page-button achievement-clickable${currentPage === page ? ' achievement-page-button--active' : ''}`}
+                  type="button"
+                  key={page}
+                  onClick={() => setCurrentPage(page)}
+                >
+                  {page}
+                </button>
+              ))}
+            </nav>
+            <button className="achievement-pagination-control achievement-clickable" type="button" onClick={goToNextPage} disabled={currentPage === pageCount}>
+              Вперед
+            </button>
+          </div>
+
+          <div className="achievement-button-row">
+            <button
+              className="achievement-primary-button achievement-clickable"
+              type="button"
+              onClick={saveAchievement}
+              disabled={isSaving || isLoading || students.length === 0 || achievements.length === 0}
+            >
+              {isSaving ? 'Сохраняю...' : 'Сохранить ачивки'}
+            </button>
           </div>
         </section>
-
-        <div className="achievement-pagination-row">
-          <button className="achievement-pagination-control achievement-clickable" type="button" onClick={goToPreviousPage}>
-            Назад
-          </button>
-          <nav className="achievement-pagination" aria-label="Страницы">
-            {Array.from({ length: pageCount }, (_, index) => index + 1).map((page) => (
-              <button
-                className={`achievement-page-button achievement-clickable${currentPage === page ? ' achievement-page-button--active' : ''}`}
-                type="button"
-                key={page}
-                onClick={() => setCurrentPage(page)}
-              >
-                {page}
-              </button>
-            ))}
-          </nav>
-          <button className="achievement-pagination-control achievement-clickable" type="button" onClick={goToNextPage}>
-            Вперед
-          </button>
-        </div>
-
-        <div className="achievement-button-row">
-        <button className="achievement-primary-button achievement-clickable" type="button" onClick={saveAchievement}>
-          Сохранить изменения
-        </button>
-        </div>
-      </section>
-    </main>
+      </main>
+    </TeacherAppShell>
   );
 }

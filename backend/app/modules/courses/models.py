@@ -9,7 +9,7 @@ class Course(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String(100), nullable=False)
-    descriptions = Column(String(200))
+    descriptions = Column(Text)
     staff_id = Column(Integer, ForeignKey("staff.id"), nullable=False)
     course_status = Column(Enum("Draft", "Archived", "Published", name="course_statuses"), nullable=False)
     course_duration = Column(Enum("ThreeDays", "SixDays", name="course_types"), nullable=False, default="ThreeDays")

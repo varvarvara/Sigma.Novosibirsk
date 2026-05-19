@@ -184,7 +184,12 @@ class CertificatesAppService:
             bucket_name=self.storage.bucket_name,
         )
         if object_key:
-            presigned = self.storage.generate_presigned_url(object_name=object_key, expiration=3600)
+            filename = object_key.rsplit("/", 1)[-1] or f"certificate-{certificate_id}"
+            presigned = self.storage.generate_presigned_url(
+                object_name=object_key,
+                expiration=3600,
+                download_filename=filename,
+            )
             if presigned:
                 return presigned
         return certificate.certificate_url
@@ -208,7 +213,12 @@ class CertificatesAppService:
             bucket_name=self.storage.bucket_name,
         )
         if object_key:
-            presigned = self.storage.generate_presigned_url(object_name=object_key, expiration=3600)
+            filename = object_key.rsplit("/", 1)[-1] or f"certificate-{certificate_id}"
+            presigned = self.storage.generate_presigned_url(
+                object_name=object_key,
+                expiration=3600,
+                download_filename=filename,
+            )
             if presigned:
                 return presigned
         return certificate.certificate_url

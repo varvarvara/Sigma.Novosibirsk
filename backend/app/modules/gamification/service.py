@@ -182,6 +182,9 @@ class TeamMemberService:
         if not self.repo.remove_member(team_id, student_id):
             raise HTTPException(404, "Not found")
 
+    def list_for_team(self, team_id: int, season_id: int):
+        return self.repo.list_members_with_names(team_id, season_id)
+
 
 
 class ScoreService:

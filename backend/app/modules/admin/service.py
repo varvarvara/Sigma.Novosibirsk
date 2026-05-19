@@ -3,6 +3,7 @@ import logging
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
+from app.config import settings
 from app.modules.admin.schemas import (
     ActionMessage,
     IntakeActionOut,
@@ -13,6 +14,7 @@ from app.modules.admin.schemas import (
 from app.modules.auth.schemas import PreRegistrationOut
 from app.modules.users.repository import UsersRepository
 from app.modules.users.schemas import StaffOutput
+from app.security.email_service import _smtp_is_configured, send_teacher_credentials_email
 from app.security.hashHelper import HashHelper
 from app.security.password_policy import generate_temporary_password
 from app.tasks import send_teacher_credentials_email_task
@@ -20,6 +22,30 @@ from enums import PreRegistrationStatuses, StaffRoles
 
 
 logger = logging.getLogger(__name__)
+
+
+def _dispatch_teacher_credentials_email(*, email: str, first_name: str, password: str) -> None:
+    """Queue Celery email when possible; in dev fall back to sync SMTP or log credentials."""
+    if _smtp_is_configured():
+        try:
+            send_teacher_credentials_email_task.delay(email=email, first_name=first_name, password=password)
+            return
+        except Exception:
+            logger.exception("Failed to enqueue teacher credentials email for %s", email)
+
+    if settings.APP_ENV == "dev":
+        try:
+            send_teacher_credentials_email(to_email=email, first_name=first_name, password=password)
+            return
+        except Exception:
+            logger.warning(
+                "Teacher credentials for %s (SMTP unavailable): password=%s",
+                email,
+                password,
+            )
+            return
+
+    logger.error("Teacher credentials email was not sent for %s: SMTP is not configured", email)
 
 
 class AdminService:
@@ -86,17 +112,11 @@ class AdminService:
             new_status=PreRegistrationStatuses.APPROVED.value,
         )
 
-        try:
-            send_teacher_credentials_email_task.delay(
-                email=pre_registration.email,
-                first_name=pre_registration.first_name,
-                password=plain_password,
-            )
-        except Exception:
-            logger.exception(
-                "Failed to enqueue teacher credentials email",
-                extra={"pre_registration_id": pre_registration_id, "email": pre_registration.email},
-            )
+        _dispatch_teacher_credentials_email(
+            email=pre_registration.email,
+            first_name=pre_registration.first_name,
+            password=plain_password,
+        )
 
         return StaffOutput.model_validate(staff)
 

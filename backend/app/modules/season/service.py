@@ -11,6 +11,7 @@ from app.modules.gamification.models import (
     ExtracurricularTeamMember,
     ExtracurricularScore,
 )
+from app.modules.media.service import get_media_service
 from app.modules.scheduling.models import Schedule, Slot
 from app.modules.users.models import Student, Staff, PreRegistration, TeacherCertificate
 from app.modules.season.models import Season
@@ -18,6 +19,16 @@ from app.modules.season.models import Season
 class SeasonService:
     def __init__(self, db: Session):
         self.db = db
+        self.media = get_media_service()
+
+    def _student_payload(self, student: Student) -> dict:
+        data = {
+            column.name: getattr(student, column.name)
+            for column in Student.__table__.columns
+            if column.name != "password"
+        }
+        data["avatar_url"] = self.media.resolve_url(student.avatar_image_key)
+        return data
 
     def get_season_by_id(self, season_id: int) -> Season | None:
         return self.db.query(Season).filter(Season.id == season_id).first()
@@ -25,8 +36,9 @@ class SeasonService:
     def get_staff_by_season(self, season_id: int) -> list[Staff]:
         return self.db.query(Staff).filter(Staff.season_id == season_id).all()
 
-    def get_students_by_season(self, season_id: int) -> list[Student]:
-        return self.db.query(Student).filter(Student.season_id == season_id).all()
+    def get_students_by_season(self, season_id: int) -> list[dict]:
+        students = self.db.query(Student).filter(Student.season_id == season_id).all()
+        return [self._student_payload(student) for student in students]
 
     def get_pre_registrations_by_season(self, season_id: int) -> list[PreRegistration]:
         return self.db.query(PreRegistration).filter(PreRegistration.season_id == season_id).all()
@@ -81,5 +93,5 @@ class SeasonService:
 
     def get_enrollments_by_season(self, season_id: int) -> list[Enrollment]:
         return self.db.query(Enrollment).filter(Enrollment.season_id == season_id).all()
-    
-    
+
+

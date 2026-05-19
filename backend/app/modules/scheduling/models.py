@@ -13,6 +13,7 @@ class Schedule(Base):
     slot_id = Column(Integer, ForeignKey("slots.id"), nullable=True)
     lesson_date = Column(Date, nullable=False)
     lesson_time = Column(Time, nullable=False)
+    classroom = Column(String(20), nullable=True)
     season_id = Column(Integer, ForeignKey("season.id"), nullable=False)
 
     staff = relationship("Staff", back_populates="schedules")
@@ -23,6 +24,7 @@ class Schedule(Base):
 
     __table_args__ = (
         UniqueConstraint("staff_id", "lesson_date", "lesson_time", name="uq_schedule_staff_datetime"),
+        UniqueConstraint("lesson_date", "lesson_time", "classroom", name="uq_schedule_classroom_datetime"),
     )
 
 
@@ -70,6 +72,7 @@ class ScheduleGenerationItem(Base):
     slot_id = Column(Integer, ForeignKey("slots.id"), nullable=True)
     lesson_date = Column(Date, nullable=False)
     lesson_time = Column(Time, nullable=False)
+    classroom = Column(String(20), nullable=True)
     season_id = Column(Integer, ForeignKey("season.id"), nullable=False)
 
     generation = relationship("ScheduleGeneration", back_populates="items")

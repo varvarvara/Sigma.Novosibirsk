@@ -51,6 +51,7 @@ class Student(Base):
     password = Column(String(255), nullable=False)
     phone = Column(String(20), nullable=False)
     tg_nickname = Column(String(50))
+    birth_date = Column(Date, nullable=True)
     year_of_study = Column(Integer, nullable=False)
     city = Column(String(30))
     school = Column(String(100))

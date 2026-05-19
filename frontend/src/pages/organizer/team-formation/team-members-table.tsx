@@ -3,6 +3,7 @@ import { type MemberScoreEntry, getMemberScoreKey } from "./team-scoring";
 type TableMember = {
     id: number;
     name: string;
+    avatarUrl?: string | null;
 };
 
 type TeamMembersTableProps = {
@@ -11,6 +12,7 @@ type TeamMembersTableProps = {
     memberColors: string[];
     activeMemberId: number;
     memberScores: Record<string, MemberScoreEntry>;
+    emptyMessage?: string;
     onSelectMember: (memberId: number) => void;
     onRemoveMember: (member: TableMember) => void;
     onScoreChange: (teamId: number | "main", memberId: number, patch: Partial<MemberScoreEntry>) => void;
@@ -22,6 +24,7 @@ export function TeamMembersTable({
     memberColors,
     activeMemberId,
     memberScores,
+    emptyMessage = "Участники не найдены.",
     onSelectMember,
     onRemoveMember,
     onScoreChange,
@@ -34,6 +37,9 @@ export function TeamMembersTable({
                 <span />
             </div>
             <div className="team-table__body">
+                {members.length === 0 ? (
+                    <p className="team-table__empty">{emptyMessage}</p>
+                ) : null}
                 {members.map((member, index) => {
                     const scoreKey = getMemberScoreKey(teamId, member.id);
                     const entry = memberScores[scoreKey] ?? { rawPoints: "" };
@@ -46,12 +52,20 @@ export function TeamMembersTable({
                             onClick={() => onSelectMember(member.id)}
                         >
                             <span className="team-member-row__person">
-                                <span
-                                    className="team-member-row__avatar"
-                                    style={{ background: memberColors[index % memberColors.length] }}
-                                >
-                                    {member.name[0]}
-                                </span>
+                                {member.avatarUrl ? (
+                                    <img
+                                        className="team-member-row__avatar team-member-row__avatar--image"
+                                        src={member.avatarUrl}
+                                        alt=""
+                                    />
+                                ) : (
+                                    <span
+                                        className="team-member-row__avatar"
+                                        style={{ background: memberColors[index % memberColors.length] }}
+                                    >
+                                        {member.name[0]}
+                                    </span>
+                                )}
                                 <span>{member.name}</span>
                             </span>
 

@@ -25,6 +25,7 @@ class Achievement(Base):
     course_id = Column(Integer, ForeignKey("course.id"), nullable=False)
     achievement_score = Column(Integer, nullable=False)
     season_id = Column(Integer, ForeignKey("season.id"), nullable=False)
+    icon_image_key = Column(String(512), nullable=True)
 
     course = relationship("Course", back_populates="achievements")
     season = relationship("Season", back_populates="achievements")

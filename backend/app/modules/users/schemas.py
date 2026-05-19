@@ -18,6 +18,7 @@ class StudentInCreate(BaseModel):
     email: EmailStr
     phone: str
     tg_nickname: str | None = None
+    birth_date: date | None = None
     year_of_study: int
     city: str | None = None
     school: str | None = None
@@ -44,21 +45,23 @@ class StudentInCreate(BaseModel):
             )
         return value
 
+    @field_validator("year_of_study")
+    def validate_year_of_study(cls, value):
+        if value is None:
+            return value
+        if value < 8 or value > 11:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="Year of study must be between 8 and 11",
+            )
+        return value
+
     @field_validator("phone", "parent_phone")
     def validate_phone_fields(cls, value):
         if not PHONE_MATCH_PATTERN.fullmatch(value):
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                 detail="Phone has invalid format",
-            )
-        return value
-
-    @field_validator("year_of_study")
-    def validate_year_of_study(cls, value):
-        if value < 8 or value > 11:
-            raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail="Year of study must be between 8 and 11",
             )
         return value
 
@@ -122,6 +125,7 @@ class StudentOutput(BaseModel):
     email: EmailStr
     phone: str
     tg_nickname: str | None = None
+    birth_date: date | None = None
     year_of_study: int
     city: str | None = None
     school: str | None = None
@@ -133,11 +137,18 @@ class StudentOutput(BaseModel):
     model_config = {"from_attributes": True}
 
 
-class StaffMeUpdate(BaseModel):
+class ProfileMeUpdate(BaseModel):
     first_name: str | None = None
     last_name: str | None = None
     partonymic: str | None = None
+    phone: str | None = None
+    tg_nickname: str | None = None
     birth_date: date | None = None
+    year_of_study: int | None = None
+    city: str | None = None
+    school: str | None = None
+    parent_name: str | None = None
+    parent_phone: str | None = None
     university: str | None = None
     study_direction: str | None = None
     study_year: int | None = None
@@ -160,6 +171,17 @@ class StaffMeUpdate(BaseModel):
             )
         return value
 
+    @field_validator("phone", "parent_phone")
+    def validate_optional_phone_fields(cls, value):
+        if value is None:
+            return value
+        if not PHONE_MATCH_PATTERN.fullmatch(value):
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="Phone has invalid format",
+            )
+        return value
+
     @field_validator("study_year")
     def validate_study_year(cls, value):
         if value is None:
@@ -170,6 +192,9 @@ class StaffMeUpdate(BaseModel):
                 detail="study_year must be between 1 and 6",
             )
         return value
+
+
+StaffMeUpdate = ProfileMeUpdate
 
 
 class StaffOutput(BaseModel):

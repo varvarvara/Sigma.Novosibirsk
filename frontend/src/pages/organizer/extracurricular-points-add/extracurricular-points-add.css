@@ -1,7 +1,12 @@
 .points-status,
 .points-notice {
-  margin: 0 0 12px;
+  margin: 0;
   color: #6b6578;
+  font-family: 'Inter Regular', Inter, sans-serif;
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 400;
+  overflow-wrap: anywhere;
 }
 
 .points-add-page {
@@ -24,9 +29,13 @@
     flex-direction: column;
     width: 100%;
     min-width: 0;
+    height: 100vh;
+    height: 100dvh;
     padding: 32px 40px 40px;
     box-sizing: border-box;
     background: #ffffff;
+    overflow-y: auto;
+    overflow-x: hidden;
 }
 
 .points-header {
@@ -194,24 +203,34 @@
 }
 
 .points-panel {
-    flex: 1;
+    flex: 1 1 auto;
     min-height: 0;
     width: 100%;
     margin-top: 24px;
     display: flex;
     flex-direction: column;
     background: #FFFFFF;
-    overflow: hidden;
+    overflow: visible;
     box-shadow: none;
 }
 
 .points-tools {
-    height: 36px;
+    min-height: 36px;
     margin-top: 24px;
     padding: 0;
     display: flex;
     align-items: center;
+    flex-wrap: wrap;
     justify-content: flex-end;
+    gap: 10px 12px;
+}
+
+.points-notice {
+    max-width: min(520px, 100%);
+    border-radius: 8px;
+    padding: 8px 10px;
+    background: #F8FAFC;
+    color: #475569;
 }
 
 .points-search {
@@ -240,19 +259,25 @@
 }
 
 .points-table {
-    flex: 1;
+    flex: 1 1 auto;
     min-height: 0;
     width: 100%;
     display: flex;
     flex-direction: column;
     border: 1px solid #E2E8F0;
     border-radius: 12px;
-    overflow: hidden;
+    overflow-x: auto;
+    overflow-y: hidden;
     box-shadow: 0 12px 24px rgba(15, 23, 42, 0.08);
+}
+
+.points-panel .points-status {
+    margin-bottom: 12px;
 }
 
 .points-table__header {
     height: 72px;
+    min-width: 720px;
     padding: 0 24px;
     display: grid;
     grid-template-columns: 1.5fr 0.8fr 0.6fr 32px;
@@ -270,10 +295,13 @@
 .points-table__body {
     flex: 1;
     min-height: 0;
+    max-height: max(240px, calc(100dvh - 300px));
     overflow-y: auto;
+    overflow-x: hidden;
 }
 
 .points-row {
+    min-width: 720px;
     min-height: 72px;
     border-bottom: 1px solid #E2E8F0;
     padding: 0 24px;
@@ -286,6 +314,10 @@
     font-family: 'Inter Regular';
     font-size: 14px;
     line-height: 20px;
+}
+
+.points-row:last-child {
+    border-bottom: 0;
 }
 
 .points-row:hover {

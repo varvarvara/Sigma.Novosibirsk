@@ -63,7 +63,13 @@ class AttendanceRepository:
             .first()
         )
 
-    def upsert_attendance(self, student_id: int, schedule_id: int, attendance_status: bool) -> tuple[Attendance, bool]:
+    def upsert_attendance(
+        self,
+        student_id: int,
+        schedule_id: int,
+        attendance_status: bool,
+        season_id: int,
+    ) -> tuple[Attendance, bool]:
         attendance = self.get_attendance(student_id=student_id, schedule_id=schedule_id)
         created = False
 
@@ -72,11 +78,13 @@ class AttendanceRepository:
                 student_id=student_id,
                 schedule_id=schedule_id,
                 attendance_status=attendance_status,
+                season_id=season_id,
             )
             self.db.add(attendance)
             created = True
         else:
             attendance.attendance_status = attendance_status
+            attendance.season_id = season_id
 
         self.db.commit()
         self.db.refresh(attendance)
@@ -155,6 +163,18 @@ class AttendanceRepository:
             )
 
         return results
+
+    def list_course_students(self, course_id: int) -> list[Student]:
+        return (
+            self.db.query(Student)
+            .join(Enrollment, Enrollment.student_id == Student.id)
+            .filter(
+                Enrollment.course_id == course_id,
+                Enrollment.enrollment_status != "Dropped",
+            )
+            .order_by(Student.last_name.asc(), Student.first_name.asc())
+            .all()
+        )
 
     def list_course_lessons_with_student_attendance(self, course_id: int, student_id: int) -> list[dict]:
         rows = (
@@ -328,7 +348,7 @@ class AttendanceRepository:
                     "course_title": row.course_title,
                     "teacher_name": f"{row.first_name} {row.last_name}".strip() or "Преподаватель не указан",
                     "lesson_date": row.lesson_date,
-                    "points": 1 if attended else 0,
+                    "points": 3 if attended else 0,
                     "attended": attended,
                 }
             )
@@ -348,7 +368,12 @@ class AttendanceRepository:
     def get_gamification(self, student_id: int) -> Gamification | None:
         return self.db.query(Gamification).filter(Gamification.student_id == student_id).first()
 
-    def upsert_gamification_attendance_score(self, student_id: int, attendance_score: int) -> Gamification:
+    def upsert_gamification_attendance_score(
+        self,
+        student_id: int,
+        attendance_score: int,
+        season_id: int,
+    ) -> Gamification:
         gamification = self.get_gamification(student_id=student_id)
 
         if gamification is None:
@@ -359,10 +384,12 @@ class AttendanceRepository:
                 extracurricular_score=0,
                 total_score=attendance_score,
                 level=0,
+                season_id=season_id,
             )
             self.db.add(gamification)
         else:
             gamification.attendance_score = attendance_score
+            gamification.season_id = season_id
             gamification.total_score = (
                 attendance_score
                 + (gamification.achievement_score or 0)
@@ -380,10 +407,53 @@ class AchievementRepository:
     def get_achievement_by_season(self, season_id: int) -> list[Achievement]:
         return self.db.query(Achievement).filter(Achievement.season_id == season_id).all()
 
-    def assign_to_student(self, student_id: int, achievement_id: int):
+    def get_achievement_by_id(self, achievement_id: int) -> Achievement | None:
+        return self.db.query(Achievement).filter(Achievement.id == achievement_id).first()
+
+    def list_course_achievements(self, course_id: int) -> list[Achievement]:
+        return (
+            self.db.query(Achievement)
+            .filter(Achievement.course_id == course_id)
+            .order_by(Achievement.id.asc())
+            .all()
+        )
+
+    def create_achievement(
+        self,
+        achievement_name: str,
+        achievement_description: str,
+        course_id: int,
+        achievement_score: int,
+        season_id: int,
+    ) -> Achievement:
+        achievement = Achievement(
+            achievement_name=achievement_name,
+            achievement_description=achievement_description,
+            course_id=course_id,
+            achievement_score=achievement_score,
+            season_id=season_id,
+        )
+        self.db.add(achievement)
+        self.db.commit()
+        self.db.refresh(achievement)
+        return achievement
+
+    def assign_to_student(self, student_id: int, achievement_id: int, season_id: int):
+        existing = (
+            self.db.query(StudentAchievement)
+            .filter(
+                StudentAchievement.student_id == student_id,
+                StudentAchievement.achievement_id == achievement_id,
+            )
+            .first()
+        )
+        if existing is not None:
+            return existing
+
         obj = StudentAchievement(
             student_id=student_id,
             achievement_id=achievement_id,
+            season_id=season_id,
         )
 
         self.db.add(obj)
@@ -399,6 +469,20 @@ class AchievementRepository:
             )
 
         return obj
+
+    def list_course_student_achievement_assignments(self, course_id: int, student_ids: list[int]) -> list[StudentAchievement]:
+        if not student_ids:
+            return []
+
+        return (
+            self.db.query(StudentAchievement)
+            .join(Achievement, StudentAchievement.achievement_id == Achievement.id)
+            .filter(
+                Achievement.course_id == course_id,
+                StudentAchievement.student_id.in_(student_ids),
+            )
+            .all()
+        )
 
     def get_student_course_achievements(self, student_id: int, course_id: int):
         return (
@@ -427,6 +511,7 @@ class AchievementRepository:
                 Achievement.achievement_name.label("achievement_name"),
                 Achievement.achievement_description.label("achievement_description"),
                 Achievement.achievement_score.label("achievement_score"),
+                Achievement.icon_image_key.label("icon_image_key"),
             )
             .join(Achievement, StudentAchievement.achievement_id == Achievement.id)
             .join(Course, Achievement.course_id == Course.id)
