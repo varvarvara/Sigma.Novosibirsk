@@ -14,38 +14,44 @@ from app.modules.admin.schemas import (
 from app.modules.auth.schemas import PreRegistrationOut
 from app.modules.users.repository import UsersRepository
 from app.modules.users.schemas import StaffOutput
-from app.security.email_service import _smtp_is_configured, send_teacher_credentials_email
+from app.security.authHandler import AuthHandler
+from app.security.email_service import _smtp_is_configured, send_teacher_password_setup_email
 from app.security.hashHelper import HashHelper
 from app.security.password_policy import generate_temporary_password
-from app.tasks import send_teacher_credentials_email_task
+from app.tasks import send_teacher_password_setup_email_task
 from enums import PreRegistrationStatuses, StaffRoles
 
 
 logger = logging.getLogger(__name__)
 
 
-def _dispatch_teacher_credentials_email(*, email: str, first_name: str, password: str) -> None:
-    """Queue Celery email when possible; in dev fall back to sync SMTP or log credentials."""
+def _build_teacher_password_setup_url(reset_token: str) -> str:
+    base_url = settings.FRONTEND_APP_URL.rstrip("/")
+    return f"{base_url}/password-reset?token={reset_token}&mode=setup"
+
+
+def _dispatch_teacher_password_setup_email(*, email: str, first_name: str, setup_url: str) -> None:
+    """Queue Celery email when possible; in dev fall back to sync SMTP or log the setup link."""
     if _smtp_is_configured():
         try:
-            send_teacher_credentials_email_task.delay(email=email, first_name=first_name, password=password)
+            send_teacher_password_setup_email_task.delay(email=email, first_name=first_name, setup_url=setup_url)
             return
         except Exception:
-            logger.exception("Failed to enqueue teacher credentials email for %s", email)
+            logger.exception("Failed to enqueue teacher password setup email for %s", email)
 
     if settings.APP_ENV == "dev":
         try:
-            send_teacher_credentials_email(to_email=email, first_name=first_name, password=password)
+            send_teacher_password_setup_email(to_email=email, first_name=first_name, setup_url=setup_url)
             return
         except Exception:
             logger.warning(
-                "Teacher credentials for %s (SMTP unavailable): password=%s",
+                "Teacher password setup link for %s (SMTP unavailable): %s",
                 email,
-                password,
+                setup_url,
             )
             return
 
-    logger.error("Teacher credentials email was not sent for %s: SMTP is not configured", email)
+    logger.error("Teacher password setup email was not sent for %s: SMTP is not configured", email)
 
 
 class AdminService:
@@ -100,8 +106,10 @@ class AdminService:
         if self._users_repository.get_student_by_email(email=pre_registration.email) is not None:
             raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Student with this email already exists")
 
-        plain_password = data.password if data and data.password else generate_temporary_password(length=8)
-        password_hash = HashHelper.get_password_hash(plain_password=plain_password)
+        # The approval body is kept for API compatibility; teachers now set their own password by email link.
+        _ = data
+        technical_password = generate_temporary_password(length=32)
+        password_hash = HashHelper.get_password_hash(plain_password=technical_password)
         staff = self._users_repository.create_staff_from_pre_registration(
             pre_registration=pre_registration,
             password_hash=password_hash,
@@ -112,10 +120,15 @@ class AdminService:
             new_status=PreRegistrationStatuses.APPROVED.value,
         )
 
-        _dispatch_teacher_credentials_email(
+        reset_token = AuthHandler.create_password_reset_token(
+            user_id=staff.id,
+            user_type="staff",
+            email=staff.email,
+        )
+        _dispatch_teacher_password_setup_email(
             email=pre_registration.email,
             first_name=pre_registration.first_name,
-            password=plain_password,
+            setup_url=_build_teacher_password_setup_url(reset_token),
         )
 
         return StaffOutput.model_validate(staff)

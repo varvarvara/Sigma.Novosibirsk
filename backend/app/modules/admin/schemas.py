@@ -12,13 +12,7 @@ LETTER_MATCH_PATTERN = re.compile(r"^[а-яА-ЯёЁa-zA-Z\-]+$")
 
 
 class PreRegistrationApproveIn(BaseModel):
-    password: str | None = None
-
-    @field_validator("password")
-    def validate_password(cls, value):
-        if value is None:
-            return value
-        return validate_password_strength(value)
+    password: str | None = Field(default=None, deprecated=True)
 
 
 class StaffCreateByAdminIn(BaseModel):

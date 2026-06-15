@@ -44,6 +44,18 @@ def send_teacher_credentials_email(*, to_email: str, first_name: str, password: 
     send_email(to_email=to_email, subject=subject, body=body)
 
 
+def send_teacher_password_setup_email(*, to_email: str, first_name: str, setup_url: str) -> None:
+    subject = "Завершение регистрации Сигма. Новосибирск"
+    body = (
+        f"Привет, {first_name}!\n\n"
+        "Спешим сообщить, что твоя заявка преподавателя одобрена!\n"
+        "Чтобы завершить настройку аккаунта, задай пароль по ссылке:\n"
+        f"{setup_url}\n\n"
+        "Ссылка действует ограниченное время. Если ты не подавал заявку, просто игнорируй это письмо.\n"
+    )
+    send_email(to_email=to_email, subject=subject, body=body)
+
+
 def send_password_reset_email(*, to_email: str, reset_url: str) -> None:
     subject = "Восстановление пароля Sigma.Novosibirsk"
     body = (
