@@ -1,10 +1,11 @@
 import { Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useMemo, useState } from "react";
 import { ChevronLeft } from "@untitledui/icons/ChevronLeft";
-import { AuthApiError } from "../../../api/auth";
-import { getMyEnrollments, type EnrollmentOutput } from "../../../api/students/learning";
+import { AuthApiError } from "../../../entities/auth";
+import type { EnrollmentOutput } from "../../../entities/students/model/learning.types";
 import { Button } from "../../../components/base/buttons/button";
 import "./my-courses-page.css";
+import { useMyEnrollmentsQuery } from "../../../entities/students/queries/learning.queries";
 
 type Course = {
     id: number;
@@ -37,42 +38,36 @@ function mapCourseStatusLabel(status: EnrollmentOutput["enrollment_status"]) {
 
 export function MyCoursesPage() {
     const navigate = useNavigate();
-    const [courses, setCourses] = useState<Course[]>([]);
     const [expandedIds, setExpandedIds] = useState<number[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
-    const [errorMessage, setErrorMessage] = useState("");
 
-    useEffect(() => {
-        const load = async () => {
-            setIsLoading(true);
-            setErrorMessage("");
+    const {
+        data: enrollments = [],
+        isLoading,
+        error
+    } = useMyEnrollmentsQuery();
 
-            try {
-                const enrollments = await getMyEnrollments();
-                const mapped = enrollments
-                    .filter((enrollment) => enrollment.enrollment_status === "Active")
-                    .map((enrollment) => ({
+
+    const errorMessage =
+        error instanceof AuthApiError
+            ? error.message
+            : error
+                ? "Не удалось загрузить список выбранных курсов."
+                : "";
+
+    const courses = useMemo(
+        () =>
+            enrollments
+                .filter((enrollment) => enrollment.enrollment_status === "Active")
+                .map((enrollment) => ({
                     id: enrollment.id,
-                    title: enrollment.course_title ?? "Курс",
+                    title: enrollment.course_title,
                     teacher: enrollment.teacher_name ?? "Преподаватель не указан",
                     status: mapCourseStatus(enrollment.enrollment_status),
                     statusLabel: mapCourseStatusLabel(enrollment.enrollment_status),
-                    details: enrollment.course_description ?? "Описание курса пока не добавлено.",
-                }));
-                setCourses(mapped);
-            } catch (error) {
-                if (error instanceof AuthApiError) {
-                    setErrorMessage(error.message);
-                } else {
-                    setErrorMessage("Не удалось загрузить список выбранных курсов.");
-                }
-            } finally {
-                setIsLoading(false);
-            }
-        };
-
-        void load();
-    }, []);
+                    details: enrollment.course_description ?? "Описание курса пока не добавлено"
+                })),
+        [enrollments],
+    )
 
     const toggleCourse = (id: number) => {
         setExpandedIds((ids) => (ids.includes(id) ? ids.filter((item) => item !== id) : [...ids, id]));

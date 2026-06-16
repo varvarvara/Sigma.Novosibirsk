@@ -1,17 +1,17 @@
 import { Link, useLocation } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { ChevronLeft } from "@untitledui/icons/ChevronLeft";
-import { AuthApiError } from "../../../api/auth";
+import { AuthApiError } from "../../../entities/auth";
 import {
     getMyAttendanceCharges,
     getMyAttendanceDashboard,
     getMyAttendanceFilterOptions,
     getMyAchievements,
     getMyEnrollments,
-    type StudentAttendanceChargeOut,
-    type StudentAchievementDetailedOut,
-} from "../../../api/students/learning";
-import { getCurrentStudent, getStudentGamification, type Student } from "../../../api/students/profile";
+} from "../../../entities/students/api/learning.api";
+import type { StudentAttendanceChargeOut, StudentAchievementDetailedOut } from "../../../entities/students/model/learning.types";
+import { getCurrentStudent, getStudentGamification } from "../../../entities/students/api/profile.api";
+import type { Student } from "../../../entities/students/model/profile.types";
 import {
     CURRICULAR_CHARGES_FILTER_KEY,
     formatFilterDateLabel,

@@ -1,13 +1,13 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { AuthApiError } from '../../../api/auth';
+import { useMemo, useState } from 'react';
+import { AuthApiError } from '../../../entities/auth';
 import {
   formatCourseStatusLabel,
   formatCourseTypeLabel,
-  getMyTeacherCourses,
-  type TeacherCourse,
-} from '../../../api/teacher/courses';
+} from '../../../entities/teacher/api/courses.api';
+import type { TeacherCourse } from '../../../entities/teacher/model/courses.types';
 import { TeacherAppShell } from '../../../shared/ui/teacher_sidebar/teacher-app-shell';
 import './teacher-courses-styles.css';
+import { useGetMyTeacherCourses } from '../../../entities/teacher/queries/courses.queries';
 
 const STAR_COUNT = 5;
 
@@ -63,33 +63,21 @@ function CourseRatingStars({ course }: { course: TeacherCourse }) {
 type StatusTab = 'all' | TeacherCourse['course_status'];
 
 export function TeacherCoursesPage() {
-  const [courses, setCourses] = useState<TeacherCourse[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [loadError, setLoadError] = useState<string | null>(null);
   const [statusTab, setStatusTab] = useState<StatusTab>('all');
   const [selectedCourseId, setSelectedCourseId] = useState<number | null>(null);
 
-  const loadCourses = useCallback(async () => {
-    setIsLoading(true);
-    setLoadError(null);
+  const {
+    data: courses = [],
+    isLoading,
+    error,
+  } = useGetMyTeacherCourses();
 
-    try {
-      const items = await getMyTeacherCourses();
-      setCourses(items);
-    } catch (error) {
-      if (error instanceof AuthApiError) {
-        setLoadError(error.message);
-      } else {
-        setLoadError('Не удалось загрузить курсы');
-      }
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    void loadCourses();
-  }, [loadCourses]);
+  const loadError =
+    error instanceof AuthApiError
+      ? error.message
+      : error
+        ? "Не удалось загрузить курсы."
+        : null;
 
   const filteredCourses = useMemo(() => {
     if (statusTab === 'all') {

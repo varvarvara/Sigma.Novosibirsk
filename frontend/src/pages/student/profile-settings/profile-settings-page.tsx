@@ -2,14 +2,13 @@ import { type ChangeEvent, useEffect, useRef, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { ChevronLeft } from "@untitledui/icons/ChevronLeft";
 import { CameraPlus } from "@untitledui/icons/CameraPlus";
-import { AuthApiError, clearAuthTokens, getAccessToken } from "../../../api/auth";
+import { AuthApiError, clearAuthTokens, getAccessToken } from "../../../entities/auth";
 import {
     getCurrentStudent,
     updateMyStudentProfile,
     uploadMyAvatar,
-    type CurrentUser,
-    type Student,
-} from "../../../api/students/profile";
+} from "../../../entities/students/api/profile.api";
+import type { CurrentUser, Student } from "../../../entities/students/model/profile.types";
 import "./profile-settings.css";
 
 const DEFAULT_AVATAR_SRC = "/default-avatar.svg";

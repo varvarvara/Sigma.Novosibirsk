@@ -1,6 +1,6 @@
 import { Link, useLocation } from '@tanstack/react-router';
 import { useEffect, useState } from 'react';
-import { getCurrentStudent, isStaffProfile } from '../../../api/students/profile';
+import { isStaffProfile } from '../../../entities/students/api/profile.api';
 import {
   getOrgProfileSyncDetail,
   ORG_AVATAR_UPDATED_EVENT,
@@ -11,6 +11,7 @@ import {
 } from '../../org-profile-events';
 import './org-sidebar-styles.css';
 import { readOrgAvatar, useOrgAvatar } from './use-org-avatar';
+import { useCurrentUserQuery } from '../../../entities/students/queries/profile.queries';
 
 type OrgSidebarProps = {
   avatarSrc?: string | null;
@@ -41,6 +42,9 @@ export function OrgSidebar({ avatarSrc }: OrgSidebarProps) {
     avatarSrc !== undefined && avatarSrc !== null ? avatarSrc : undefined,
   );
 
+  const {data: currentUser} = useCurrentUserQuery();
+  const staffUser = currentUser && isStaffProfile(currentUser) ? currentUser : null;
+
   useEffect(() => {
     if (avatarSrc !== undefined && avatarSrc !== null) {
       setShellAvatarSrc(avatarSrc);
@@ -52,31 +56,13 @@ export function OrgSidebar({ avatarSrc }: OrgSidebarProps) {
       return;
     }
 
-    let cancelled = false;
+    if (!staffUser) {
+      return;
+    }
 
-    const loadAvatar = async () => {
-      try {
-        const user = await getCurrentStudent();
-        if (cancelled || !isStaffProfile(user)) {
-          return;
-        }
-
-        const nextAvatar = user.avatar_url ?? ORG_DEFAULT_AVATAR_SRC;
-        persistOrgAvatarUrl(user.avatar_url);
-        setShellAvatarSrc(nextAvatar);
-      } catch {
-        if (!cancelled) {
-          setShellAvatarSrc(readOrgAvatar());
-        }
-      }
-    };
-
-    void loadAvatar();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [avatarSrc]);
+    persistOrgAvatarUrl(staffUser.avatar_url ?? null);
+    setShellAvatarSrc(staffUser.avatar_url ?? ORG_DEFAULT_AVATAR_SRC);
+    }, [avatarSrc, staffUser]);
 
   useEffect(() => {
     const handleProfileSync = (event: Event) => {

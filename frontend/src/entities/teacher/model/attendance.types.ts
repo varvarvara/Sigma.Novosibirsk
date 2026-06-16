@@ -1,5 +1,3 @@
-import { getAccessToken, request } from '../auth';
-
 export type TeacherCourseStudentAttendanceSummary = {
   student_id: number;
   first_name: string;
@@ -70,45 +68,3 @@ export type BulkAttendanceItem = {
   student_id: number;
   attendance_status: boolean;
 };
-
-function authHeaders() {
-  const accessToken = getAccessToken();
-  return accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined;
-}
-
-export function getCourseAttendanceSummary(courseId: number) {
-  return request<TeacherCourseAttendanceSummary>(`/attendance/courses/${courseId}/summary`, {
-    headers: authHeaders(),
-  });
-}
-
-export function getCourseStudentAttendanceDetail(courseId: number, studentId: number) {
-  return request<TeacherCourseStudentAttendanceDetail>(`/attendance/courses/${courseId}/students/${studentId}`, {
-    headers: authHeaders(),
-  });
-}
-
-export function bulkMarkAttendance(scheduleId: number, items: BulkAttendanceItem[]) {
-  return request(`/attendance/schedules/${scheduleId}/mark-bulk`, {
-    method: 'POST',
-    headers: authHeaders(),
-    body: JSON.stringify({ items }),
-  });
-}
-
-export function getCourseAchievementMatrix(courseId: number) {
-  return request<TeacherAchievementMatrix>(`/attendance/courses/${courseId}/achievement-matrix`, {
-    headers: authHeaders(),
-  });
-}
-
-export function assignAchievement(studentId: number, achievementId: number) {
-  return request('/attendance/achievements/assign', {
-    method: 'POST',
-    headers: authHeaders(),
-    body: JSON.stringify({
-      student_id: studentId,
-      achievement_id: achievementId,
-    }),
-  });
-}

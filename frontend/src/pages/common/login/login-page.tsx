@@ -13,7 +13,7 @@ import {
   login,
   saveAuthTokens,
   saveRememberedEmail,
-} from '../../../api/auth'
+} from '../../../entities/auth'
 import '../../../components/auth/auth-split-layout.css'
 import '../../../styles/field-error.css'
 import './login-page.css'

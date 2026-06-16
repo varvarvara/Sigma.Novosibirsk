@@ -1,12 +1,14 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { MarkerPin01 } from '@untitledui/icons/MarkerPin01'
 import { User01 } from '@untitledui/icons/User01'
-import { AuthApiError } from '../../../api/auth'
-import { getMyScheduleEvents, type ScheduleEvent } from '../../../api/students/learning'
+import { AuthApiError } from '../../../entities/auth'
+import type { ScheduleEvent } from '../../../entities/students/model/learning.types'
 import { isScheduleReadyForStudent } from '../../../features/course-flow/resolve-course-flow'
 import { addDays, getDayLabel } from './schedule-page.utils'
 import type { ScheduleItem } from './schedule-page.types'
 import './schedule-page.css'
+import { useQuery } from '@tanstack/react-query'
+import { useMyScheduleEventsQuery } from '../../../entities/students/queries/learning.queries'
 
 const DAYS_BEFORE = 60
 const DAYS_AFTER = 120
@@ -88,26 +90,58 @@ function getInitialAnchorDate(items: ScheduleItem[]) {
 }
 
 export function SchedulePage() {
-  const [scheduleItems, setScheduleItems] = useState<ScheduleItem[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [isScheduleReady, setIsScheduleReady] = useState<boolean | null>(null)
-  const [errorMessage, setErrorMessage] = useState('')
-  const initialAnchorDate = useMemo(() => getInitialAnchorDate(scheduleItems), [scheduleItems])
-  const days = useMemo(() => buildDateRange(initialAnchorDate), [initialAnchorDate])
+
   const [activeIndex, setActiveIndex] = useState(DEFAULT_ACTIVE_INDEX)
   const scrollFrameRef = useRef<number | null>(null)
 
   const daysRowRef = useRef<HTMLDivElement>(null)
   const chipRefs = useRef<Array<HTMLButtonElement | null>>([])
 
-  const activeDate = days[activeIndex] ?? new Date()
-  const activeDateKey = toDateKey(activeDate)
-  const monthTitle = formatMonthTitle(activeDate)
+  const {
+    data: isScheduleReadyResult,
+    isLoading: isScheduleReadyLoading,
+    error: scheduleReadyError
+  } = useQuery({
+    queryKey: ["scheduleReadyForStudent"],
+    queryFn: isScheduleReadyForStudent,
+  })
 
-  useEffect(() => {
+  const {
+    data: scheduleResponse,
+    isLoading: isScheduleEventsLoading,
+    error: scheduleEventsError
+  } = useMyScheduleEventsQuery(DEFAULT_SEASON_ID)
+
+
+  const scheduleItems = useMemo(() => {
+    if (!scheduleResponse) {
+      return [];
+    }
+
+    const items = scheduleResponse.events.map(toScheduleItem);
+    const hasPublishedSchedule = 
+      scheduleResponse.schedule_published !== false && items.length > 0;
+
+    return hasPublishedSchedule ? items : [];
+  }, [scheduleResponse]);
+
+
+  const isLoading = isScheduleReadyLoading || (isScheduleReadyResult === true && isScheduleEventsLoading);
+
+
+  const errorMessage =
+    scheduleReadyError instanceof AuthApiError ?
+      scheduleReadyError.message :
+      scheduleEventsError instanceof AuthApiError ?
+        scheduleEventsError.message :
+        scheduleReadyError || scheduleEventsError ?
+          "Не удалось загрузить расписание" : ''
+
+    useEffect(() => {
     if (scheduleItems.length === 0) {
       return
     }
+
 
     const anchor = getInitialAnchorDate(scheduleItems)
     const nextDays = buildDateRange(anchor)
@@ -117,46 +151,18 @@ export function SchedulePage() {
     setActiveIndex(nextIndex >= 0 ? nextIndex : DEFAULT_ACTIVE_INDEX)
   }, [scheduleItems])
 
+
+  const initialAnchorDate = useMemo(() => getInitialAnchorDate(scheduleItems), [scheduleItems])
+  const days = useMemo(() => buildDateRange(initialAnchorDate), [initialAnchorDate])
+  const activeDate = days[activeIndex] ?? new Date()
+  const activeDateKey = toDateKey(activeDate)
+  const monthTitle = formatMonthTitle(activeDate)
+
   const dayItems = useMemo(
     () => sortByTime(scheduleItems.filter((item) => item.date === activeDateKey)),
     [activeDateKey, scheduleItems],
   )
-
-  useEffect(() => {
-    const load = async () => {
-      setIsLoading(true)
-      setErrorMessage('')
-
-      try {
-        const ready = await isScheduleReadyForStudent()
-        if (!ready) {
-          setIsScheduleReady(false)
-          setScheduleItems([])
-          return
-        }
-
-        const response = await getMyScheduleEvents(DEFAULT_SEASON_ID)
-        const items = response.events.map(toScheduleItem)
-        const hasPublishedSchedule =
-          response.schedule_published !== false && items.length > 0
-
-        setIsScheduleReady(hasPublishedSchedule)
-        setScheduleItems(hasPublishedSchedule ? items : [])
-      } catch (error) {
-        setIsScheduleReady(false)
-        setScheduleItems([])
-        if (error instanceof AuthApiError) {
-          setErrorMessage(error.message)
-        } else {
-          setErrorMessage('Не удалось загрузить расписание.')
-        }
-      } finally {
-        setIsLoading(false)
-      }
-    }
-
-    void load()
-  }, [])
+  
 
   const centerChip = (index: number, behavior: ScrollBehavior) => {
     const row = daysRowRef.current

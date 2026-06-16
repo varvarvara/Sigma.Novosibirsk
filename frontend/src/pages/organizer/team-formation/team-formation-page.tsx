@@ -1,17 +1,16 @@
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
-import { AuthApiError } from "../../../api/auth";
+import { AuthApiError } from "../../../entities/auth";
 import {
     listExtracurricularScores,
     listExtracurricularTeams,
-    type ExtracurricularTeam as ApiTeam,
-} from "../../../api/organizer/extracurricular";
+} from "../../../entities/organizer/api/extracurricular.api";
 import {
     getSeasonExtracurricularTeamMembers,
     getSeasonStudents,
-    type SeasonStudent,
-    type SeasonTeamMember,
-} from "../../../api/organizer/season";
+} from "../../../entities/organizer/api/season.api";
+import type { ExtracurricularTeam } from "../../../entities/organizer/model/extracurricular.types";
+import type { SeasonStudent, SeasonTeamMember } from "../../../entities/organizer/model/season.types";
 import { DEFAULT_SEASON_ID } from "../../../features/auth/student-registration";
 import { OrgPanelState } from "../../../shared/ui/org-panel-state";
 import { OrgSidebar } from "../../../shared/ui/org-sidebar";
@@ -76,7 +75,7 @@ function buildMembersForTeam(
 }
 
 function mapTeam(
-    apiTeam: ApiTeam,
+    apiTeam: ExtracurricularTeam,
     index: number,
     teamPoints: Map<number, number>,
     members: TeamMember[],

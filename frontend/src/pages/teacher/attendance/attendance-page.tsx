@@ -1,13 +1,17 @@
 import { type CSSProperties, useEffect, useMemo, useState } from 'react';
-import { getMyTeacherCourses, type TeacherCourse } from '../../../api/teacher/courses';
+import { getMyTeacherCourses } from '../../../entities/teacher/api/courses.api';
+import type { TeacherCourse } from '../../../entities/teacher/model/courses.types';
 import {
   bulkMarkAttendance,
   getCourseAttendanceSummary,
   getCourseStudentAttendanceDetail,
-  type TeacherCourseAttendanceSummary,
-  type TeacherCourseStudentAttendanceDetail,
-  type TeacherLessonAttendanceItem,
-} from '../../../api/teacher/attendance';
+  
+} from '../../../entities/teacher/api/attendance.api';
+import type { 
+  TeacherCourseAttendanceSummary,
+  TeacherCourseStudentAttendanceDetail,
+  TeacherLessonAttendanceItem
+} from '../../../entities/teacher/model/attendance.types';
 import { TeacherAppShell } from '../../../shared/ui/teacher_sidebar/teacher-app-shell';
 import './attendance-page.css';
 

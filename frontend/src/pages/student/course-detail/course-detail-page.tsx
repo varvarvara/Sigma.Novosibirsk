@@ -1,14 +1,15 @@
 import { Link, useNavigate, useSearch } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { ChevronLeft } from "@untitledui/icons/ChevronLeft";
-import { AuthApiError } from "../../../api/auth";
+import { AuthApiError } from "../../../entities/auth";
 import { CourseCoverThumb } from "../../../components/course-cover-thumb/course-cover-thumb";
 import {
     formatEnrollmentSlotTime,
     normalizeEnrollmentSlotOptions,
 } from "../../../features/course-flow/enrollment-slot-times";
 import { DRAFT_SELECTION_STORAGE_KEY } from "../../../features/course-flow/resolve-course-flow";
-import { getEnrollmentSlotOptions, type SlotCourseOption, type SlotOptionsItem } from "../../../api/students/learning";
+import { getEnrollmentSlotOptions } from "../../../entities/students/api/learning.api";
+import type { SlotCourseOption, SlotOptionsItem } from "../../../entities/students/model/learning.types";
 import "./course-detail-page.css";
 
 type CourseType = "Авторский" | "Олимпиадный";

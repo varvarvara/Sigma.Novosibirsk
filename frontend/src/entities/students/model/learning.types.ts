@@ -1,5 +1,3 @@
-import { AuthApiError, getAccessToken, request } from "../auth";
-
 export type SlotCourseOption = {
   course_id: number;
   title: string;
@@ -117,37 +115,6 @@ export type SchedulePublishStatusOut = {
   published: boolean;
 };
 
-function authHeaders() {
-  const accessToken = getAccessToken();
-  return accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined;
-}
-
-export function getEnrollmentSlotOptions() {
-  return request<EnrollmentSlotOptionsOut>("/enrollment/slots/options", {
-    headers: authHeaders(),
-  });
-}
-
-export function submitEnrollmentSlotSelection(selections: EnrollmentSelectionIn[]) {
-  return request<EnrollmentSubmitOut>("/enrollment/slots/submit", {
-    method: "POST",
-    headers: authHeaders(),
-    body: JSON.stringify({ selections }),
-  });
-}
-
-export function getMyEnrollments() {
-  return request<EnrollmentOutput[]>("/enrollment/me", {
-    headers: authHeaders(),
-  });
-}
-
-export function getMyAttendanceDashboard() {
-  return request<StudentAttendanceDashboardOut>("/attendance/me", {
-    headers: authHeaders(),
-  });
-}
-
 export type StudentAttendanceFilterCourseOut = {
   course_id: number;
   course_title: string;
@@ -168,41 +135,3 @@ export type StudentAttendanceChargeOut = {
   points: number;
   attended: boolean;
 };
-
-export function getMyAttendanceFilterOptions() {
-  return request<StudentAttendanceFilterOptionsOut>("/attendance/me/filter-options", {
-    headers: authHeaders(),
-  });
-}
-
-export function getMyAttendanceCharges() {
-  return request<StudentAttendanceChargeOut[]>("/attendance/me/charges", {
-    headers: authHeaders(),
-  });
-}
-
-export function getMyAchievements() {
-  return request<StudentAchievementDetailedOut[]>("/attendance/me/achievements", {
-    headers: authHeaders(),
-  });
-}
-
-export function getMyScheduleEvents(seasonId: number) {
-  return request<ScheduleEventsOut>(`/scheduling/events?season_id=${seasonId}`, {
-    headers: authHeaders(),
-  });
-}
-
-export async function getSchedulePublishStatus(seasonId: number) {
-  try {
-    return await request<SchedulePublishStatusOut>(`/scheduling/publish-status?season_id=${seasonId}`, {
-      headers: authHeaders(),
-    });
-  } catch (error) {
-    if (error instanceof AuthApiError && error.status === 404) {
-      return { season_id: seasonId, published: false };
-    }
-
-    throw error;
-  }
-}

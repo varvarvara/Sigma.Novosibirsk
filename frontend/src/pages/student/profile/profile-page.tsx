@@ -7,14 +7,13 @@ import {
     getAccessToken,
     getRefreshToken,
     logout,
-} from "../../../api/auth";
+} from "../../../entities/auth";
 import {
     getCurrentStudent,
     getStudentGamification,
     getStudentTeam,
-    type CurrentUser,
-    type Student,
-} from "../../../api/students/profile";
+} from "../../../entities/students/api/profile.api";
+import type { CurrentUser, Student } from "../../../entities/students/model/profile.types";
 import "./profile-page.css";
 
 const DEFAULT_AVATAR_SRC = "/default-avatar.svg";

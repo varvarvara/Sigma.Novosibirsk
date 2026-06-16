@@ -1,4 +1,4 @@
-import { AuthApiError, staffPreRegistration, type StaffPreRegistrationRequest } from '../../api/auth'
+import { AuthApiError, staffPreRegistration, type StaffPreRegistrationRequest } from '../../entities/auth'
 import { validateBirthDate } from './birth-date-validation'
 import { DEFAULT_SEASON_ID, extractPhoneDigits } from './student-registration'
 

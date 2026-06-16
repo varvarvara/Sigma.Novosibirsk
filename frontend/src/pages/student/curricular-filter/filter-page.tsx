@@ -1,8 +1,9 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { ChevronLeft } from "@untitledui/icons/ChevronLeft";
-import { AuthApiError } from "../../../api/auth";
-import { getMyAttendanceFilterOptions, type StudentAttendanceFilterCourseOut } from "../../../api/students/learning";
+import { AuthApiError } from "../../../entities/auth";
+import { getMyAttendanceFilterOptions } from "../../../entities/students/api/learning.api";
+import type { StudentAttendanceFilterCourseOut } from "../../../entities/students/model/learning.types";
 import { Button } from "../../../components/base/buttons/button";
 import {
     formatFilterDateLabel,

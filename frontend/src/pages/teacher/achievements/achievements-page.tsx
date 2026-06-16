@@ -1,10 +1,11 @@
 import { type CSSProperties, useEffect, useMemo, useState } from 'react';
-import { getMyTeacherCourses, type TeacherCourse } from '../../../api/teacher/courses';
+import { getMyTeacherCourses } from '../../../entities/teacher/api/courses.api';
+import type { TeacherCourse } from '../../../entities/teacher/model/courses.types';
 import {
   assignAchievement,
   getCourseAchievementMatrix,
-  type TeacherAchievementMatrix,
-} from '../../../api/teacher/attendance';
+} from '../../../entities/teacher/api/attendance.api';
+import type { TeacherAchievementMatrix } from '../../../entities/teacher/model/attendance.types';
 import { TeacherAppShell } from '../../../shared/ui/teacher_sidebar/teacher-app-shell';
 import './achievements-page.css';
 

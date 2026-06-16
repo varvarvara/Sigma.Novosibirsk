@@ -1,6 +1,6 @@
 import { type ReactNode, useEffect, useState } from 'react';
 import { useLocation, useNavigate } from '@tanstack/react-router';
-import { getCurrentStudent, isStaffProfile } from '../../../api/students/profile';
+import { isStaffProfile } from '../../../entities/students/api/profile.api';
 import { TEACHER_DEFAULT_AVATAR_SRC } from '../../../features/teacher/teacher-profile';
 import {
   getTeacherProfileSyncDetail,
@@ -14,6 +14,7 @@ import { TeacherSubnavPanel } from './teacher-subnav-panel';
 import { readTeacherAvatar } from './use-teacher-avatar';
 import './teacher-sidebar-styles.css';
 import './teacher-app-shell.css';
+import { useCurrentUserQuery } from '../../../entities/students/queries/profile.queries';
 
 type TeacherAppShellProps = {
   children: ReactNode;
@@ -48,36 +49,21 @@ export function TeacherAppShell({ children, avatarSrc, className }: TeacherAppSh
     }
   }, [avatarSrc]);
 
+  const {data: currentUser} = useCurrentUserQuery();
+  const staffUser = currentUser && isStaffProfile(currentUser) ? currentUser : null;
+
   useEffect(() => {
     if (avatarSrc !== undefined) {
       return;
     }
 
-    let cancelled = false;
+    if (!staffUser) {
+      return;
+    }
 
-    const loadAvatar = async () => {
-      try {
-        const user = await getCurrentStudent();
-        if (cancelled || !isStaffProfile(user)) {
-          return;
-        }
-
-        const nextAvatar = user.avatar_url ?? TEACHER_DEFAULT_AVATAR_SRC;
-        persistTeacherAvatarUrl(user.avatar_url);
-        setShellAvatarSrc(nextAvatar);
-      } catch {
-        if (!cancelled) {
-          setShellAvatarSrc(readTeacherAvatar());
-        }
-      }
-    };
-
-    void loadAvatar();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [avatarSrc]);
+    persistTeacherAvatarUrl(staffUser.avatar_url ?? null);
+    setShellAvatarSrc(staffUser.avatar_url ?? TEACHER_DEFAULT_AVATAR_SRC);
+  }, [avatarSrc, staffUser]);
 
   useEffect(() => {
     const handleProfileSync = (event: Event) => {
@@ -124,7 +110,10 @@ export function TeacherAppShell({ children, avatarSrc, className }: TeacherAppSh
     setIsPanelOpen(false);
   };
 
-  const resolvedAvatarSrc = avatarSrc !== undefined ? avatarSrc : shellAvatarSrc;
+  const resolvedAvatarSrc = 
+    avatarSrc !== undefined 
+      ? avatarSrc
+      : shellAvatarSrc ?? staffUser?.avatar_url ?? readTeacherAvatar();
 
   const shellClassName = [
     'teacher-app-shell',

@@ -1,7 +1,7 @@
 import { Link, useLocation } from '@tanstack/react-router';
-import { useCallback, useEffect, useState } from 'react';
-import { clearAuthTokens, getAccessToken, getRefreshToken, logout } from '../../../api/auth';
-import { getCurrentStudent, isStaffProfile } from '../../../api/students/profile';
+import { useEffect, useState } from 'react';
+import { clearAuthTokens, getAccessToken, getRefreshToken, logout } from '../../../entities/auth';
+import { isStaffProfile } from '../../../entities/students/api/profile.api';
 import { getTeacherFullName } from '../../../features/teacher/teacher-profile';
 import {
   getTeacherProfileSyncDetail,
@@ -15,6 +15,7 @@ import {
   TEACHER_NAV_SECTIONS,
 } from './teacher-nav-config';
 import { useTeacherAvatar } from './use-teacher-avatar';
+import { useCurrentUserQuery } from '../../../entities/students/queries/profile.queries';
 
 type TeacherSubnavPanelProps = {
   section: TeacherNavSection | null;
@@ -38,7 +39,6 @@ function applyTeacherProfileSyncDetail(
       firstName: detail.firstName ?? '',
       lastName: detail.lastName ?? '',
       patronymic: detail.patronymic ?? '',
-      email: '',
     });
 
     if (fullName) {
@@ -62,50 +62,37 @@ export function TeacherSubnavPanel({ section, isOpen, avatarSrc }: TeacherSubnav
   const resolvedAvatarSrc = useTeacherAvatar(avatarSrc);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
-  const loadUser = useCallback(async () => {
-    try {
-      const user = await getCurrentStudent();
-      if (!isStaffProfile(user)) {
-        return;
-      }
+  const {data: currentUser} = useCurrentUserQuery();
 
-      const mapped = {
-        firstName: user.first_name,
-        lastName: user.last_name,
-        patronymic: user.partonymic ?? '',
-        email: user.email,
-      };
-
-      const fullName = getTeacherFullName(mapped);
-      setDisplayName(fullName || 'Имя фамилия');
-      setDisplayEmail(user.email);
-    } catch {
+  useEffect(() => {
+    if (!currentUser || !isStaffProfile(currentUser)) {
+      return;
     }
-  }, []);
+
+    const fullName = getTeacherFullName({
+      firstName: currentUser.first_name,
+      lastName: currentUser.last_name,
+      patronymic: currentUser.partonymic ?? '',
+    })
+    
+    setDisplayName(fullName || 'Имя Фамилия');
+    setDisplayEmail(currentUser.email);
+  }, [currentUser]);
 
   useEffect(() => {
-    void loadUser();
-  }, [loadUser]);
-
-  useEffect(() => {
-    const handleAvatarSync = () => {
-      void loadUser();
-    };
-
     const handleProfileSync = (event: Event) => {
       const detail = getTeacherProfileSyncDetail(event);
       applyTeacherProfileSyncDetail(detail, setDisplayName, setDisplayEmail);
-      void loadUser();
     };
 
-    window.addEventListener(TEACHER_AVATAR_UPDATED_EVENT, handleAvatarSync);
+    window.addEventListener(TEACHER_AVATAR_UPDATED_EVENT, handleProfileSync);
     window.addEventListener(TEACHER_PROFILE_UPDATED_EVENT, handleProfileSync);
 
     return () => {
-      window.removeEventListener(TEACHER_AVATAR_UPDATED_EVENT, handleAvatarSync);
+      window.removeEventListener(TEACHER_AVATAR_UPDATED_EVENT, handleProfileSync);
       window.removeEventListener(TEACHER_PROFILE_UPDATED_EVENT, handleProfileSync);
     };
-  }, [loadUser]);
+  }, []);
 
   const handleLogout = async () => {
     if (isLoggingOut) {

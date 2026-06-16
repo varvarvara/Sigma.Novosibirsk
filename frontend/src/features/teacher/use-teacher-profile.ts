@@ -1,13 +1,13 @@
 import { type ChangeEvent, useCallback, useEffect, useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
-import { AuthApiError, clearAuthTokens, getAccessToken, getRefreshToken, logout } from '../../api/auth';
+import { AuthApiError, clearAuthTokens, getAccessToken, getRefreshToken, logout } from '../../entities/auth';
 import {
   deleteMyAvatar,
   getCurrentStudent,
   isStaffProfile,
   updateMyStaffProfile,
   uploadMyAvatar,
-} from '../../api/students/profile';
+} from '../../entities/students/api/profile.api';
 import { validateBirthDate } from '../auth/birth-date-validation';
 import { dispatchTeacherProfileUpdated } from '../../shared/teacher-profile-events';
 import {

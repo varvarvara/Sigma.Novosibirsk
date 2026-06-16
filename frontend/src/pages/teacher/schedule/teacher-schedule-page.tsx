@@ -1,7 +1,8 @@
 import { type CSSProperties, type MouseEvent as ReactMouseEvent, useEffect, useMemo, useRef, useState } from 'react';
-import { AuthApiError } from '../../../api/auth';
-import { getCurrentStudent, isStaffProfile } from '../../../api/students/profile';
-import { getTeacherTimetable, type TeacherTimetableItem } from '../../../api/teacher/schedule';
+import { AuthApiError } from '../../../entities/auth';
+import { getCurrentStudent, isStaffProfile } from '../../../entities/students/api/profile.api';
+import { getTeacherTimetable } from '../../../entities/teacher/api/schedule.api';
+import type { TeacherTimetableItem } from '../../../entities/teacher/model/schedule.types';
 import { TeacherAppShell } from '../../../shared/ui/teacher_sidebar/teacher-app-shell';
 import './teacher-schedule-styles.css';
 

@@ -3,8 +3,8 @@ import { useCallback, useEffect, useState } from "react";
 import { ChevronLeft } from "@untitledui/icons/ChevronLeft";
 import {
     getMyExtracurricular,
-    type StudentExtracurricularDashboard,
-} from "../../../api/students/extracurricular";
+} from "../../../entities/students/api/extracurricular.api";
+import type { StudentExtracurricularDashboard } from "../../../entities/students/model/extracurricular.types";
 import "./extracurricular-page.css";
 
 const RATING_ICONS: Record<number, string> = {

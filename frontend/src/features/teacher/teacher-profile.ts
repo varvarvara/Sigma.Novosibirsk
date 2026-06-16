@@ -1,4 +1,4 @@
-import type { StaffProfile } from '../../api/students/profile';
+import type { StaffProfile } from '../../entities/students/model/profile.types';
 
 export const TEACHER_DEFAULT_AVATAR_SRC = '/default-avatar.svg';
 export const TEACHER_AVATAR_MAX_SIZE_BYTES = 5 * 1024 * 1024;
@@ -15,6 +15,12 @@ export type TeacherProfileData = {
   direction: string;
   course: string;
 };
+
+type TeacherFullName = {
+  firstName: string;
+  lastName: string;
+  patronymic: string;
+}
 
 export const emptyTeacherProfileData: TeacherProfileData = {
   firstName: '',
@@ -46,7 +52,7 @@ export function mapStaffToTeacherProfile(staff: StaffProfile): TeacherProfileDat
   };
 }
 
-export function getTeacherFullName(profile: TeacherProfileData) {
+export function getTeacherFullName(profile: TeacherFullName) {
   return [profile.lastName, profile.firstName, profile.patronymic].filter(Boolean).join(' ');
 }
 

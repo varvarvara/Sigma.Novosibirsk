@@ -1,5 +1,3 @@
-import { getAccessToken, request } from "../auth";
-
 export type ExtracurricularTeamMember = {
   student_id: number;
   full_name: string;
@@ -35,17 +33,3 @@ export type StudentExtracurricularDashboard = {
   rating: ExtracurricularRatingTeam[];
   charges: ExtracurricularCharge[];
 };
-
-function authHeaders() {
-  const accessToken = getAccessToken();
-  return accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined;
-}
-
-export function getMyExtracurricular(seasonId = 1) {
-  return request<StudentExtracurricularDashboard>(
-    `/gamification/me/extracurricular?season_id=${seasonId}`,
-    {
-      headers: authHeaders(),
-    },
-  );
-}

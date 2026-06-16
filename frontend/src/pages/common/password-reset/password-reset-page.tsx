@@ -8,7 +8,7 @@ import {
   AuthApiError,
   confirmPasswordReset,
   requestPasswordReset,
-} from '../../../api/auth'
+} from '../../../entities/auth'
 import { isMobileAuthViewport } from '../../../features/auth/auth-flow'
 import '../../../components/auth/auth-split-layout.css'
 import '../../../styles/field-error.css'

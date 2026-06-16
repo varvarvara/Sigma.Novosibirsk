@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
-import { AuthApiError } from "../../../api/auth";
+import { AuthApiError } from "../../../entities/auth";
 import {
     addExtracurricularTeamMember,
     createExtracurricularTeam,
     listExtracurricularTeams,
-} from "../../../api/organizer/extracurricular";
-import { getSeasonStudents, type SeasonStudent } from "../../../api/organizer/season";
+} from "../../../entities/organizer/api/extracurricular.api";
+import { getSeasonStudents, type SeasonStudent } from "../../../entities/organizer/api/season.api";
 import { DEFAULT_SEASON_ID } from "../../../features/auth/student-registration";
 import { OrgSidebar } from "../../../shared/ui/org-sidebar";
 import "./team-creation-page.css";

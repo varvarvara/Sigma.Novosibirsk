@@ -1,5 +1,5 @@
 import { redirect } from "@tanstack/react-router";
-import { AuthApiError } from "../../api/auth";
+import { AuthApiError } from "../../entities/auth";
 import {
     COURSE_FLOW_PATH,
     resolveCourseFlowStage,

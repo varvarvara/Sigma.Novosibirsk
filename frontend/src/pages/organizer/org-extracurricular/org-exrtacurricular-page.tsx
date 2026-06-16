@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
-import { AuthApiError, getAuthSession } from "../../../api/auth";
+import { AuthApiError, getAuthSession } from "../../../entities/auth";
 import {
     createExtracurricularActivity,
     DEFAULT_EXTRACURRICULAR_ACTIVITY_SCORE,
-} from "../../../api/organizer/extracurricular";
-import { getSeasonStaff, getSeasonStudents, type SeasonStaffMember, type SeasonStudent } from "../../../api/organizer/season";
+} from "../../../entities/organizer/api/extracurricular.api";
+import { getSeasonStaff, getSeasonStudents, type SeasonStaffMember, type SeasonStudent } from "../../../entities/organizer/api/season.api";
 import { DEFAULT_SEASON_ID } from "../../../features/auth/student-registration";
 import {
     extractActivityDateDigits,

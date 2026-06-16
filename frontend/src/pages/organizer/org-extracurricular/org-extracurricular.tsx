@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
-import { AuthApiError } from "../../../api/auth";
+import { AuthApiError } from "../../../entities/auth";
 import {
     listExtracurricularActivities,
     listExtracurricularScores,
-    type ExtracurricularActivity as ApiActivity,
-} from "../../../api/organizer/extracurricular";
-import { getSeasonStaff, type SeasonStaffMember } from "../../../api/organizer/season";
+} from "../../../entities/organizer/api/extracurricular.api";
+import { getSeasonStaff } from "../../../entities/organizer/api/season.api";
+import type { SeasonStaffMember } from "../../../entities/organizer/model/season.types";
+import type { ExtracurricularActivity } from "../../../entities/organizer/model/extracurricular.types";
 import { DEFAULT_SEASON_ID } from "../../../features/auth/student-registration";
 import { OrgSidebar } from "../../../shared/ui/org-sidebar";
 import "./org-extracurricular.css";
@@ -25,7 +26,7 @@ type Activity = {
 };
 
 function mapActivity(
-    activity: ApiActivity,
+    activity: ExtracurricularActivity,
     staffById: Map<number, SeasonStaffMember>,
     scoredActivityIds: Set<number>,
 ): Activity {

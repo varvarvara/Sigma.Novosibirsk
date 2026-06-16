@@ -1,16 +1,16 @@
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearch } from "@tanstack/react-router";
-import { AuthApiError } from "../../../api/auth";
-import {
-    DEFAULT_EXTRACURRICULAR_ACTIVITY_SCORE,
-    listExtracurricularActivities,
-    listExtracurricularScores,
-    listExtracurricularTeams,
-    markExtracurricularTeamAttendance,
-} from "../../../api/organizer/extracurricular";
+import { AuthApiError } from "../../../entities/auth";
+import { DEFAULT_EXTRACURRICULAR_ACTIVITY_SCORE } from "../../../entities/organizer/api/extracurricular.api";
 import { DEFAULT_SEASON_ID } from "../../../features/auth/student-registration";
 import { OrgSidebar } from "../../../shared/ui/org-sidebar";
 import "./extracurricular-points-add.css";
+import { 
+    useListActivitiesQuery, 
+    useListScoresQuery, 
+    useListTeamsQuery, 
+    useMarkTeamAttendanceMutation 
+} from "../../../entities/organizer/extracurricullar.queries";
 
 type TeamScore = {
     id: number;
@@ -30,10 +30,7 @@ export function ExtracurricularPointsAddPage() {
     const search = useSearch({ from: "/extracurricular-points-add" });
     const [teams, setTeams] = useState<TeamScore[]>([]);
     const [notice, setNotice] = useState("Черновик");
-    const [isLoading, setIsLoading] = useState(true);
-    const [isSaving, setIsSaving] = useState(false);
-    const [error, setError] = useState<string | null>(null);
-    const [defaultPoints, setDefaultPoints] = useState(DEFAULT_EXTRACURRICULAR_ACTIVITY_SCORE);
+
 
     const activityId = search.activityId;
     const title = search.title ?? "Название";
@@ -41,56 +38,82 @@ export function ExtracurricularPointsAddPage() {
     const time = search.time ?? "—";
     const organizer = search.organizer ?? "—";
 
-    const loadTeams = useCallback(async () => {
+    const {
+        data: apiTeams = [],
+        isLoading: isTeamLoading,
+        error: teamsError,
+    } = useListTeamsQuery();
+
+    const {
+        data: activities = [],
+        isLoading: isActivitiesLoading,
+        error: activitiesError,
+    } = useListActivitiesQuery();
+
+    const {
+        data: scores = [],
+        isLoading: isScoresLoading,
+        error: scoresError,
+    } = useListScoresQuery();
+
+    const attendanceMutation = useMarkTeamAttendanceMutation();
+
+    const isLoading = isTeamLoading || isScoresLoading || isActivitiesLoading;
+
+    const error = useMemo(() => {
         if (!activityId) {
-            setError("Не выбрано мероприятие");
-            setIsLoading(false);
+            return "Не выбрано мероприятие";
+        }
+
+        const queryError = teamsError ?? scoresError ?? activitiesError;
+
+        if (!queryError) {
+            return null;
+        }
+
+        if (queryError instanceof AuthApiError) {
+            return queryError.message;
+        }
+
+        return "Не удалось загрузить команды";
+    }, [activityId, activitiesError, scoresError, teamsError]);
+
+    const defaultPoints = useMemo(() => {
+        if (!activityId) {
+            return DEFAULT_EXTRACURRICULAR_ACTIVITY_SCORE;
+        }
+
+        const activity = activities.find((item) => item.id === activityId);
+        return activity?.ex_course_score ?? DEFAULT_EXTRACURRICULAR_ACTIVITY_SCORE;
+    }, [activities, activityId]);
+
+
+    useEffect(() => {
+        if (!activityId || error) {
+            setTeams([]);
             return;
         }
 
-        setIsLoading(true);
-        setError(null);
-
-        try {
-            const [apiTeams, scores, activities] = await Promise.all([
-                listExtracurricularTeams(),
-                listExtracurricularScores(),
-                listExtracurricularActivities(),
-            ]);
-
-            const activity = activities.find((item) => item.id === activityId);
-            const activityScore = activity?.ex_course_score ?? DEFAULT_EXTRACURRICULAR_ACTIVITY_SCORE;
-            setDefaultPoints(activityScore);
-
-            const scoredTeamIds = new Set(
-                scores
-                    .filter((score) => score.ex_course_id === activityId)
-                    .map((score) => score.team_id),
-            );
-
-            setTeams(
-                apiTeams.map((team) => ({
-                    id: team.id,
-                    name: team.ex_team_name,
-                    points: scoredTeamIds.has(team.id) ? activityScore : 0,
-                    visited: scoredTeamIds.has(team.id),
-                })),
-            );
-        } catch (loadError) {
-            if (loadError instanceof AuthApiError) {
-                setError(loadError.message);
-            } else {
-                setError("Не удалось загрузить команды");
-            }
-            setTeams([]);
-        } finally {
-            setIsLoading(false);
+        if (isLoading) {
+            return;
         }
-    }, [activityId]);
 
-    useEffect(() => {
-        void loadTeams();
-    }, [loadTeams]);
+        const scoredTeamIds = new Set(
+            scores
+                .filter((score) => score.ex_course_id === activityId)
+                .map((score) => score.team_id),
+        );
+    
+        setTeams(
+            apiTeams.map((team) => ({
+                id: team.id,
+                name: team.ex_team_name,
+                points: scoredTeamIds.has(team.id) ? defaultPoints : 0,
+                visited: scoredTeamIds.has(team.id),
+            })),
+        );
+    }, [activityId, apiTeams, defaultPoints, error, isLoading, scores]);
+
 
     const filteredTeams = teams;
 
@@ -104,7 +127,6 @@ export function ExtracurricularPointsAddPage() {
             return;
         }
 
-        setIsSaving(true);
         setNotice("Сохранение...");
 
         try {
@@ -113,7 +135,7 @@ export function ExtracurricularPointsAddPage() {
             await Promise.all(
                 visitedTeams.map(async (team) => {
                     try {
-                        await markExtracurricularTeamAttendance({
+                        await attendanceMutation.mutateAsync({
                             team_id: team.id,
                             ex_course_id: activityId,
                             season_id: DEFAULT_SEASON_ID,
@@ -135,8 +157,6 @@ export function ExtracurricularPointsAddPage() {
             } else {
                 setNotice("Не удалось сохранить посещаемость");
             }
-        } finally {
-            setIsSaving(false);
         }
     };
 
@@ -166,9 +186,9 @@ export function ExtracurricularPointsAddPage() {
                         className="points-light-button points-clickable"
                         type="button"
                         onClick={() => void savePoints()}
-                        disabled={isSaving || isLoading || !activityId}
+                        disabled={attendanceMutation.isPending || isLoading || !activityId}
                     >
-                        {isSaving ? "Сохранение..." : "Сохранить посещаемость"}
+                        {attendanceMutation.isPending ? "Сохранение..." : "Сохранить посещаемость"}
                     </button>
                     {notice ? <span className="points-notice">{notice}</span> : null}
                 </div>

@@ -3,7 +3,7 @@ import {
     getMyEnrollments,
     getMyScheduleEvents,
     getSchedulePublishStatus,
-} from "../../api/students/learning";
+} from "../../entities/students/api/learning.api";
 import {
     normalizeEnrollmentSlotOptions,
     sanitizeDraftSelectionByHour,

@@ -1,15 +1,15 @@
 import { Link, useLocation, useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ChevronLeft } from "@untitledui/icons/ChevronLeft";
-import { AuthApiError } from "../../../api/auth";
+import { AuthApiError } from "../../../entities/auth";
 import {
     getEnrollmentSlotOptions,
     getMyEnrollments,
     submitEnrollmentSlotSelection,
-    type SlotOptionsItem,
-} from "../../../api/students/learning";
+} from "../../../entities/students/api/learning.api";
+import type { SlotOptionsItem } from "../../../entities/students/model/learning.types";
 import { CourseCoverThumb } from "../../../components/course-cover-thumb/course-cover-thumb";
-import type { SlotCourseOption } from "../../../api/students/learning";
+import type { SlotCourseOption } from "../../../entities/students/model/learning.types";
 import {
     formatEnrollmentSlotTime,
     normalizeEnrollmentSlotOptions,

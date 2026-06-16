@@ -2,8 +2,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   getMyTeacherCertificates,
   getTeacherCertificateDownload,
-  type TeacherCertificate,
-} from '../../../api/teacher/certificates';
+} from '../../../entities/teacher/api/certificates.api';
+import type { TeacherCertificate } from '../../../entities/teacher/model/certificate.types';
 import { TeacherAppShell } from '../../../shared/ui/teacher_sidebar/teacher-app-shell';
 import './teacher-courses-styles.css';
 
