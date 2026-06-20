@@ -1,0 +1,3 @@
+ALTER TABLE course ADD COLUMN IF NOT EXISTS cover_image_key TEXT;
+ALTER TABLE students ADD COLUMN IF NOT EXISTS avatar_image_key VARCHAR(512);
+ALTER TABLE staff ADD COLUMN IF NOT EXISTS avatar_image_key VARCHAR(512);

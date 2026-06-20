@@ -1,0 +1,122 @@
+.org-panel-state {
+    flex: 1;
+    display: flex;
+    min-height: 280px;
+    margin-top: 24px;
+}
+
+.org-panel-state__card {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    min-height: 320px;
+    padding: 48px 32px;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    background: #ffffff;
+    text-align: center;
+    box-sizing: border-box;
+}
+
+.org-panel-state__card--error {
+    border-color: #fecaca;
+    background: #fffbfb;
+}
+
+.org-panel-state__card--empty {
+    background: #fafafa;
+}
+
+.org-panel-state__spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid #e9d7fe;
+    border-top-color: #7f56d9;
+    border-radius: 50%;
+    animation: org-panel-state-spin 0.75s linear infinite;
+}
+
+@keyframes org-panel-state-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.org-panel-state__icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 4px;
+}
+
+.org-panel-state__icon--error {
+    background: #fee2e2;
+    color: #dc2626;
+}
+
+.org-panel-state__icon--empty {
+    background: #f3e8ff;
+    color: #7c3aed;
+}
+
+.org-panel-state__icon-svg {
+    display: block;
+}
+
+.org-panel-state__title {
+    margin: 0;
+    color: #0f172a;
+    font-family: "Inter SemiBold", Inter, sans-serif;
+    font-size: 20px;
+    line-height: 28px;
+    font-weight: 600;
+}
+
+.org-panel-state__message {
+    margin: 0;
+    max-width: 420px;
+    color: #64748b;
+    font-family: Inter, sans-serif;
+    font-size: 14px;
+    line-height: 22px;
+    font-weight: 500;
+}
+
+.org-panel-state__actions {
+    margin-top: 8px;
+}
+
+.org-panel-state__button {
+    margin-top: 8px;
+    height: 40px;
+    padding: 0 20px;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    font-family: "Inter SemiBold", Inter, sans-serif;
+    font-size: 14px;
+    line-height: 20px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.org-panel-state__button--primary {
+    background: #7f56d9;
+    color: #ffffff;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.12);
+}
+
+.org-panel-state__button--primary:hover {
+    background: #6941c6;
+}
+
+.org-panel-state__button--primary:focus-visible {
+    outline: 2px solid #e9e1ff;
+    outline-offset: 2px;
+}

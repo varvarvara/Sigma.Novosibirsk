@@ -1,0 +1,118 @@
+:root {
+    --back-chevron-size: 24px;
+    --back-chevron-offset: 24px;
+    --student-bottom-nav-height: 73px;
+}
+
+@font-face {
+    font-family: 'Inter Regular';
+    src: url('./assets/Inter/static/Inter_24pt-Regular.ttf') format('truetype');
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Inter Medium';
+    src: url('./assets/Inter/static/Inter_24pt-Medium.ttf') format('truetype');
+    font-weight: 500;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Inter SemiBold';
+    src: url('./assets/Inter/static/Inter_24pt-SemiBold.ttf') format('truetype');
+    font-weight: 600;
+    font-style: normal;
+    font-display: swap;
+}
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html,
+body,
+#root {
+    min-height: 100%;
+}
+
+html {
+    overflow-y: auto;
+}
+
+body {
+    font-family: 'Inter Regular';
+    font-weight: 400;
+    background: #141414;
+    overflow-x: hidden;
+    overflow-y: auto;
+}
+
+.semi-bold-text {
+    font-weight: 600;
+}
+
+.regular-text {
+    font-weight: 400;
+}
+
+.app-back-button {
+    display: grid;
+    place-items: center;
+    width: var(--back-chevron-size);
+    height: var(--back-chevron-size);
+    flex: 0 0 var(--back-chevron-size);
+    border: none;
+    padding: 0;
+    background: transparent;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.app-back-button--dark {
+    background: transparent;
+}
+
+.app-back-button__icon {
+    display: block;
+    flex-shrink: 0;
+}
+
+.app-primary-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 40px;
+    padding: 0 24px;
+    border: 0;
+    border-radius: 20px;
+    background: #7949FF;
+    color: #FFFFFF;
+    box-shadow: 0 1px 2px rgba(27, 36, 44, 0.12);
+    font-family: 'Inter SemiBold', Inter, sans-serif;
+    font-size: 16px;
+    line-height: 20px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.15s ease, transform 0.1s ease, opacity 0.15s ease;
+}
+
+.app-primary-button:hover {
+    background: #6d3ff5;
+}
+
+.app-primary-button:active {
+    transform: translateY(1px);
+}
+
+.app-primary-button:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+.page-transition {
+    min-height: 100%;
+}
