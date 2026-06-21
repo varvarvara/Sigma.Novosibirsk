@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { ENROLLMENT_SLOT_TIME_LABELS } from '../../../features/course-flow/enrollment-slot-times';
-import { TeacherAppShell } from '../../../shared/ui/teacher_sidebar/teacher-app-shell';
+import { TeacherAppShell } from '../../../widgets/teacher-sidebar/teacher-app-shell';
 import './teacher-courses-styles.css';
 
 const SCHEDULE_DATES = ['23.07', '24.07', '25.07', '26.07', '27.07', '28.07', '29.07'] as const;

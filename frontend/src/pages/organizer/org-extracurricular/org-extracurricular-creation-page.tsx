@@ -5,7 +5,8 @@ import {
     createExtracurricularActivity,
     DEFAULT_EXTRACURRICULAR_ACTIVITY_SCORE,
 } from "../../../entities/organizer/api/extracurricular.api";
-import { getSeasonStaff, getSeasonStudents, type SeasonStaffMember, type SeasonStudent } from "../../../entities/organizer/api/season.api";
+import { getSeasonStaff, getSeasonStudents } from "../../../entities/organizer/api/season.api";
+import type { SeasonStaffMember, SeasonStudent } from "../../../entities/organizer/model/season.types";
 import { DEFAULT_SEASON_ID } from "../../../features/auth/student-registration";
 import {
     extractActivityDateDigits,
@@ -17,7 +18,7 @@ import {
     validateActivityTime,
     validateActivityTimeLive,
 } from "../../../features/organizer/activity-schedule-validation";
-import { OrgSidebar } from "../../../shared/ui/org-sidebar";
+import { OrgSidebar } from "../../../widgets/org-sidebar";
 import "../../../styles/field-error.css";
 import "./org-extracurricular-page.css";
 
@@ -66,7 +67,7 @@ function FieldErrorMessage({ id, message }: { id?: string; message?: string | nu
     );
 }
 
-export function OrgExtracurricularPage() {
+export function OrgExtracurricularCreationPage() {
     const navigate = useNavigate();
     const [title, setTitle] = useState("");
     const [description, setDescription] = useState("");

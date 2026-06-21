@@ -1,6 +1,6 @@
 import { Link, useLocation } from '@tanstack/react-router';
 import { useEffect, useState } from 'react';
-import { isStaffProfile } from '../../../entities/students/api/profile.api';
+import { isStaffProfile } from '../../entities/student/api/profile.api';
 import {
   getOrgProfileSyncDetail,
   ORG_AVATAR_UPDATED_EVENT,
@@ -8,10 +8,10 @@ import {
   ORG_LOGO_SRC,
   ORG_PROFILE_UPDATED_EVENT,
   persistOrgAvatarUrl,
-} from '../../org-profile-events';
+} from '../../shared/org-profile-events';
 import './org-sidebar-styles.css';
 import { readOrgAvatar, useOrgAvatar } from './use-org-avatar';
-import { useCurrentUserQuery } from '../../../entities/students/queries/profile.queries';
+import { useCurrentUserQuery } from '../../entities/student/queries/profile.queries';
 
 type OrgSidebarProps = {
   avatarSrc?: string | null;

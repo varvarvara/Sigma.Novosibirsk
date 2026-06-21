@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
-import { AuthStarPanel } from '../../../components/auth/auth-star-panel';
+import { AuthStarPanel } from '../../../features/auth/ui/auth-star-panel';
 import { ChevronDown } from '@untitledui/icons/ChevronDown';
 import { Eye } from '@untitledui/icons/Eye';
 import { EyeOff } from '@untitledui/icons/EyeOff';
 import { validateBirthDateLive } from '../../../features/auth/birth-date-validation';
-import { RegistrationConsentText } from '../../../features/auth/registration-consent-text';
+import { RegistrationConsentText } from '../../../features/auth/ui/registration-consent-text';
 import {
   getRegistrationErrorMessage,
   registerStudentAndLogin,

@@ -9,7 +9,7 @@ import { getSeasonStaff } from "../../../entities/organizer/api/season.api";
 import type { SeasonStaffMember } from "../../../entities/organizer/model/season.types";
 import type { ExtracurricularActivity } from "../../../entities/organizer/model/extracurricular.types";
 import { DEFAULT_SEASON_ID } from "../../../features/auth/student-registration";
-import { OrgSidebar } from "../../../shared/ui/org-sidebar";
+import { OrgSidebar } from "../../../widgets/org-sidebar";
 import "./org-extracurricular.css";
 
 type ActivityStatus = "active" | "draft" | "done";

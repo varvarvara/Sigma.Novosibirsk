@@ -1,9 +1,9 @@
-import {
+import { 
     getEnrollmentSlotOptions,
     getMyEnrollments,
     getMyScheduleEvents,
-    getSchedulePublishStatus,
-} from "../../entities/students/api/learning.api";
+    getSchedulePublishStatus
+} from "../../entities/student/api/learning.api";
 import {
     normalizeEnrollmentSlotOptions,
     sanitizeDraftSelectionByHour,

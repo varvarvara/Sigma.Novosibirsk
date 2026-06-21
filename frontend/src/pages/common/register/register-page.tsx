@@ -7,13 +7,13 @@ import {
   type SetStateAction,
 } from 'react'
 import { useLocation, useNavigate } from '@tanstack/react-router'
-import { AuthBackButton } from '../../../components/auth/auth-back-button'
+import { AuthBackButton } from '../../../features/auth/ui/auth-back-button'
 import { ChevronDown } from '@untitledui/icons/ChevronDown'
 import { Eye } from '@untitledui/icons/Eye'
 import { EyeOff } from '@untitledui/icons/EyeOff'
 import { AuthApiError, getAuthSession, login, saveAuthTokens } from '../../../entities/auth'
-import { signupStudent } from '../../../entities/students/api/profile.api'
-import { RegistrationConsentText } from '../../../features/auth/registration-consent-text'
+import { signupStudent } from '../../../entities/student/api/profile.api'
+import { RegistrationConsentText } from '../../../features/auth/ui/registration-consent-text'
 import './register-page.css'
 
 const PHONE_SLOT_POSITIONS = [4, 5, 6, 9, 10, 11, 13, 14, 16, 17] as const

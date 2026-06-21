@@ -4,7 +4,7 @@ import {
   getTeacherCertificateDownload,
 } from '../../../entities/teacher/api/certificates.api';
 import type { TeacherCertificate } from '../../../entities/teacher/model/certificate.types';
-import { TeacherAppShell } from '../../../shared/ui/teacher_sidebar/teacher-app-shell';
+import { TeacherAppShell } from '../../../widgets/teacher-sidebar/teacher-app-shell';
 import './teacher-courses-styles.css';
 
 type FileRow = {

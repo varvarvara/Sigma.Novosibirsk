@@ -1,21 +1,21 @@
 import { Link, useLocation } from '@tanstack/react-router';
 import { useEffect, useState } from 'react';
-import { clearAuthTokens, getAccessToken, getRefreshToken, logout } from '../../../entities/auth';
-import { isStaffProfile } from '../../../entities/students/api/profile.api';
-import { getTeacherFullName } from '../../../features/teacher/teacher-profile';
+import { clearAuthTokens, getAccessToken, getRefreshToken, logout } from "../../entities/auth";
+import { isStaffProfile } from '../../entities/student/api/profile.api';
+import { getTeacherFullName } from "../../features/teacher/teacher-profile";
 import {
   getTeacherProfileSyncDetail,
   TEACHER_AVATAR_UPDATED_EVENT,
   TEACHER_PROFILE_UPDATED_EVENT,
   type TeacherProfileSyncDetail,
-} from '../../teacher-profile-events';
+} from '../../shared/teacher-profile-events';
 import {
   isTeacherSubnavItemActive,
   type TeacherNavSection,
   TEACHER_NAV_SECTIONS,
 } from './teacher-nav-config';
 import { useTeacherAvatar } from './use-teacher-avatar';
-import { useCurrentUserQuery } from '../../../entities/students/queries/profile.queries';
+import { useCurrentUserQuery } from '../../entities/student/queries/profile.queries';
 
 type TeacherSubnavPanelProps = {
   section: TeacherNavSection | null;

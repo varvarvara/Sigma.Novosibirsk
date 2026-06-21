@@ -1,6 +1,6 @@
 import { useLocation } from "@tanstack/react-router";
 import { Navbar } from "../widgets/navbar/navbar";
-import { PageTransition } from "./page-transition";
+import { PageTransition } from "./ui/page-transition";
 
 const STUDENT_NAVBAR_PATHS = new Set([
     "/profile",

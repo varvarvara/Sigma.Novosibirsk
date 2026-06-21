@@ -2,8 +2,8 @@ import { Link, useLocation } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { ChevronLeft } from "@untitledui/icons/ChevronLeft";
 import { AuthApiError } from "../../../entities/auth";
-import { getMyAchievements } from "../../../entities/students/api/learning.api";
-import type { StudentAchievementDetailedOut } from "../../../entities/students/model/learning.types";
+import { getMyAchievements } from "../../../entities/student/api/learning.api";
+import type { StudentAchievementDetailedOut } from "../../../entities/student/model/learning.types";
 import "./curricular-achievements.css";
 
 type SubjectGroup = {

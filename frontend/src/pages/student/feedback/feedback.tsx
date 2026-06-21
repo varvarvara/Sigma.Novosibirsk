@@ -1,7 +1,7 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import type { CSSProperties } from "react";
 import { useState } from "react";
-import { Button } from "../../../components/base/buttons/button";
+import { Button } from "../../../shared/ui/buttons/button";
 import "./feedback.css";
 
 const ratingOptions = [

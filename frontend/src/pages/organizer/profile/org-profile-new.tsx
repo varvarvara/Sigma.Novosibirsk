@@ -7,10 +7,10 @@ import {
   isStaffProfile,
   updateMyStaffProfile,
   uploadMyAvatar,
-} from '../../../entities/students/api/profile.api';
-import type {  StaffProfile } from "../../../entities/students/model/profile.types"
+} from '../../../entities/student/api/profile.api';
+import type { StaffProfile } from '../../../entities/student/model/profile.types';
 import { validateBirthDate } from '../../../features/auth/birth-date-validation';
-import { OrgSidebar } from '../../../shared/ui/org-sidebar';
+import { OrgSidebar } from '../../../widgets/org-sidebar';
 import {
   dispatchOrgProfileUpdated,
   ORG_DEFAULT_AVATAR_SRC,

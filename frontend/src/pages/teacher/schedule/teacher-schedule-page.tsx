@@ -1,23 +1,13 @@
 import { type CSSProperties, type MouseEvent as ReactMouseEvent, useEffect, useMemo, useRef, useState } from 'react';
 import { AuthApiError } from '../../../entities/auth';
-import { getCurrentStudent, isStaffProfile } from '../../../entities/students/api/profile.api';
+import { getCurrentStudent, isStaffProfile } from '../../../entities/student/api/profile.api';
 import { getTeacherTimetable } from '../../../entities/teacher/api/schedule.api';
-import type { TeacherTimetableItem } from '../../../entities/teacher/model/schedule.types';
-import { TeacherAppShell } from '../../../shared/ui/teacher_sidebar/teacher-app-shell';
+import { addDays, addMonths, fromDateKey, pad, startOfDay, toDateKey } from '../../../features/teacher-schedule/lib/date';
+import { MODE_LABELS, MONTH_NAMES, buildMonthGrid, buildWeekDays, formatHeaderLabel, getStoredMode, groupSlotsByDate, type Slot, type ViewMode, WEEKDAY_FULL_NAMES } from '../../../features/teacher-schedule/lib/timetable';
+import { getNovosibirskTimeParts, minutesToTime, timeToMinutes } from '../../../features/teacher-schedule/lib/time';
+import { TeacherAppShell } from '../../../widgets/teacher-sidebar/teacher-app-shell';
 import './teacher-schedule-styles.css';
 
-type ViewMode = 'day' | 'week' | 'month';
-type DayKey = 0 | 1 | 2 | 3 | 4 | 5 | 6;
-
-type Slot = {
-  id: string;
-  weekday: 1 | 2 | 3 | 4 | 5;
-  start: string;
-  end: string;
-  course: string;
-  room: string;
-  students: number;
-};
 
 type PopoverState = {
   left: number;
@@ -34,194 +24,6 @@ const scheduleEnd = '23:00';
 const stepMinutes = 60;
 const SCHEDULE_HEADER_HEIGHT_PX = 48;
 const SCHEDULE_HOUR_HEIGHT_PX = 52;
-const monthNames = [
-  'Январь',
-  'Февраль',
-  'Март',
-  'Апрель',
-  'Май',
-  'Июнь',
-  'Июль',
-  'Август',
-  'Сентябрь',
-  'Октябрь',
-  'Ноябрь',
-  'Декабрь',
-];
-
-const weekdayFullNames = ['Воскресенье', 'Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота'];
-const modeLabels: Record<ViewMode, string> = {
-  day: 'День',
-  week: 'Неделя',
-  month: 'Месяц',
-};
-
-function pad(value: number) {
-  return String(value).padStart(2, '0');
-}
-
-function toDateKey(date: Date) {
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
-}
-
-function fromDateKey(key: string) {
-  const [year, month, day] = key.split('-').map(Number);
-  return new Date(year, month - 1, day);
-}
-
-function startOfDay(date: Date) {
-  return new Date(date.getFullYear(), date.getMonth(), date.getDate());
-}
-
-function addDays(date: Date, amount: number) {
-  const copy = startOfDay(date);
-  copy.setDate(copy.getDate() + amount);
-  return copy;
-}
-
-function addMonths(date: Date, amount: number) {
-  return new Date(date.getFullYear(), date.getMonth() + amount, date.getDate());
-}
-
-function startOfWeek(date: Date) {
-  const copy = startOfDay(date);
-  const dayIndex = (copy.getDay() + 6) % 7;
-  copy.setDate(copy.getDate() - dayIndex);
-  return copy;
-}
-
-function startOfMonth(date: Date) {
-  return new Date(date.getFullYear(), date.getMonth(), 1);
-}
-
-function endOfMonth(date: Date) {
-  return new Date(date.getFullYear(), date.getMonth() + 1, 0);
-}
-
-function endOfWeek(date: Date) {
-  return addDays(startOfWeek(date), 6);
-}
-
-function timeToMinutes(time: string) {
-  const [hours, minutes] = time.split(':').map(Number);
-  return hours * 60 + minutes;
-}
-
-function minutesToTime(minutes: number) {
-  const safe = ((minutes % 1440) + 1440) % 1440;
-  const hours = Math.floor(safe / 60);
-  const mins = safe % 60;
-  return `${pad(hours)}:${pad(mins)}`;
-}
-
-function getNovosibirskTimeParts(date: Date) {
-  const parts = new Intl.DateTimeFormat('ru-RU', {
-    timeZone: 'Asia/Novosibirsk',
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: false,
-  }).formatToParts(date);
-
-  const hour = Number(parts.find((part) => part.type === 'hour')?.value ?? 0);
-  const minute = Number(parts.find((part) => part.type === 'minute')?.value ?? 0);
-
-  return { hour, minute };
-}
-
-function formatWeek(date: Date) {
-  const start = startOfWeek(date);
-  const end = addDays(start, 6);
-  if (start.getMonth() === end.getMonth()) {
-    return `${pad(start.getDate())}-${pad(end.getDate())} ${monthNames[start.getMonth()]} ${start.getFullYear()}`;
-  }
-  return `${pad(start.getDate())} ${monthNames[start.getMonth()]} - ${pad(end.getDate())} ${monthNames[end.getMonth()]} ${start.getFullYear()}`;
-}
-
-function formatMonth(date: Date) {
-  return `${monthNames[date.getMonth()]} ${date.getFullYear()}`;
-}
-
-function formatHeaderLabel(mode: ViewMode, date: Date) {
-  if (mode === 'day') {
-    return `${pad(date.getDate())} ${monthNames[date.getMonth()]} ${date.getFullYear()}`;
-  }
-  if (mode === 'week') {
-    return formatWeek(date);
-  }
-  return formatMonth(date);
-}
-
-function buildMonthGrid(date: Date) {
-  const firstOfMonth = startOfMonth(date);
-  const lastOfMonth = endOfMonth(date);
-  const gridStart = startOfWeek(firstOfMonth);
-  const gridEnd = endOfWeek(lastOfMonth);
-  const grid: Date[] = [];
-
-  let current = gridStart;
-  while (current <= gridEnd) {
-    grid.push(current);
-    current = addDays(current, 1);
-  }
-
-  return grid;
-}
-
-function buildWeekDays(date: Date) {
-  const start = startOfWeek(date);
-  return Array.from({ length: 7 }, (_, index) => addDays(start, index));
-}
-
-function formatLessonTime(value: string) {
-  return value.length >= 5 ? value.slice(0, 5) : value;
-}
-
-function timetableItemToSlot(item: TeacherTimetableItem): Slot {
-  const date = fromDateKey(item.lesson_date);
-  const weekday = date.getDay();
-  const start = formatLessonTime(item.lesson_time);
-  const end = minutesToTime(timeToMinutes(start) + 60);
-  const classroom = item.classroom ? `каб. ${item.classroom}` : 'кабинет не назначен';
-
-  return {
-    id: `schedule-${item.schedule_id}`,
-    weekday: (weekday >= 1 && weekday <= 5 ? weekday : 1) as Slot['weekday'],
-    start,
-    end,
-    course: item.course_title,
-    room: `Занятие ${item.class_number} · ${classroom}`,
-    students: 0,
-  };
-}
-
-function groupSlotsByDate(items: TeacherTimetableItem[]) {
-  const map: Record<string, Slot[]> = {};
-
-  for (const item of items) {
-    const key = item.lesson_date;
-    if (!map[key]) {
-      map[key] = [];
-    }
-    map[key].push(timetableItemToSlot(item));
-  }
-
-  for (const key of Object.keys(map)) {
-    map[key].sort((left, right) => left.start.localeCompare(right.start));
-  }
-
-  return map;
-}
-
-function getStoredMode() {
-  if (typeof window === 'undefined') {
-    return 'week' as ViewMode;
-  }
-  const value = window.localStorage.getItem(STORAGE_MODE_KEY);
-  if (value === 'day' || value === 'week' || value === 'month') {
-    return value;
-  }
-  return 'week';
-}
 
 function getStoredDate() {
   if (typeof window === 'undefined') {
@@ -432,11 +234,11 @@ export function TeacherSchedulePage() {
                   className="teacher-schedule-mode-switch-button"
                   onClick={() => setModeMenuOpen((current) => !current)}
                 >
-                  {modeLabels[viewMode]}
+                  {MODE_LABELS[viewMode]}
                 </button>
                 {modeMenuOpen ? (
                   <div className="teacher-schedule-mode-menu" role="menu">
-                    {(Object.keys(modeLabels) as ViewMode[]).map((mode) => (
+                    {(Object.keys(MODE_LABELS) as ViewMode[]).map((mode) => (
                       <button
                         key={mode}
                         type="button"
@@ -446,7 +248,7 @@ export function TeacherSchedulePage() {
                           setModeMenuOpen(false);
                         }}
                       >
-                        {modeLabels[mode]}
+                        {MODE_LABELS[mode]}
                       </button>
                     ))}
                   </div>
@@ -546,9 +348,9 @@ export function TeacherSchedulePage() {
                         setViewMode('day');
                       }
                     }}
-                    aria-label={`Открыть день ${pad(date.getDate())} ${monthNames[date.getMonth()]}`}
+                    aria-label={`Открыть день ${pad(date.getDate())} ${MONTH_NAMES[date.getMonth()]}`}
                   >
-                    <span className="teacher-schedule-day-header-weekday">{weekdayFullNames[date.getDay()]}</span>
+                    <span className="teacher-schedule-day-header-weekday">{WEEKDAY_FULL_NAMES[date.getDay()]}</span>
                     <span className="teacher-schedule-day-header-date">{pad(date.getDate())}</span>
                   </div>
                 ))}

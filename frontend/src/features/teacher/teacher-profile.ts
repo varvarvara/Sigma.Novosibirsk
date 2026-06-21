@@ -1,4 +1,4 @@
-import type { StaffProfile } from '../../entities/students/model/profile.types';
+import type { StaffProfile } from '../../entities/student/model/profile.types';
 
 export const TEACHER_DEFAULT_AVATAR_SRC = '/default-avatar.svg';
 export const TEACHER_AVATAR_MAX_SIZE_BYTES = 5 * 1024 * 1024;

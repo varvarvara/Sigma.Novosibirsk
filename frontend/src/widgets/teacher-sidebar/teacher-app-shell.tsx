@@ -1,20 +1,20 @@
 import { type ReactNode, useEffect, useState } from 'react';
 import { useLocation, useNavigate } from '@tanstack/react-router';
-import { isStaffProfile } from '../../../entities/students/api/profile.api';
-import { TEACHER_DEFAULT_AVATAR_SRC } from '../../../features/teacher/teacher-profile';
+import { isStaffProfile } from '../../entities/student/api/profile.api';
+import { TEACHER_DEFAULT_AVATAR_SRC } from '../../features/teacher/teacher-profile';
 import {
   getTeacherProfileSyncDetail,
   persistTeacherAvatarUrl,
   TEACHER_AVATAR_UPDATED_EVENT,
   TEACHER_PROFILE_UPDATED_EVENT,
-} from '../../teacher-profile-events';
+} from '../../shared/teacher-profile-events';
 import { getTeacherNavSectionFromPath, TEACHER_NAV_SECTIONS, type TeacherNavSection } from './teacher-nav-config';
 import { TeacherSidebar } from './teacher-sidebar';
 import { TeacherSubnavPanel } from './teacher-subnav-panel';
 import { readTeacherAvatar } from './use-teacher-avatar';
 import './teacher-sidebar-styles.css';
 import './teacher-app-shell.css';
-import { useCurrentUserQuery } from '../../../entities/students/queries/profile.queries';
+import { useCurrentUserQuery } from '../../entities/student/queries/profile.queries';
 
 type TeacherAppShellProps = {
   children: ReactNode;

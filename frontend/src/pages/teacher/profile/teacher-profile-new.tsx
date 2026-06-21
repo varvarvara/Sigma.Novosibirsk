@@ -1,4 +1,4 @@
-import { TeacherAppShell } from '../../../shared/ui/teacher_sidebar/teacher-app-shell';
+import { TeacherAppShell } from '../../../widgets/teacher-sidebar/teacher-app-shell';
 import '../../../styles/field-error.css';
 import { getTeacherFullName, TEACHER_DEFAULT_AVATAR_SRC, TEACHER_STUDY_YEAR_OPTIONS } from '../../../features/teacher/teacher-profile';
 import { useTeacherProfile } from '../../../features/teacher/use-teacher-profile';

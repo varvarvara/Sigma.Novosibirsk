@@ -13,7 +13,7 @@ import type { ExtracurricularTeam } from "../../../entities/organizer/model/extr
 import type { SeasonStudent, SeasonTeamMember } from "../../../entities/organizer/model/season.types";
 import { DEFAULT_SEASON_ID } from "../../../features/auth/student-registration";
 import { OrgPanelState } from "../../../shared/ui/org-panel-state";
-import { OrgSidebar } from "../../../shared/ui/org-sidebar";
+import { OrgSidebar } from "../../../widgets/org-sidebar";
 import { TeamMembersTable } from "./team-members-table";
 import { formatTeamPointsLabel, getMemberScoreKey, type MemberScoreEntry } from "./team-scoring";
 import "./team-formation-page.css";
@@ -172,7 +172,6 @@ export function TeamFormationPage() {
     };
 
     const deleteTeam = () => {
-        // TODO: backend has no DELETE /gamification/team endpoint yet
         setNotice("Удаление команды пока недоступно на сервере");
     };
 

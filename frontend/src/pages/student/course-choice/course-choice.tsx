@@ -1,5 +1,5 @@
 import { useNavigate } from "@tanstack/react-router";
-import { Button } from "../../../components/base/buttons/button";
+import { Button } from "../../../shared/ui/button/button";
 import "./course-choice.css";
 
 export function CourseChoicePage() {

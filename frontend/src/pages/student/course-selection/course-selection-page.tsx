@@ -6,10 +6,10 @@ import {
     getEnrollmentSlotOptions,
     getMyEnrollments,
     submitEnrollmentSlotSelection,
-} from "../../../entities/students/api/learning.api";
-import type { SlotOptionsItem } from "../../../entities/students/model/learning.types";
-import { CourseCoverThumb } from "../../../components/course-cover-thumb/course-cover-thumb";
-import type { SlotCourseOption } from "../../../entities/students/model/learning.types";
+} from "../../../entities/student/api/learning.api";
+import type { SlotOptionsItem } from "../../../entities/student/model/learning.types";
+import { CourseCoverThumb } from "../../../shared/ui/course-cover-thumb/course-cover-thumb";
+import type { SlotCourseOption } from "../../../entities/student/model/learning.types";
 import {
     formatEnrollmentSlotTime,
     normalizeEnrollmentSlotOptions,
@@ -19,25 +19,10 @@ import {
     DRAFT_SELECTION_STORAGE_KEY,
     readDraftSelectionByHour,
 } from "../../../features/course-flow/resolve-course-flow";
+import { pickLessonCoverUrl } from "../../../features/course-selection/lib/pick-lesson-cover-url";
+import { hydrateSelectionFromEnrollments } from "../../../features/course-selection/model/selection-draft";
 import "../../../styles/field-error.css";
 import "./course-selection-page.css";
-
-function pickLessonCoverUrl(slot: SlotOptionsItem, selectedCourse?: SlotCourseOption, allSlots: SlotOptionsItem[] = []) {
-    if (selectedCourse?.cover_image_url?.trim()) {
-        return selectedCourse.cover_image_url.trim();
-    }
-
-    const courseWithCover = slot.courses.find((course) => Boolean(course.cover_image_url?.trim()));
-    if (courseWithCover?.cover_image_url) {
-        return courseWithCover.cover_image_url.trim();
-    }
-
-    if (slot.preview_cover_url?.trim()) {
-        return slot.preview_cover_url.trim();
-    }
-
-    return null;
-}
 
 export function CourseSelectionPage() {
     const navigate = useNavigate();
@@ -52,24 +37,7 @@ export function CourseSelectionPage() {
     const isDraftHydratedRef = useRef(false);
 
     const syncDraftFromStorage = useCallback((slotOptions: SlotOptionsItem[], enrollments: Awaited<ReturnType<typeof getMyEnrollments>>) => {
-        const nextSelected = readDraftSelectionByHour(slotOptions);
-
-        for (const slot of slotOptions) {
-            if (nextSelected[slot.slot_hour]) {
-                continue;
-            }
-
-            const activeEnrollment = enrollments.find(
-                (enrollment) =>
-                    enrollment.enrollment_status === "Active" &&
-                    slot.courses.some((course) => course.course_id === enrollment.course_id),
-            );
-            if (activeEnrollment) {
-                nextSelected[slot.slot_hour] = activeEnrollment.course_id;
-            }
-        }
-
-        setSelectedByHour(nextSelected);
+        setSelectedByHour(hydrateSelectionFromEnrollments(slotOptions, enrollments));
         isDraftHydratedRef.current = true;
     }, []);
 
@@ -205,7 +173,6 @@ export function CourseSelectionPage() {
                     const coverImageUrl = pickLessonCoverUrl(
                         slot ?? { slot_hour: lesson.slotHour, courses: lesson.courses },
                         selectedCourse,
-                        slots,
                     );
                     const chosenName = selectedCourse?.title ?? null;
                     const isSelected = Boolean(chosenName);

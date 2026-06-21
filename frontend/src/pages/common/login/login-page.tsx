@@ -1,9 +1,9 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { useLocation, useNavigate } from '@tanstack/react-router'
-import { AuthBackButton } from '../../../components/auth/auth-back-button'
+import { AuthBackButton } from '../../../features/auth/ui/auth-back-button'
 import { Eye } from '@untitledui/icons/Eye'
 import { EyeOff } from '@untitledui/icons/EyeOff'
-import { AuthStarPanel } from '../../../components/auth/auth-star-panel'
+import { AuthStarPanel } from '../../../features/auth/ui/auth-star-panel'
 import { isMobileAuthViewport, navigateToRegistration } from '../../../features/auth/auth-flow'
 import {
   AuthApiError,
@@ -14,7 +14,7 @@ import {
   saveAuthTokens,
   saveRememberedEmail,
 } from '../../../entities/auth'
-import '../../../components/auth/auth-split-layout.css'
+import '../../../features/auth/ui/auth-split-layout.css'
 import '../../../styles/field-error.css'
 import './login-page.css'
 

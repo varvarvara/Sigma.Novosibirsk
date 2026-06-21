@@ -1,9 +1,9 @@
 import { useState, type ChangeEvent, type FormEvent } from 'react'
 import { Link, useNavigate } from '@tanstack/react-router'
-import { AuthStarPanel } from '../../../components/auth/auth-star-panel'
+import { AuthStarPanel } from '../../../features/auth/ui/auth-star-panel'
 import { ChevronDown } from '@untitledui/icons/ChevronDown'
 import { validateBirthDateLive } from '../../../features/auth/birth-date-validation'
-import { RegistrationConsentText } from '../../../features/auth/registration-consent-text'
+import { RegistrationConsentText } from '../../../features/auth/ui/registration-consent-text'
 import {
   DESCRIPTION_MAX_LENGTH,
   TEACHER_COURSE_TYPE_OPTIONS,

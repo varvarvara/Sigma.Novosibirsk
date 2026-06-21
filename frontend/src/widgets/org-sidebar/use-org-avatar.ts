@@ -5,9 +5,9 @@ import {
   ORG_DEFAULT_AVATAR_SRC,
   ORG_PROFILE_UPDATED_EVENT,
   readPersistedOrgAvatarUrl,
-} from '../../org-profile-events';
+} from '../../shared/org-profile-events';
 
-export { ORG_AVATAR_UPDATED_EVENT } from '../../org-profile-events';
+export { ORG_AVATAR_UPDATED_EVENT } from '../../shared/org-profile-events';
 
 export function readOrgAvatar(override?: string | null) {
   if (override !== undefined && override !== null && override !== '') {

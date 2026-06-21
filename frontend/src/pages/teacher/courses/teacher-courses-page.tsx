@@ -5,7 +5,7 @@ import {
   formatCourseTypeLabel,
 } from '../../../entities/teacher/api/courses.api';
 import type { TeacherCourse } from '../../../entities/teacher/model/courses.types';
-import { TeacherAppShell } from '../../../shared/ui/teacher_sidebar/teacher-app-shell';
+import { TeacherAppShell } from '../../../widgets/teacher-sidebar/teacher-app-shell';
 import './teacher-courses-styles.css';
 import { useGetMyTeacherCourses } from '../../../entities/teacher/queries/courses.queries';
 

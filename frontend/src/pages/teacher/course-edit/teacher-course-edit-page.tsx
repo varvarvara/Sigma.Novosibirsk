@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
-import { Button } from '../../../shared/ui/Button/Button';
-import { Card } from '../../../shared/ui/Card/Card';
+import { Button } from '../../../shared/ui/button/button';
+import { Card } from '../../../shared/ui/card/card';
 
 export function TeacherCourseEditPage() {
     const navigate = useNavigate();

@@ -20,12 +20,12 @@ export const learningQueryKeys = {
     myAttendanceFilterOptions: ["getMyAttendanceFilterOptions"] as const,
     myAttendanceCharges: ["getMyAttendanceCharges"] as const,
     myAttendanceDashboard: ["getMyAttendanceDashboard"] as const,
-    myAchievements: ["getMyAchivements"] as const,
+    myAchievements: ["getMyAchievements"] as const,
     myScheduleEvents: (seasonId: number) => ["getMyScheduleEvents", seasonId] as const,
     schedulePublishStatus: (seasonId: number) => ["getSchedulePublishStatus", seasonId] as const,
 }
 
-export function useEnrollmentsSlotQuery() {
+export function useEnrollmentSlotOptionsQuery() {
     return useQuery({
         queryKey: learningQueryKeys.enrollmentSlotOptions,
         queryFn: getEnrollmentSlotOptions,

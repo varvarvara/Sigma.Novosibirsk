@@ -6,7 +6,7 @@ import {
   getCourseAchievementMatrix,
 } from '../../../entities/teacher/api/attendance.api';
 import type { TeacherAchievementMatrix } from '../../../entities/teacher/model/attendance.types';
-import { TeacherAppShell } from '../../../shared/ui/teacher_sidebar/teacher-app-shell';
+import { TeacherAppShell } from '../../../widgets/teacher-sidebar/teacher-app-shell';
 import './achievements-page.css';
 
 const pageSize = 10;

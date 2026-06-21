@@ -7,29 +7,19 @@ import {
     getCurrentStudent,
     updateMyStudentProfile,
     uploadMyAvatar,
-} from "../../../entities/students/api/profile.api";
-import type { CurrentUser, Student } from "../../../entities/students/model/profile.types";
+} from "../../../entities/student/api/profile.api";
+import type { CurrentUser, Student } from "../../../entities/student/model/profile.types";
+import {
+    buildStudentUpdatePayload,
+    getStudentDraft,
+    type StudentProfileDraft,
+} from "../../../features/profile-edit/student-profile-form";
+import { SettingsField } from "../../../features/profile-edit/ui/settings-field";
 import "./profile-settings.css";
 
 const DEFAULT_AVATAR_SRC = "/default-avatar.svg";
 const AVATAR_MAX_SIZE_BYTES = 5 * 1024 * 1024;
 const GRADE_OPTIONS = [8, 9, 10, 11] as const;
-
-type StudentProfileDraft = {
-    first_name: string;
-    last_name: string;
-    partonymic: string;
-    birth_day: string;
-    birth_month: string;
-    birth_year: string;
-    school: string;
-    year_of_study: string;
-    city: string;
-    phone: string;
-    tg_nickname: string;
-    parent_name: string;
-    parent_phone: string;
-};
 
 function isStudentProfile(user: CurrentUser): user is Student {
     return "year_of_study" in user;
@@ -41,108 +31,6 @@ function getFullName(user: CurrentUser | null) {
     }
 
     return [user.last_name, user.first_name, user.partonymic].filter(Boolean).join(" ");
-}
-
-function splitBirthDate(birthDate: string | null | undefined) {
-    if (!birthDate) {
-        return { birth_day: "", birth_month: "", birth_year: "" };
-    }
-
-    const [year, month, day] = birthDate.split("-");
-    return {
-        birth_day: day ?? "",
-        birth_month: month ?? "",
-        birth_year: year ?? "",
-    };
-}
-
-function getStudentDraft(student: Student | null): StudentProfileDraft {
-    const birthParts = splitBirthDate(student?.birth_date);
-
-    return {
-        first_name: student?.first_name ?? "",
-        last_name: student?.last_name ?? "",
-        partonymic: student?.partonymic ?? "",
-        birth_day: birthParts.birth_day,
-        birth_month: birthParts.birth_month,
-        birth_year: birthParts.birth_year,
-        school: student?.school ?? "",
-        year_of_study: student?.year_of_study ? String(student.year_of_study) : "",
-        city: student?.city ?? "",
-        phone: student?.phone ?? "",
-        tg_nickname: student?.tg_nickname ?? "",
-        parent_name: student?.parent_name ?? "",
-        parent_phone: student?.parent_phone ?? "",
-    };
-}
-
-function composeBirthDate(draft: StudentProfileDraft) {
-    const { birth_day: day, birth_month: month, birth_year: year } = draft;
-    if (!day && !month && !year) {
-        return null;
-    }
-
-    if (!day || !month || !year) {
-        return undefined;
-    }
-
-    return `${year.padStart(4, "0")}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
-}
-
-function buildStudentUpdatePayload(draft: StudentProfileDraft) {
-    const birthDate = composeBirthDate(draft);
-
-    return {
-        first_name: draft.first_name.trim(),
-        last_name: draft.last_name.trim(),
-        partonymic: draft.partonymic.trim() || null,
-        birth_date: birthDate === undefined ? undefined : birthDate,
-        year_of_study: draft.year_of_study ? Number(draft.year_of_study) : undefined,
-        city: draft.city.trim() || null,
-        school: draft.school.trim() || null,
-        phone: draft.phone.trim(),
-        tg_nickname: draft.tg_nickname.trim() || null,
-        parent_name: draft.parent_name.trim(),
-        parent_phone: draft.parent_phone.trim(),
-    };
-}
-
-type SettingsFieldProps = {
-    id: string;
-    label: string;
-    value: string;
-    isEditing: boolean;
-    isDisabled: boolean;
-    type?: string;
-    placeholder?: string;
-    onChange: (value: string) => void;
-};
-
-function SettingsField({
-    id,
-    label,
-    value,
-    isEditing,
-    isDisabled,
-    type = "text",
-    placeholder,
-    onChange,
-}: SettingsFieldProps) {
-    return (
-        <div className="profile-settings-field">
-            <label htmlFor={id}>{label}</label>
-            <input
-                id={id}
-                className="profile-settings-control"
-                type={type}
-                value={value}
-                readOnly={!isEditing}
-                disabled={isDisabled}
-                placeholder={placeholder}
-                onChange={(event) => onChange(event.target.value)}
-            />
-        </div>
-    );
 }
 
 export function ProfileSettingsPage() {

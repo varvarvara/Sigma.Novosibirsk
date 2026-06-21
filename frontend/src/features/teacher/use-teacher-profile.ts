@@ -7,7 +7,7 @@ import {
   isStaffProfile,
   updateMyStaffProfile,
   uploadMyAvatar,
-} from '../../entities/students/api/profile.api';
+} from '../../entities/student/api/profile.api';
 import { validateBirthDate } from '../auth/birth-date-validation';
 import { dispatchTeacherProfileUpdated } from '../../shared/teacher-profile-events';
 import {

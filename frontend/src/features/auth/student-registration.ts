@@ -1,5 +1,5 @@
 import { AuthApiError, login, saveAuthTokens } from '../../entities/auth';
-import { signupStudent } from '../../entities/students/api/profile.api';
+import { signupStudent } from '../../entities/student/api/profile.api';
 
 import { validateBirthDate } from './birth-date-validation'
 

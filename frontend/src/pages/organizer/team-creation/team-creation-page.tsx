@@ -8,7 +8,7 @@ import {
 } from "../../../entities/organizer/api/extracurricular.api";
 import { getSeasonStudents, type SeasonStudent } from "../../../entities/organizer/api/season.api";
 import { DEFAULT_SEASON_ID } from "../../../features/auth/student-registration";
-import { OrgSidebar } from "../../../shared/ui/org-sidebar";
+import { OrgSidebar } from "../../../widgets/org-sidebar";
 import "./team-creation-page.css";
 
 function formatStudentName(student: SeasonStudent) {

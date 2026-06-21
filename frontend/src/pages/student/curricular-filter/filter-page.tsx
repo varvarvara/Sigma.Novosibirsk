@@ -2,14 +2,14 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { ChevronLeft } from "@untitledui/icons/ChevronLeft";
 import { AuthApiError } from "../../../entities/auth";
-import { getMyAttendanceFilterOptions } from "../../../entities/students/api/learning.api";
-import type { StudentAttendanceFilterCourseOut } from "../../../entities/students/model/learning.types";
-import { Button } from "../../../components/base/buttons/button";
+import { getMyAttendanceFilterOptions } from "../../../entities/student/api/learning.api";
+import type { StudentAttendanceFilterCourseOut } from "../../../entities/student/model/learning.types";
+import { Button } from "../../../shared/ui/buttons/button";
 import {
     formatFilterDateLabel,
     readCurricularChargesFilter,
     writeCurricularChargesFilter,
-} from "../../../features/curricular/curricular-charges-filter";
+} from "../../../features/curricular-filter/model/curricular-charges-filter";
 import "./filter-page.css";
 
 export function FilterPage() {

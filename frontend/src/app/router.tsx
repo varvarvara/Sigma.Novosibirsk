@@ -1,5 +1,5 @@
 import { createRootRoute, createRoute, createRouter, redirect } from '@tanstack/react-router'
-import { RootLayout } from '../layouts/root-layout'
+import { RootLayout } from './root-layout'
 import { getAuthSession } from '../entities/auth'
 import {
   parseAuthIntent,

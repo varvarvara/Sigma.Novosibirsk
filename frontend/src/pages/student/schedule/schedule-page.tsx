@@ -2,13 +2,13 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { MarkerPin01 } from '@untitledui/icons/MarkerPin01'
 import { User01 } from '@untitledui/icons/User01'
 import { AuthApiError } from '../../../entities/auth'
-import type { ScheduleEvent } from '../../../entities/students/model/learning.types'
+import type { ScheduleEvent } from '../../../entities/student/model/learning.types'
 import { isScheduleReadyForStudent } from '../../../features/course-flow/resolve-course-flow'
 import { addDays, getDayLabel } from './schedule-page.utils'
 import type { ScheduleItem } from './schedule-page.types'
 import './schedule-page.css'
 import { useQuery } from '@tanstack/react-query'
-import { useMyScheduleEventsQuery } from '../../../entities/students/queries/learning.queries'
+import { useMyScheduleEventsQuery } from '../../../entities/student/queries/learning.queries'
 
 const DAYS_BEFORE = 60
 const DAYS_AFTER = 120

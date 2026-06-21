@@ -2,10 +2,10 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { ChevronLeft } from "@untitledui/icons/ChevronLeft";
 import { AuthApiError } from "../../../entities/auth";
-import type { EnrollmentOutput } from "../../../entities/students/model/learning.types";
-import { Button } from "../../../components/base/buttons/button";
+import type { EnrollmentOutput } from "../../../entities/student/model/learning.types";
+import { Button } from "../../../shared/ui/buttons/button";
 import "./my-courses-page.css";
-import { useMyEnrollmentsQuery } from "../../../entities/students/queries/learning.queries";
+import { useMyEnrollmentsQuery } from "../../../entities/student/queries/learning.queries";
 
 type Course = {
     id: number;

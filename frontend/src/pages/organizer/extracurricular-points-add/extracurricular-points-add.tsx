@@ -3,27 +3,16 @@ import { useNavigate, useSearch } from "@tanstack/react-router";
 import { AuthApiError } from "../../../entities/auth";
 import { DEFAULT_EXTRACURRICULAR_ACTIVITY_SCORE } from "../../../entities/organizer/api/extracurricular.api";
 import { DEFAULT_SEASON_ID } from "../../../features/auth/student-registration";
-import { OrgSidebar } from "../../../shared/ui/org-sidebar";
+import { formatResponsible } from "../../../features/extracurricular-attendance/lib/format-responsible";
+import { buildTeamScores, type TeamScore } from "../../../features/extracurricular-attendance/model/team-score";
+import { OrgSidebar } from "../../../widgets/org-sidebar";
 import "./extracurricular-points-add.css";
 import { 
     useListActivitiesQuery, 
     useListScoresQuery, 
     useListTeamsQuery, 
     useMarkTeamAttendanceMutation 
-} from "../../../entities/organizer/extracurricullar.queries";
-
-type TeamScore = {
-    id: number;
-    name: string;
-    points: number;
-    visited: boolean;
-};
-
-const formatResponsible = (name: string) => {
-    const parts = name.trim().split(" ").filter(Boolean);
-
-    return `${parts[1] ?? parts[0]} ${parts[0]?.[0] ?? ""}.`;
-};
+} from "../../../entities/organizer/queries/extracurricular.queries";
 
 export function ExtracurricularPointsAddPage() {
     const navigate = useNavigate();
@@ -98,20 +87,7 @@ export function ExtracurricularPointsAddPage() {
             return;
         }
 
-        const scoredTeamIds = new Set(
-            scores
-                .filter((score) => score.ex_course_id === activityId)
-                .map((score) => score.team_id),
-        );
-    
-        setTeams(
-            apiTeams.map((team) => ({
-                id: team.id,
-                name: team.ex_team_name,
-                points: scoredTeamIds.has(team.id) ? defaultPoints : 0,
-                visited: scoredTeamIds.has(team.id),
-            })),
-        );
+        setTeams(buildTeamScores(apiTeams, scores, activityId, defaultPoints));
     }, [activityId, apiTeams, defaultPoints, error, isLoading, scores]);
 
 

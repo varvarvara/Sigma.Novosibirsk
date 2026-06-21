@@ -2,7 +2,7 @@ import { Link, useNavigate, useSearch } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { ChevronLeft } from "@untitledui/icons/ChevronLeft";
 import { AuthApiError } from "../../../entities/auth";
-import { getEnrollmentSlotOptions } from "../../../entities/students/api/learning.api";
+import { getEnrollmentSlotOptions } from "../../../entities/student/api/learning.api";
 import {
     formatEnrollmentSlotTime,
     normalizeEnrollmentSlotOptions,

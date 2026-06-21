@@ -12,8 +12,8 @@ import {
     getCurrentStudent,
     getStudentGamification,
     getStudentTeam,
-} from "../../../entities/students/api/profile.api";
-import type { CurrentUser, Student } from "../../../entities/students/model/profile.types";
+} from "../../../entities/student/api/profile.api";
+import type { CurrentUser, Student } from "../../../entities/student/model/profile.types";
 import "./profile-page.css";
 
 const DEFAULT_AVATAR_SRC = "/default-avatar.svg";

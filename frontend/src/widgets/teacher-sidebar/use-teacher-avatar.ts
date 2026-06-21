@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
-import { TEACHER_DEFAULT_AVATAR_SRC } from '../../../features/teacher/teacher-profile';
+import { TEACHER_DEFAULT_AVATAR_SRC } from '../../features/teacher/teacher-profile';
 import {
   getTeacherProfileSyncDetail,
   readPersistedTeacherAvatarUrl,
   TEACHER_AVATAR_UPDATED_EVENT,
   TEACHER_PROFILE_UPDATED_EVENT,
-} from '../../teacher-profile-events';
+} from '../../shared/teacher-profile-events';
 
 export function readTeacherAvatar(override?: string | null) {
   if (override !== undefined && override !== null && override !== '') {
