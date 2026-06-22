@@ -1,6 +1,6 @@
 import { Link, useLocation } from '@tanstack/react-router';
 import { useEffect, useState } from 'react';
-import { isStaffProfile } from '../../entities/student/api/profile.api';
+import { isStaffProfile } from '../../entities/student/model/profile.types';
 import {
   getOrgProfileSyncDetail,
   ORG_AVATAR_UPDATED_EVENT,

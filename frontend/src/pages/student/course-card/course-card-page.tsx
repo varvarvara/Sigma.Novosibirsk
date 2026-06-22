@@ -1,8 +1,8 @@
 import { Link, useNavigate, useSearch } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 import { ChevronLeft } from "@untitledui/icons/ChevronLeft";
 import { AuthApiError } from "../../../entities/auth";
-import { getEnrollmentSlotOptions } from "../../../entities/student/api/learning.api";
+import { useEnrollmentSlotOptionsQuery } from "../../../entities/student/queries/learning.queries";
 import {
     formatEnrollmentSlotTime,
     normalizeEnrollmentSlotOptions,
@@ -19,42 +19,27 @@ function mapCourseType(value: string | null | undefined): CourseType {
 export function CourseCardPage() {
     const navigate = useNavigate();
     const { slotId, courseId } = useSearch({ from: "/course-card" });
-    const [slots, setSlots] = useState<{ id: number; slotHour: number; title: string; time: string; courses: Array<{
-        course_id: number;
-        title: string;
-        description: string | null;
-        syllabus_url: string | null;
-        course_type: string | null;
-        teacher_name: string | null;
-        cover_image_url: string | null;
-    }> }[]>([]);
-    const [errorMessage, setErrorMessage] = useState("");
+    const { data: slotOptionsRaw, error } = useEnrollmentSlotOptionsQuery();
+    const slots = useMemo(() => {
+        if (!slotOptionsRaw) {
+            return [];
+        }
 
-    useEffect(() => {
-        const load = async () => {
-            setErrorMessage("");
-            try {
-                const slotOptions = normalizeEnrollmentSlotOptions(await getEnrollmentSlotOptions());
-                setSlots(
-                    slotOptions.slots.map((slot, index) => ({
-                        id: index + 1,
-                        slotHour: slot.slot_hour,
-                        title: `${index + 1} урок`,
-                        time: formatEnrollmentSlotTime(slot.slot_hour),
-                        courses: slot.courses,
-                    })),
-                );
-            } catch (error) {
-                if (error instanceof AuthApiError) {
-                    setErrorMessage(error.message);
-                } else {
-                    setErrorMessage("Не удалось загрузить данные курса.");
-                }
-            }
-        };
-
-        void load();
-    }, []);
+        const slotOptions = normalizeEnrollmentSlotOptions(slotOptionsRaw);
+        return slotOptions.slots.map((slot, index) => ({
+            id: index + 1,
+            slotHour: slot.slot_hour,
+            title: `${index + 1} урок`,
+            time: formatEnrollmentSlotTime(slot.slot_hour),
+            courses: slot.courses,
+        }));
+    }, [slotOptionsRaw]);
+    const errorMessage =
+        error instanceof AuthApiError
+            ? error.message
+            : error
+                ? "Не удалось загрузить данные курса."
+                : "";
 
     const currentSlot = slots.find((slot) => slot.id === slotId) ?? slots[0];
     const currentCourse = useMemo(() => {

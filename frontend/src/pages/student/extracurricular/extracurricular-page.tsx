@@ -1,10 +1,8 @@
 import { Link, useLocation } from "@tanstack/react-router";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect } from "react";
 import { ChevronLeft } from "@untitledui/icons/ChevronLeft";
-import {
-    getMyExtracurricular,
-} from "../../../entities/student/api/extracurricular.api";
-import type { StudentExtracurricularDashboard } from "../../../entities/student/model/extracurricular.types";
+import { AuthApiError } from "../../../entities/auth";
+import { useMyExtracurricularQuery } from "../../../entities/student/queries/extracurricular.queries";
 import "./extracurricular-page.css";
 
 const RATING_ICONS: Record<number, string> = {
@@ -19,28 +17,7 @@ function formatCoins(value: number) {
 
 export function ExtracurricularPage() {
     const { hash } = useLocation();
-    const [dashboard, setDashboard] = useState<StudentExtracurricularDashboard | null>(null);
-    const [isLoading, setIsLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
-
-    const loadDashboard = useCallback(async () => {
-        setIsLoading(true);
-        setError(null);
-
-        try {
-            const data = await getMyExtracurricular();
-            setDashboard(data);
-        } catch {
-            setError("Не удалось загрузить данные внеучебки");
-            setDashboard(null);
-        } finally {
-            setIsLoading(false);
-        }
-    }, []);
-
-    useEffect(() => {
-        void loadDashboard();
-    }, [loadDashboard]);
+    const { data: dashboard, isLoading, error } = useMyExtracurricularQuery();
 
     useEffect(() => {
         if (hash === "charges") {
@@ -48,13 +25,20 @@ export function ExtracurricularPage() {
         }
     }, [hash, dashboard]);
 
+    const errorMessage =
+        error instanceof AuthApiError
+            ? error.message
+            : error
+                ? "Не удалось загрузить данные внеучебки"
+                : null;
+
     const myTeam = dashboard?.my_team;
     const rating = dashboard?.rating ?? [];
     const charges = dashboard?.charges ?? [];
     const showTeamCard = Boolean(dashboard?.has_team && myTeam);
     const showCharges = showTeamCard;
     const showEmpty =
-        !isLoading && (Boolean(error) || (rating.length === 0 && !showTeamCard));
+        !isLoading && (Boolean(errorMessage) || (rating.length === 0 && !showTeamCard));
 
     return (
         <main className="extracurricular-page">

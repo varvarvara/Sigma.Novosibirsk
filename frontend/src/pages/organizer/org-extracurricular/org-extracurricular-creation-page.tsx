@@ -1,12 +1,13 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { AuthApiError, getAuthSession } from "../../../entities/auth";
-import {
-    createExtracurricularActivity,
-    DEFAULT_EXTRACURRICULAR_ACTIVITY_SCORE,
-} from "../../../entities/organizer/api/extracurricular.api";
-import { getSeasonStaff, getSeasonStudents } from "../../../entities/organizer/api/season.api";
+import { DEFAULT_EXTRACURRICULAR_ACTIVITY_SCORE } from "../../../entities/organizer/api/extracurricular.api";
 import type { SeasonStaffMember, SeasonStudent } from "../../../entities/organizer/model/season.types";
+import { useCreateActivityMutation } from "../../../entities/organizer/queries/extracurricular.queries";
+import {
+    useSeasonStaffQuery,
+    useSeasonStudentsQuery,
+} from "../../../entities/organizer/queries/season.queries";
 import { DEFAULT_SEASON_ID } from "../../../features/auth/student-registration";
 import {
     extractActivityDateDigits,
@@ -22,8 +23,6 @@ import { OrgSidebar } from "../../../widgets/org-sidebar";
 import "../../../styles/field-error.css";
 import "./org-extracurricular-page.css";
 
-type EventFormat = "offline" | "online";
-
 type ScheduleItem = {
     id: number;
     time: string;
@@ -36,8 +35,6 @@ const initialSchedule: ScheduleItem[] = [
     { id: 2, time: "11:30", title: "Практический блок", speaker: "Куратор направления" },
     { id: 3, time: "14:00", title: "Командная работа", speaker: "Наставники" },
 ];
-
-const categories = ["Волонтерство", "Медиа", "Спорт", "Проекты", "Дизайн", "Наука"];
 
 const formatStaffLabel = (staff: SeasonStaffMember) =>
     `${staff.last_name} ${staff.first_name[0] ?? ""}.`.trim();
@@ -85,33 +82,23 @@ export function OrgExtracurricularCreationPage() {
     const [isParticipantsOpen, setIsParticipantsOpen] = useState(false);
     const [schedule, setSchedule] = useState(initialSchedule);
     const [activeScheduleId, setActiveScheduleId] = useState(initialSchedule[0].id);
-    const [isSaving, setIsSaving] = useState(false);
     const [saveError, setSaveError] = useState<string | null>(null);
-
-    const loadReferenceData = useCallback(async () => {
-        try {
-            const [staff, seasonStudents] = await Promise.all([
-                getSeasonStaff(DEFAULT_SEASON_ID),
-                getSeasonStudents(DEFAULT_SEASON_ID),
-            ]);
-            setStaffMembers(staff);
-            setStudents(seasonStudents);
-
-            const session = getAuthSession();
-            const currentStaff = staff.find((member) => member.id === session?.userId);
-            if (currentStaff) {
-                setOrganizer(formatStaffLabel(currentStaff));
-                setSelectedStaffId(currentStaff.id);
-            }
-        } catch {
-            setStaffMembers([]);
-            setStudents([]);
-        }
-    }, []);
+    const createActivityMutation = useCreateActivityMutation();
+    const { data: staff = [] } = useSeasonStaffQuery(DEFAULT_SEASON_ID);
+    const { data: seasonStudents = [] } = useSeasonStudentsQuery(DEFAULT_SEASON_ID);
+    const isSaving = createActivityMutation.isPending;
 
     useEffect(() => {
-        void loadReferenceData();
-    }, [loadReferenceData]);
+        setStaffMembers(staff);
+        setStudents(seasonStudents);
+
+        const session = getAuthSession();
+        const currentStaff = staff.find((member) => member.id === session?.userId);
+        if (currentStaff) {
+            setOrganizer((current) => current || formatStaffLabel(currentStaff));
+            setSelectedStaffId((current) => current ?? currentStaff.id);
+        }
+    }, [seasonStudents, staff]);
 
     const selectedCount = useMemo(() => selectedCategories.length, [selectedCategories]);
     const filteredOrganizers = useMemo(() => {
@@ -177,10 +164,8 @@ export function OrgExtracurricularCreationPage() {
             return;
         }
 
-        setIsSaving(true);
-
         try {
-            await createExtracurricularActivity({
+            await createActivityMutation.mutateAsync({
                 ex_course_name: title.trim() || "Новая активность",
                 staff_id: staffId,
                 ex_course_score: DEFAULT_EXTRACURRICULAR_ACTIVITY_SCORE,
@@ -193,8 +178,6 @@ export function OrgExtracurricularCreationPage() {
             } else {
                 setSaveError("Не удалось создать мероприятие");
             }
-        } finally {
-            setIsSaving(false);
         }
     };
 

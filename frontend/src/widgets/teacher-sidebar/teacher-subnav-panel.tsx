@@ -1,7 +1,7 @@
 import { Link, useLocation } from '@tanstack/react-router';
 import { useEffect, useState } from 'react';
 import { clearAuthTokens, getAccessToken, getRefreshToken, logout } from "../../entities/auth";
-import { isStaffProfile } from '../../entities/student/api/profile.api';
+import { isStaffProfile } from '../../entities/student/model/profile.types';
 import { getTeacherFullName } from "../../features/teacher/teacher-profile";
 import {
   getTeacherProfileSyncDetail,

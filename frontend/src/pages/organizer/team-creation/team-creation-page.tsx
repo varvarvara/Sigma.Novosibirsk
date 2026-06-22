@@ -1,12 +1,13 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { AuthApiError } from "../../../entities/auth";
 import {
-    addExtracurricularTeamMember,
-    createExtracurricularTeam,
-    listExtracurricularTeams,
-} from "../../../entities/organizer/api/extracurricular.api";
-import { getSeasonStudents, type SeasonStudent } from "../../../entities/organizer/api/season.api";
+    useCreateTeamMemberMutation,
+    useCreateTeamMutation,
+    useListTeamsQuery,
+} from "../../../entities/organizer/queries/extracurricular.queries";
+import { useSeasonStudentsQuery } from "../../../entities/organizer/queries/season.queries";
+import type { SeasonStudent } from "../../../entities/organizer/model/season.types";
 import { DEFAULT_SEASON_ID } from "../../../features/auth/student-registration";
 import { OrgSidebar } from "../../../widgets/org-sidebar";
 import "./team-creation-page.css";
@@ -30,32 +31,20 @@ export function TeamCreationPage() {
     const [teamName, setTeamName] = useState("");
     const [memberIds, setMemberIds] = useState<number[]>([]);
     const [memberName, setMemberName] = useState("");
-    const [students, setStudents] = useState<SeasonStudent[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
-    const [isSaving, setIsSaving] = useState(false);
     const [error, setError] = useState<string | null>(null);
-
-    const loadStudents = useCallback(async () => {
-        setIsLoading(true);
-        setError(null);
-
-        try {
-            const seasonStudents = await getSeasonStudents(DEFAULT_SEASON_ID);
-            setStudents(seasonStudents);
-        } catch (loadError) {
-            if (loadError instanceof AuthApiError) {
-                setError(loadError.message);
-            } else {
-                setError("Не удалось загрузить участников");
-            }
-        } finally {
-            setIsLoading(false);
-        }
-    }, []);
-
-    useEffect(() => {
-        void loadStudents();
-    }, [loadStudents]);
+    const {
+        data: students = [],
+        isLoading,
+        error: studentsError,
+    } = useSeasonStudentsQuery(DEFAULT_SEASON_ID);
+    const { data: teams = [], error: teamsError } = useListTeamsQuery();
+    const createTeamMutation = useCreateTeamMutation();
+    const createTeamMemberMutation = useCreateTeamMemberMutation();
+    const isSaving = createTeamMutation.isPending || createTeamMemberMutation.isPending;
+    const loadError =
+        studentsError instanceof AuthApiError ? studentsError.message :
+        teamsError instanceof AuthApiError ? teamsError.message :
+        studentsError || teamsError ? "Не удалось загрузить участников" : null;
 
     const selectedMembers = useMemo(
         () => students.filter((student) => memberIds.includes(student.id)),
@@ -81,15 +70,13 @@ export function TeamCreationPage() {
 
     const createTeam = async () => {
         const trimmedName = teamName.trim() || "Название команды";
-        setIsSaving(true);
         setError(null);
 
         try {
-            const existingTeams = await listExtracurricularTeams();
             const nextTeamNumber =
-                existingTeams.reduce((max, team) => Math.max(max, team.ex_team_number), 0) + 1;
+                teams.reduce((max, team) => Math.max(max, team.ex_team_number), 0) + 1;
 
-            const createdTeam = await createExtracurricularTeam({
+            const createdTeam = await createTeamMutation.mutateAsync({
                 ex_team_number: nextTeamNumber,
                 ex_team_name: trimmedName,
                 season_id: DEFAULT_SEASON_ID,
@@ -97,7 +84,7 @@ export function TeamCreationPage() {
 
             await Promise.all(
                 memberIds.map((studentId) =>
-                    addExtracurricularTeamMember({
+                    createTeamMemberMutation.mutateAsync({
                         team_id: createdTeam.id,
                         student_id: studentId,
                         season_id: DEFAULT_SEASON_ID,
@@ -112,8 +99,6 @@ export function TeamCreationPage() {
             } else {
                 setError("Не удалось создать команду");
             }
-        } finally {
-            setIsSaving(false);
         }
     };
 
@@ -142,7 +127,7 @@ export function TeamCreationPage() {
                     </div>
                 </header>
 
-                {error ? <p className="team-creation-status">{error}</p> : null}
+                {error || loadError ? <p className="team-creation-status">{error ?? loadError}</p> : null}
                 {isLoading ? <p className="team-creation-status">Загрузка участников...</p> : null}
 
                 <section className="team-creation-form" aria-label="Параметры команды">

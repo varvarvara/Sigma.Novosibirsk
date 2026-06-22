@@ -8,11 +8,11 @@ import {
     getRefreshToken,
     logout,
 } from "../../../entities/auth";
-import {
-    getCurrentStudent,
-    getStudentGamification,
-    getStudentTeam,
-} from "../../../entities/student/api/profile.api";
+import { 
+    useCurrentUserQuery,
+    useStudentGamificationQuery,
+    useStudentTeamQuery
+} from "../../../entities/student/queries/profile.queries";
 import type { CurrentUser, Student } from "../../../entities/student/model/profile.types";
 import "./profile-page.css";
 
@@ -46,81 +46,48 @@ export function ProfilePage() {
     const navigate = useNavigate();
     const [isLoggingOut, setIsLoggingOut] = useState(false);
     const [avatarSrc, setAvatarSrc] = useState(DEFAULT_AVATAR_SRC);
-    const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
-    const [isProfileLoading, setIsProfileLoading] = useState(true);
-    const [stats, setStats] = useState({
-        achievements: 0,
-        points: 0,
-        sigmaCoins: 0,
-    });
-    const [teamName, setTeamName] = useState<string | null>(null);
 
-    useEffect(() => {
-        const loadProfile = async () => {
-            const accessToken = getAccessToken();
-            if (!accessToken) {
-                navigate({ to: "/login" });
-                return;
-            }
+    const {
+        data: currentUser,
+        isLoading: isProfileLoading,
+        error: profileError,
+    } = useCurrentUserQuery();
 
-            setIsProfileLoading(true);
+    const studentId = currentUser && isStudentProfile(currentUser) ? currentUser.id : undefined;
 
-            try {
-                const user = await getCurrentStudent();
-                setCurrentUser(user);
-                setAvatarSrc(user.avatar_url ?? DEFAULT_AVATAR_SRC);
+    const { data: gamification } = useStudentGamificationQuery(studentId);
+    const { data: team } = useStudentTeamQuery(studentId);
 
-                if (isStudentProfile(user)) {
-                    try {
-                        const gamification = await getStudentGamification(user.id);
-                        setStats({
-                            achievements: gamification.achievement_score,
-                            points: gamification.total_score,
-                            sigmaCoins: gamification.extracurricular_score,
-                        });
-                    } catch (error) {
-                        if (error instanceof AuthApiError && error.status === 404) {
-                            setStats({
-                                achievements: 0,
-                                points: 0,
-                                sigmaCoins: 0,
-                            });
-                        } else {
-                            throw error;
-                        }
-                    }
-
-                    try {
-                        const team = await getStudentTeam(user.id);
-                        setTeamName(team.team_name);
-                    } catch (error) {
-                        if (error instanceof AuthApiError && error.status === 404) {
-                            setTeamName(null);
-                        } else {
-                            throw error;
-                        }
-                    }
-                } else {
-                    setStats({
-                        achievements: 0,
-                        points: 0,
-                        sigmaCoins: 0,
-                    });
-                    setTeamName(null);
-                }
-            } catch (error) {
-                if (error instanceof AuthApiError && error.status === 401) {
-                    clearAuthTokens();
-                    navigate({ to: "/login" });
-                    return;
-                }
-            } finally {
-                setIsProfileLoading(false);
-            }
+    const stats = isStudentProfile(currentUser)
+        ? {
+            achievements: gamification?.achievement_score ?? 0,
+            points: gamification?.total_score ?? 0,
+            sigmaCoins: gamification?.extracurricular_score ?? 0,
+        }
+        : {
+            achievements: 0,
+            points: 0,
+            sigmaCoins: 0,
         };
 
-        void loadProfile();
-    }, [navigate]);
+    const teamName = team?.team_name ?? null;
+
+    useEffect(() => {
+        const accessToken = getAccessToken();
+        if (!accessToken) {
+            navigate({ to: "/login" });
+            return;
+        }
+
+        if (profileError instanceof AuthApiError && profileError.status === 401) {
+            clearAuthTokens();
+            navigate({ to: "/login" });
+        }
+    }, [navigate, profileError]);
+
+    useEffect(() => {
+        setAvatarSrc(currentUser?.avatar_url ?? DEFAULT_AVATAR_SRC);
+    }, [currentUser]);
 
     const handleLogout = async () => {
         if (isLoggingOut) {

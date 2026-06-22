@@ -1,11 +1,11 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { AuthApiError } from "../../../entities/auth";
 import {
-    listExtracurricularActivities,
-    listExtracurricularScores,
-} from "../../../entities/organizer/api/extracurricular.api";
-import { getSeasonStaff } from "../../../entities/organizer/api/season.api";
+    useListActivitiesQuery,
+    useListScoresQuery,
+} from "../../../entities/organizer/queries/extracurricular.queries";
+import { useSeasonStaffQuery } from "../../../entities/organizer/queries/season.queries";
 import type { SeasonStaffMember } from "../../../entities/organizer/model/season.types";
 import type { ExtracurricularActivity } from "../../../entities/organizer/model/extracurricular.types";
 import { DEFAULT_SEASON_ID } from "../../../features/auth/student-registration";
@@ -46,47 +46,44 @@ function mapActivity(
 
 export function OrgExtracurricularManagementPage() {
     const navigate = useNavigate();
-    const [activities, setActivities] = useState<Activity[]>([]);
     const [query, setQuery] = useState("");
     const [activeStatus, setActiveStatus] = useState<ActivityStatus | "all">("all");
     const [selectedActivityId, setSelectedActivityId] = useState(0);
-    const [isLoading, setIsLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
+    const {
+        data: apiActivities = [],
+        isLoading: isActivitiesLoading,
+        error: activitiesError,
+    } = useListActivitiesQuery();
+    const {
+        data: scores = [],
+        isLoading: isScoresLoading,
+        error: scoresError,
+    } = useListScoresQuery();
+    const {
+        data: staff = [],
+        isLoading: isStaffLoading,
+        error: staffError,
+    } = useSeasonStaffQuery(DEFAULT_SEASON_ID);
 
-    const loadActivities = useCallback(async () => {
-        setIsLoading(true);
-        setError(null);
+    const isLoading = isActivitiesLoading || isScoresLoading || isStaffLoading;
+    const error =
+        activitiesError instanceof AuthApiError ? activitiesError.message :
+        scoresError instanceof AuthApiError ? scoresError.message :
+        staffError instanceof AuthApiError ? staffError.message :
+        activitiesError || scoresError || staffError ? "Не удалось загрузить мероприятия" : null;
 
-        try {
-            const [apiActivities, scores, staff] = await Promise.all([
-                listExtracurricularActivities(),
-                listExtracurricularScores(),
-                getSeasonStaff(DEFAULT_SEASON_ID),
-            ]);
+    const activities = useMemo(() => {
+        const staffById = new Map(staff.map((member) => [member.id, member] as const));
+        const scoredActivityIds = new Set(scores.map((score) => score.ex_course_id));
 
-            const staffById = new Map(staff.map((member) => [member.id, member]));
-            const scoredActivityIds = new Set(scores.map((score) => score.ex_course_id));
-            const mapped = apiActivities.map((activity) =>
-                mapActivity(activity, staffById, scoredActivityIds),
-            );
-
-            setActivities(mapped);
-            setSelectedActivityId(mapped[0]?.id ?? 0);
-        } catch (loadError) {
-            if (loadError instanceof AuthApiError) {
-                setError(loadError.message);
-            } else {
-                setError("Не удалось загрузить мероприятия");
-            }
-            setActivities([]);
-        } finally {
-            setIsLoading(false);
-        }
-    }, []);
+        return apiActivities.map((activity) =>
+            mapActivity(activity, staffById, scoredActivityIds),
+        );
+    }, [apiActivities, scores, staff]);
 
     useEffect(() => {
-        void loadActivities();
-    }, [loadActivities]);
+        setSelectedActivityId((current) => current || activities[0]?.id || 0);
+    }, [activities]);
 
     const filteredActivities = useMemo(() => {
         const value = query.trim().toLowerCase();

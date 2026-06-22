@@ -2,13 +2,13 @@ import { Link, useNavigate, useSearch } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { ChevronLeft } from "@untitledui/icons/ChevronLeft";
 import { AuthApiError } from "../../../entities/auth";
+import { useEnrollmentSlotOptionsQuery } from "../../../entities/student/queries/learning.queries";
 import { CourseCoverThumb } from "../../../shared/ui/course-cover-thumb/course-cover-thumb";
 import {
     formatEnrollmentSlotTime,
     normalizeEnrollmentSlotOptions,
 } from "../../../features/course-flow/enrollment-slot-times";
 import { DRAFT_SELECTION_STORAGE_KEY } from "../../../features/course-flow/resolve-course-flow";
-import { getEnrollmentSlotOptions } from "../../../entities/student/api/learning.api";
 import type { SlotCourseOption, SlotOptionsItem } from "../../../entities/student/model/learning.types";
 import "./course-detail-page.css";
 
@@ -31,31 +31,21 @@ export function CourseDetailPage() {
     const navigate = useNavigate();
     const { slotId } = useSearch({ from: "/course-detail" });
 
-    const [slots, setSlots] = useState<SlotOptionsItem[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
-    const [errorMessage, setErrorMessage] = useState("");
     const [selectedCourseId, setSelectedCourseId] = useState<number | null>(null);
+    const { data: slotOptionsRaw, isLoading, error } = useEnrollmentSlotOptionsQuery();
+    const slots: SlotOptionsItem[] = useMemo(() => {
+        if (!slotOptionsRaw) {
+            return [];
+        }
 
-    useEffect(() => {
-        const load = async () => {
-            setIsLoading(true);
-            setErrorMessage("");
-            try {
-                const slotOptions = normalizeEnrollmentSlotOptions(await getEnrollmentSlotOptions());
-                setSlots(slotOptions.slots);
-            } catch (error) {
-                if (error instanceof AuthApiError) {
-                    setErrorMessage(error.message);
-                } else {
-                    setErrorMessage("Не удалось загрузить список курсов.");
-                }
-            } finally {
-                setIsLoading(false);
-            }
-        };
-
-        void load();
-    }, []);
+        return normalizeEnrollmentSlotOptions(slotOptionsRaw).slots;
+    }, [slotOptionsRaw]);
+    const errorMessage =
+        error instanceof AuthApiError
+            ? error.message
+            : error
+                ? "Не удалось загрузить список курсов."
+                : "";
 
     const lessons = useMemo(
         () =>

@@ -1,17 +1,15 @@
 import { type CSSProperties, useEffect, useMemo, useState } from 'react';
-import { getMyTeacherCourses } from '../../../entities/teacher/api/courses.api';
-import type { TeacherCourse } from '../../../entities/teacher/model/courses.types';
-import {
-  bulkMarkAttendance,
-  getCourseAttendanceSummary,
-  getCourseStudentAttendanceDetail,
-  
-} from '../../../entities/teacher/api/attendance.api';
-import type { 
-  TeacherCourseAttendanceSummary,
+import { AuthApiError } from '../../../entities/auth';
+import type {
   TeacherCourseStudentAttendanceDetail,
   TeacherLessonAttendanceItem
 } from '../../../entities/teacher/model/attendance.types';
+import {
+  useBulkMarkAttendanceMutation,
+  useTeacherCourseAttendanceDetailsQuery,
+  useTeacherCourseAttendanceSummaryQuery,
+} from '../../../entities/teacher/queries/attendance.queries';
+import { useGetMyTeacherCourses } from '../../../entities/teacher/queries/courses.queries';
 import { TeacherAppShell } from '../../../widgets/teacher-sidebar/teacher-app-shell';
 import './attendance-page.css';
 
@@ -48,100 +46,68 @@ function buildDraft(details: TeacherCourseStudentAttendanceDetail[]) {
 }
 
 export function TeacherAttendancePage() {
-  const [courses, setCourses] = useState<TeacherCourse[]>([]);
   const [selectedCourseId, setSelectedCourseId] = useState<number | null>(null);
-  const [summary, setSummary] = useState<TeacherCourseAttendanceSummary | null>(null);
-  const [details, setDetails] = useState<TeacherCourseStudentAttendanceDetail[]>([]);
   const [attendanceDraft, setAttendanceDraft] = useState<Record<number, Record<number, boolean>>>({});
   const [currentPage, setCurrentPage] = useState(1);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isSaving, setIsSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
 
+  const {
+    data: courses = [],
+    isLoading: isCoursesLoading,
+    error: coursesError,
+  } = useGetMyTeacherCourses();
+
   useEffect(() => {
-    let isMounted = true;
-
-    async function loadCourses() {
-      try {
-        setIsLoading(true);
-        setError(null);
-        const teacherCourses = await getMyTeacherCourses();
-        if (!isMounted) {
-          return;
-        }
-
-        setCourses(teacherCourses);
-        setSelectedCourseId((currentCourseId) => currentCourseId ?? teacherCourses[0]?.id ?? null);
-      } catch (loadError) {
-        if (isMounted) {
-          setError(loadError instanceof Error ? loadError.message : 'Не удалось загрузить курсы преподавателя');
-        }
-      } finally {
-        if (isMounted) {
-          setIsLoading(false);
-        }
-      }
+    if (!courses.length) {
+      return;
     }
 
-    void loadCourses();
+    setSelectedCourseId((currentCourseId) => currentCourseId ?? courses[0]?.id ?? null);
+  }, [courses]);
 
-    return () => {
-      isMounted = false;
-    };
-  }, []);
+  const {
+    data: summary,
+    isLoading: isSummaryLoading,
+    error: summaryError,
+  } = useTeacherCourseAttendanceSummaryQuery(selectedCourseId ?? undefined);
+
+  const {
+    data: details = [],
+    isLoading: isDetailsLoading,
+    error: detailsError,
+  } = useTeacherCourseAttendanceDetailsQuery(selectedCourseId ?? undefined, summary ?? null);
+
+  const saveAttendanceMutation = useBulkMarkAttendanceMutation(selectedCourseId ?? undefined);
+  const isLoading = isCoursesLoading || isSummaryLoading || isDetailsLoading;
+  const isSaving = saveAttendanceMutation.isPending;
+  const error =
+    coursesError instanceof AuthApiError ? coursesError.message :
+    summaryError instanceof AuthApiError ? summaryError.message :
+    detailsError instanceof AuthApiError ? detailsError.message :
+    coursesError || summaryError || detailsError
+      ? 'Не удалось загрузить посещаемость'
+      : saveError;
 
   useEffect(() => {
     if (!selectedCourseId) {
-      setSummary(null);
-      setDetails([]);
       setAttendanceDraft({});
       return;
     }
 
-    let isMounted = true;
+    setCurrentPage(1);
+    setStatusMessage(null);
+    setSaveError(null);
+  }, [selectedCourseId]);
 
-    async function loadAttendance() {
-      try {
-        setIsLoading(true);
-        setError(null);
-        setStatusMessage(null);
-        setCurrentPage(1);
-
-        const courseSummary = await getCourseAttendanceSummary(selectedCourseId as number);
-        const studentDetails = await Promise.all(
-          courseSummary.students.map((student) =>
-            getCourseStudentAttendanceDetail(selectedCourseId as number, student.student_id),
-          ),
-        );
-
-        if (!isMounted) {
-          return;
-        }
-
-        setSummary(courseSummary);
-        setDetails(studentDetails);
-        setAttendanceDraft(buildDraft(studentDetails));
-      } catch (loadError) {
-        if (isMounted) {
-          setError(loadError instanceof Error ? loadError.message : 'Не удалось загрузить посещаемость');
-          setSummary(null);
-          setDetails([]);
-          setAttendanceDraft({});
-        }
-      } finally {
-        if (isMounted) {
-          setIsLoading(false);
-        }
-      }
+  useEffect(() => {
+    if (!details.length) {
+      setAttendanceDraft({});
+      return;
     }
 
-    void loadAttendance();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [selectedCourseId]);
+    setAttendanceDraft(buildDraft(details));
+  }, [details]);
 
   const lessons = useMemo<TeacherLessonAttendanceItem[]>(() => details[0]?.lessons ?? [], [details]);
   const students = summary?.students ?? [];
@@ -175,37 +141,28 @@ export function TeacherAttendancePage() {
     }
 
     try {
-      setIsSaving(true);
-      setError(null);
+      setSaveError(null);
       setStatusMessage(null);
 
-      await Promise.all(
-        lessons.map((lesson) =>
-          bulkMarkAttendance(
-            lesson.schedule_id,
-            students.map((student) => ({
+      await saveAttendanceMutation.mutateAsync(
+        lessons.map((lesson) => ({
+          scheduleId: lesson.schedule_id,
+          items: students.map((student) => ({
               student_id: student.student_id,
               attendance_status: attendanceDraft[student.student_id]?.[lesson.schedule_id] ?? false,
-            })),
-          ),
-        ),
+          })),
+        })),
       );
-
-      if (selectedCourseId) {
-        const courseSummary = await getCourseAttendanceSummary(selectedCourseId);
-        const studentDetails = await Promise.all(
-          courseSummary.students.map((student) => getCourseStudentAttendanceDetail(selectedCourseId, student.student_id)),
-        );
-        setSummary(courseSummary);
-        setDetails(studentDetails);
-        setAttendanceDraft(buildDraft(studentDetails));
-      }
 
       setStatusMessage('Посещаемость сохранена. За отмеченное присутствие студентам начислится по 3 балла.');
     } catch (saveError) {
-      setError(saveError instanceof Error ? saveError.message : 'Не удалось сохранить посещаемость');
-    } finally {
-      setIsSaving(false);
+      setSaveError(
+        saveError instanceof AuthApiError
+          ? saveError.message
+          : saveError instanceof Error
+            ? saveError.message
+            : 'Не удалось сохранить посещаемость',
+      );
     }
   };
 

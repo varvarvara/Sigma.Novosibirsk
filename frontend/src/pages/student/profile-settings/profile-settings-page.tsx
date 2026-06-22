@@ -4,10 +4,10 @@ import { ChevronLeft } from "@untitledui/icons/ChevronLeft";
 import { CameraPlus } from "@untitledui/icons/CameraPlus";
 import { AuthApiError, clearAuthTokens, getAccessToken } from "../../../entities/auth";
 import {
-    getCurrentStudent,
-    updateMyStudentProfile,
-    uploadMyAvatar,
-} from "../../../entities/student/api/profile.api";
+    useCurrentUserQuery,
+    useUpdateMyAvatarMutation,
+    useUpdateMyStudentProfileMutation,
+} from "../../../entities/student/queries/profile.queries";
 import type { CurrentUser, Student } from "../../../entities/student/model/profile.types";
 import {
     buildStudentUpdatePayload,
@@ -36,52 +36,54 @@ function getFullName(user: CurrentUser | null) {
 export function ProfileSettingsPage() {
     const navigate = useNavigate();
     const avatarInputRef = useRef<HTMLInputElement | null>(null);
-    const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
     const [draft, setDraft] = useState<StudentProfileDraft>(getStudentDraft(null));
     const [avatarSrc, setAvatarSrc] = useState(DEFAULT_AVATAR_SRC);
     const [isEditing, setIsEditing] = useState(false);
-    const [isLoading, setIsLoading] = useState(true);
-    const [isSaving, setIsSaving] = useState(false);
-    const [isAvatarUploading, setIsAvatarUploading] = useState(false);
     const [statusMessage, setStatusMessage] = useState<string | null>(null);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+    const {
+        data: currentUser,
+        isLoading,
+        error: profileError,
+    } = useCurrentUserQuery();
+    const updateProfileMutation = useUpdateMyStudentProfileMutation();
+    const uploadAvatarMutation = useUpdateMyAvatarMutation();
 
     const student = currentUser && isStudentProfile(currentUser) ? currentUser : null;
     const fullName = getFullName(currentUser);
     const savedDraft = getStudentDraft(student);
     const isDirty = JSON.stringify(draft) !== JSON.stringify(savedDraft);
+    const isSaving = updateProfileMutation.isPending;
+    const isAvatarUploading = uploadAvatarMutation.isPending;
     const isFormDisabled = isLoading || isSaving || !isEditing;
 
     useEffect(() => {
-        const loadProfile = async () => {
-            const accessToken = getAccessToken();
-            if (!accessToken) {
-                navigate({ to: "/login" });
-                return;
-            }
+        const accessToken = getAccessToken();
+        if (!accessToken) {
+            navigate({ to: "/login" });
+            return;
+        }
 
-            setIsLoading(true);
-            setErrorMessage(null);
+        if (profileError instanceof AuthApiError && profileError.status === 401) {
+            clearAuthTokens();
+            navigate({ to: "/login" });
+            return;
+        }
 
-            try {
-                const user = await getCurrentStudent();
-                setCurrentUser(user);
-                setAvatarSrc(user.avatar_url ?? DEFAULT_AVATAR_SRC);
-                setDraft(isStudentProfile(user) ? getStudentDraft(user) : getStudentDraft(null));
-            } catch (error) {
-                if (error instanceof AuthApiError && error.status === 401) {
-                    clearAuthTokens();
-                    navigate({ to: "/login" });
-                    return;
-                }
-                setErrorMessage("Не удалось загрузить профиль.");
-            } finally {
-                setIsLoading(false);
-            }
-        };
+        if (profileError) {
+            setErrorMessage("Не удалось загрузить профиль.");
+        }
+    }, [navigate, profileError]);
 
-        void loadProfile();
-    }, [navigate]);
+    useEffect(() => {
+        if (!currentUser) {
+            return;
+        }
+
+        setAvatarSrc(currentUser.avatar_url ?? DEFAULT_AVATAR_SRC);
+        setDraft(isStudentProfile(currentUser) ? getStudentDraft(currentUser) : getStudentDraft(null));
+    }, [currentUser]);
 
     const updateDraft = (field: keyof StudentProfileDraft, value: string) => {
         setDraft((prev) => ({ ...prev, [field]: value }));
@@ -103,7 +105,7 @@ export function ProfileSettingsPage() {
     };
 
     const saveProfile = async () => {
-        if (!student || isSaving) {
+        if (!student || updateProfileMutation.isPending) {
             return;
         }
 
@@ -113,13 +115,11 @@ export function ProfileSettingsPage() {
             return;
         }
 
-        setIsSaving(true);
         setStatusMessage(null);
         setErrorMessage(null);
 
         try {
-            const updated = await updateMyStudentProfile(payload);
-            setCurrentUser(updated);
+            const updated = await updateProfileMutation.mutateAsync(payload);
             setDraft(getStudentDraft(updated));
             setIsEditing(false);
             setStatusMessage("Изменения сохранены");
@@ -129,8 +129,6 @@ export function ProfileSettingsPage() {
             } else {
                 setErrorMessage("Не удалось сохранить изменения.");
             }
-        } finally {
-            setIsSaving(false);
         }
     };
 
@@ -152,12 +150,11 @@ export function ProfileSettingsPage() {
             return;
         }
 
-        setIsAvatarUploading(true);
         setStatusMessage(null);
         setErrorMessage(null);
 
         try {
-            const uploaded = await uploadMyAvatar(selectedFile);
+            const uploaded = await uploadAvatarMutation.mutateAsync(selectedFile);
             setAvatarSrc(uploaded.avatar_url || DEFAULT_AVATAR_SRC);
             setStatusMessage("Фото профиля обновлено");
         } catch (error) {
@@ -167,7 +164,6 @@ export function ProfileSettingsPage() {
                 setErrorMessage("Не удалось загрузить аватар.");
             }
         } finally {
-            setIsAvatarUploading(false);
             event.target.value = "";
         }
     };

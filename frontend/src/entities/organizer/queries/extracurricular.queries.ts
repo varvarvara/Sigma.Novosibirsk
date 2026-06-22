@@ -64,6 +64,20 @@ export function useCreateTeamMutation() {
     })
 }
 
+export function useCreateTeamMemberMutation() {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: (payload: ExtracurricularTeamMemberCreate) =>
+            addExtracurricularTeamMember(payload),
+        onSuccess: async () => {
+            await queryClient.invalidateQueries({
+                queryKey: extracurricularQueryKeys.teams
+            });
+        }
+    })
+}
+
 export function useAddTeamMemberMutation(teamId: number, seasonId: number) {
     const queryClient = useQueryClient();
 

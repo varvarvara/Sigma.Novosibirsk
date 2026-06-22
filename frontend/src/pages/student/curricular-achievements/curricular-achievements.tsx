@@ -1,8 +1,8 @@
 import { Link, useLocation } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ChevronLeft } from "@untitledui/icons/ChevronLeft";
 import { AuthApiError } from "../../../entities/auth";
-import { getMyAchievements } from "../../../entities/student/api/learning.api";
+import { useMyAchievementsQuery } from "../../../entities/student/queries/learning.queries";
 import type { StudentAchievementDetailedOut } from "../../../entities/student/model/learning.types";
 import "./curricular-achievements.css";
 
@@ -62,31 +62,18 @@ function mapAchievementsToSubjects(items: StudentAchievementDetailedOut[]): Subj
 
 export function CurricularAchievementsPage() {
     const { hash } = useLocation();
-    const [subjects, setSubjects] = useState<SubjectGroup[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
-    const [errorMessage, setErrorMessage] = useState("");
     const [highlightedAchievementId, setHighlightedAchievementId] = useState<string | null>(null);
-
-    useEffect(() => {
-        const load = async () => {
-            setIsLoading(true);
-            setErrorMessage("");
-            try {
-                const achievements = await getMyAchievements();
-                setSubjects(mapAchievementsToSubjects(achievements));
-            } catch (error) {
-                if (error instanceof AuthApiError) {
-                    setErrorMessage(error.message);
-                } else {
-                    setErrorMessage("Не удалось загрузить ачивки.");
-                }
-            } finally {
-                setIsLoading(false);
-            }
-        };
-
-        void load();
-    }, []);
+    const { data: achievements, isLoading, error } = useMyAchievementsQuery();
+    const subjects = useMemo(
+        () => mapAchievementsToSubjects(achievements ?? []),
+        [achievements],
+    );
+    const errorMessage =
+        error instanceof AuthApiError
+            ? error.message
+            : error
+                ? "Не удалось загрузить ачивки."
+                : "";
 
     useEffect(() => {
         if (!hash) {

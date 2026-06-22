@@ -3,10 +3,10 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ChevronLeft } from "@untitledui/icons/ChevronLeft";
 import { AuthApiError } from "../../../entities/auth";
 import {
-    getEnrollmentSlotOptions,
-    getMyEnrollments,
-    submitEnrollmentSlotSelection,
-} from "../../../entities/student/api/learning.api";
+    useEnrollmentSlotOptionsQuery,
+    useEnrollmentSlotSelectionQuery,
+    useMyEnrollmentsQuery,
+} from "../../../entities/student/queries/learning.queries";
 import type { SlotOptionsItem } from "../../../entities/student/model/learning.types";
 import { CourseCoverThumb } from "../../../shared/ui/course-cover-thumb/course-cover-thumb";
 import type { SlotCourseOption } from "../../../entities/student/model/learning.types";
@@ -28,46 +28,49 @@ export function CourseSelectionPage() {
     const navigate = useNavigate();
     const location = useLocation();
     const gateMessage = (location.state as { gateMessage?: string } | undefined)?.gateMessage ?? "";
-    const [slots, setSlots] = useState<SlotOptionsItem[]>([]);
     const [selectedByHour, setSelectedByHour] = useState<Record<number, number>>({});
-    const [isLoading, setIsLoading] = useState(true);
-    const [isSubmitting, setIsSubmitting] = useState(false);
     const [errorMessage, setErrorMessage] = useState("");
     const [submitMessage, setSubmitMessage] = useState("");
     const isDraftHydratedRef = useRef(false);
+    const {
+        data: slotOptionsRaw,
+        isLoading: isSlotOptionsLoading,
+        error: slotOptionsError,
+    } = useEnrollmentSlotOptionsQuery();
+    const {
+        data: enrollments,
+        isLoading: isEnrollmentsLoading,
+        error: enrollmentsError,
+    } = useMyEnrollmentsQuery();
+    const submitSelectionMutation = useEnrollmentSlotSelectionQuery();
 
-    const syncDraftFromStorage = useCallback((slotOptions: SlotOptionsItem[], enrollments: Awaited<ReturnType<typeof getMyEnrollments>>) => {
-        setSelectedByHour(hydrateSelectionFromEnrollments(slotOptions, enrollments));
+    const slots = useMemo(() => {
+        if (!slotOptionsRaw) {
+            return [];
+        }
+
+        return normalizeEnrollmentSlotOptions(slotOptionsRaw).slots;
+    }, [slotOptionsRaw]);
+
+    const isLoading = isSlotOptionsLoading || isEnrollmentsLoading;
+    const isSubmitting = submitSelectionMutation.isPending;
+    const errorMessageFromQuery =
+        slotOptionsError instanceof AuthApiError ? slotOptionsError.message :
+        enrollmentsError instanceof AuthApiError ? enrollmentsError.message :
+        slotOptionsError || enrollmentsError ? "Не удалось загрузить список курсов." : "";
+
+    const syncDraftFromStorage = useCallback((slotOptions: SlotOptionsItem[], currentEnrollments: NonNullable<typeof enrollments>) => {
+        setSelectedByHour(hydrateSelectionFromEnrollments(slotOptions, currentEnrollments));
         isDraftHydratedRef.current = true;
     }, []);
 
     useEffect(() => {
-        const load = async () => {
-            setIsLoading(true);
-            setErrorMessage("");
+        if (!slots.length || !enrollments) {
+            return;
+        }
 
-            try {
-                const [slotOptionsRaw, enrollments] = await Promise.all([
-                    getEnrollmentSlotOptions(),
-                    getMyEnrollments(),
-                ]);
-
-                const slotOptions = normalizeEnrollmentSlotOptions(slotOptionsRaw);
-                setSlots(slotOptions.slots);
-                syncDraftFromStorage(slotOptions.slots, enrollments);
-            } catch (error) {
-                if (error instanceof AuthApiError) {
-                    setErrorMessage(error.message);
-                } else {
-                    setErrorMessage("Не удалось загрузить список курсов.");
-                }
-            } finally {
-                setIsLoading(false);
-            }
-        };
-
-        void load();
-    }, [location.pathname, syncDraftFromStorage]);
+        syncDraftFromStorage(slots, enrollments);
+    }, [enrollments, slots, syncDraftFromStorage]);
 
     useEffect(() => {
         if (location.pathname !== "/courses" || slots.length === 0) {
@@ -124,12 +127,11 @@ export function CourseSelectionPage() {
             return;
         }
 
-        setIsSubmitting(true);
         setErrorMessage("");
         setSubmitMessage("");
 
         try {
-            const response = await submitEnrollmentSlotSelection(selections);
+            const response = await submitSelectionMutation.mutateAsync(selections);
             setSubmitMessage(response.message);
             localStorage.removeItem(DRAFT_SELECTION_STORAGE_KEY);
             navigate({ to: "/soon-update" });
@@ -139,8 +141,6 @@ export function CourseSelectionPage() {
             } else {
                 setErrorMessage("Не удалось сохранить выбор курсов.");
             }
-        } finally {
-            setIsSubmitting(false);
         }
     };
 
@@ -161,8 +161,9 @@ export function CourseSelectionPage() {
             <section className="lessons-list" aria-label="Выбор курсов по слотам">
                 {isLoading ? <p className="lesson-status">Загрузка курсов...</p> : null}
                 {!isLoading && gateMessage ? <p className="lesson-status">{gateMessage}</p> : null}
-                {!isLoading && errorMessage ? <p className="field-error">{errorMessage}</p> : null}
-                {!isLoading && !errorMessage && lessons.length === 0 ? (
+                {!isLoading && errorMessageFromQuery ? <p className="field-error">{errorMessageFromQuery}</p> : null}
+                {!isLoading && !errorMessageFromQuery && errorMessage ? <p className="field-error">{errorMessage}</p> : null}
+                {!isLoading && !errorMessageFromQuery && !errorMessage && lessons.length === 0 ? (
                     <p className="lesson-status">Слоты пока не опубликованы.</p>
                 ) : null}
 

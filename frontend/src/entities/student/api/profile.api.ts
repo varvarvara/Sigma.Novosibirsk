@@ -98,7 +98,3 @@ export async function deleteMyAvatar() {
   return await apiClient.delete<CurrentUser>("/users/me/avatar")
     .then((response) => response.data);
 }
-
-export function isStaffProfile(user: CurrentUser): user is StaffProfile {
-  return "staff_role" in user;
-}

@@ -1,6 +1,6 @@
 import { type ReactNode, useEffect, useState } from 'react';
 import { useLocation, useNavigate } from '@tanstack/react-router';
-import { isStaffProfile } from '../../entities/student/api/profile.api';
+import { isStaffProfile } from '../../entities/student/model/profile.types';
 import { TEACHER_DEFAULT_AVATAR_SRC } from '../../features/teacher/teacher-profile';
 import {
   getTeacherProfileSyncDetail,

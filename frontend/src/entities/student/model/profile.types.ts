@@ -37,6 +37,10 @@ export type AvatarUploadOut = {
 
 export type CurrentUser = Student | StaffProfile;
 
+export function isStaffProfile(user: CurrentUser): user is StaffProfile {
+  return "staff_role" in user;
+}
+
 export type StudentInCreate = {
   first_name: string;
   last_name: string;

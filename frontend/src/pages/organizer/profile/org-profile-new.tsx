@@ -1,13 +1,15 @@
-import { type ChangeEvent, useCallback, useEffect, useState } from 'react';
+import { type ChangeEvent, useEffect, useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { AuthApiError, clearAuthTokens, getAccessToken, getRefreshToken, logout } from '../../../entities/auth';
 import {
-  deleteMyAvatar,
-  getCurrentStudent,
   isStaffProfile,
-  updateMyStaffProfile,
-  uploadMyAvatar,
-} from '../../../entities/student/api/profile.api';
+} from '../../../entities/student/model/profile.types';
+import {
+  useCurrentUserQuery,
+  useDeleteMyAvatarMutation,
+  useUpdateMyAvatarMutation,
+  useUpdateMyStaffProfileMutation,
+} from '../../../entities/student/queries/profile.queries';
 import type { StaffProfile } from '../../../entities/student/model/profile.types';
 import { validateBirthDate } from '../../../features/auth/birth-date-validation';
 import { OrgSidebar } from '../../../widgets/org-sidebar';
@@ -90,13 +92,20 @@ export const OrgProfileNewPage = () => {
   const [profileData, setProfileData] = useState<ProfileData>(emptyProfileData);
   const [draftProfileData, setDraftProfileData] = useState<ProfileData>(emptyProfileData);
   const [isEditing, setIsEditing] = useState(false);
-  const [isProfileLoading, setIsProfileLoading] = useState(true);
-  const [isProfileSaving, setIsProfileSaving] = useState(false);
-  const [isAvatarUploading, setIsAvatarUploading] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [profileError, setProfileError] = useState<string | null>(null);
   const [saveNotice, setSaveNotice] = useState<string | null>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const {
+    data: currentUser,
+    isLoading: isProfileLoading,
+    error: currentUserError,
+  } = useCurrentUserQuery();
+  const updateProfileMutation = useUpdateMyStaffProfileMutation();
+  const uploadAvatarMutation = useUpdateMyAvatarMutation();
+  const deleteAvatarMutation = useDeleteMyAvatarMutation();
+  const isProfileSaving = updateProfileMutation.isPending;
+  const isAvatarUploading = uploadAvatarMutation.isPending || deleteAvatarMutation.isPending;
 
   const updateProfileField =
     (field: keyof ProfileData) =>
@@ -145,52 +154,51 @@ export const OrgProfileNewPage = () => {
     setIsEditing(true);
   };
 
-  const loadProfile = useCallback(async () => {
+  useEffect(() => {
     const accessToken = getAccessToken();
     if (!accessToken) {
       navigate({ to: '/login' });
       return;
     }
 
-    setIsProfileLoading(true);
-    setProfileError(null);
-
-    try {
-      const user = await getCurrentStudent();
-      if (!isStaffProfile(user)) {
-        setProfileError('Эта страница доступна только организаторам');
-        return;
-      }
-
-      const mapped = mapStaffProfile(user);
-      setProfileData(mapped);
-      setDraftProfileData(mapped);
-      const nextAvatar = user.avatar_url ?? DEFAULT_AVATAR_SRC;
-      setAvatarSrc(nextAvatar);
-      dispatchOrgProfileUpdated({
-        avatarUrl: nextAvatar,
-        firstName: mapped.firstName,
-        lastName: mapped.lastName,
-        patronymic: mapped.patronymic,
-        email: mapped.email,
-      });
-      setIsEditing(false);
-    } catch (error) {
-      if (error instanceof AuthApiError && error.status === 401) {
-        clearAuthTokens();
-        navigate({ to: '/login' });
-        return;
-      }
-
-      setProfileError('Не удалось загрузить профиль');
-    } finally {
-      setIsProfileLoading(false);
+    if (currentUserError instanceof AuthApiError && currentUserError.status === 401) {
+      clearAuthTokens();
+      navigate({ to: '/login' });
+      return;
     }
-  }, [navigate]);
+
+    if (currentUserError) {
+      setProfileError('Не удалось загрузить профиль');
+      return;
+    }
+
+    if (currentUser && !isStaffProfile(currentUser)) {
+      setProfileError('Эта страница доступна только организаторам');
+      return;
+    }
+
+    setProfileError(null);
+  }, [currentUser, currentUserError, navigate]);
 
   useEffect(() => {
-    void loadProfile();
-  }, [loadProfile]);
+    if (!currentUser || !isStaffProfile(currentUser)) {
+      return;
+    }
+
+    const mapped = mapStaffProfile(currentUser);
+    setProfileData(mapped);
+    setDraftProfileData(mapped);
+    const nextAvatar = currentUser.avatar_url ?? DEFAULT_AVATAR_SRC;
+    setAvatarSrc(nextAvatar);
+    dispatchOrgProfileUpdated({
+      avatarUrl: nextAvatar,
+      firstName: mapped.firstName,
+      lastName: mapped.lastName,
+      patronymic: mapped.patronymic,
+      email: mapped.email,
+    });
+    setIsEditing(false);
+  }, [currentUser]);
 
   const birthInputClass = birthDateError ? 'field-input--error' : '';
   const fullName = getFullName(profileData);
@@ -219,10 +227,8 @@ export const OrgProfileNewPage = () => {
       return;
     }
 
-    setIsAvatarUploading(true);
-
     try {
-      const uploaded = await uploadMyAvatar(selectedFile);
+      const uploaded = await uploadAvatarMutation.mutateAsync(selectedFile);
       const nextAvatar = uploaded.avatar_url || DEFAULT_AVATAR_SRC;
       setAvatarSrc(nextAvatar);
       dispatchOrgProfileUpdated({ avatarUrl: nextAvatar });
@@ -235,7 +241,6 @@ export const OrgProfileNewPage = () => {
         alert('Не удалось загрузить аватар.');
       }
     } finally {
-      setIsAvatarUploading(false);
       event.target.value = '';
     }
   };
@@ -245,10 +250,8 @@ export const OrgProfileNewPage = () => {
       return;
     }
 
-    setIsAvatarUploading(true);
-
     try {
-      const user = await deleteMyAvatar();
+      const user = await deleteAvatarMutation.mutateAsync();
       const nextAvatar = isStaffProfile(user) ? user.avatar_url ?? DEFAULT_AVATAR_SRC : DEFAULT_AVATAR_SRC;
       setAvatarSrc(nextAvatar);
       dispatchOrgProfileUpdated({ avatarUrl: nextAvatar });
@@ -260,8 +263,6 @@ export const OrgProfileNewPage = () => {
       } else {
         alert('Не удалось удалить аватар.');
       }
-    } finally {
-      setIsAvatarUploading(false);
     }
   };
 
@@ -286,12 +287,11 @@ export const OrgProfileNewPage = () => {
     }
 
     setBirthDateError(null);
-    setIsProfileSaving(true);
     setSaveError(null);
     setSaveNotice(null);
 
     try {
-      const updated = await updateMyStaffProfile({
+      const updated = await updateProfileMutation.mutateAsync({
         first_name: firstName,
         last_name: lastName,
         partonymic: draftProfileData.patronymic.trim() || null,
@@ -318,8 +318,6 @@ export const OrgProfileNewPage = () => {
       } else {
         setSaveError('Не удалось сохранить профиль');
       }
-    } finally {
-      setIsProfileSaving(false);
     }
   };
 

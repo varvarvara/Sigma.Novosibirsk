@@ -1,7 +1,8 @@
 import { type CSSProperties, type MouseEvent as ReactMouseEvent, useEffect, useMemo, useRef, useState } from 'react';
 import { AuthApiError } from '../../../entities/auth';
-import { getCurrentStudent, isStaffProfile } from '../../../entities/student/api/profile.api';
-import { getTeacherTimetable } from '../../../entities/teacher/api/schedule.api';
+import { isStaffProfile } from '../../../entities/student/model/profile.types';
+import { useCurrentUserQuery } from '../../../entities/student/queries/profile.queries';
+import { useTeacherTimetableQuery } from '../../../entities/teacher/queries/schedule.queries';
 import { addDays, addMonths, fromDateKey, pad, startOfDay, toDateKey } from '../../../features/teacher-schedule/lib/date';
 import { MODE_LABELS, MONTH_NAMES, buildMonthGrid, buildWeekDays, formatHeaderLabel, getStoredMode, groupSlotsByDate, type Slot, type ViewMode, WEEKDAY_FULL_NAMES } from '../../../features/teacher-schedule/lib/timetable';
 import { getNovosibirskTimeParts, minutesToTime, timeToMinutes } from '../../../features/teacher-schedule/lib/time';
@@ -42,9 +43,6 @@ function getStoredDate() {
 export function TeacherSchedulePage() {
   const [viewMode, setViewMode] = useState<ViewMode>(() => getStoredMode());
   const [selectedDate, setSelectedDate] = useState<Date>(() => getStoredDate());
-  const [slotsByDate, setSlotsByDate] = useState<Record<string, Slot[]>>({});
-  const [isScheduleLoading, setIsScheduleLoading] = useState(true);
-  const [scheduleError, setScheduleError] = useState<string | null>(null);
   const [modeMenuOpen, setModeMenuOpen] = useState(false);
   const [activePopover, setActivePopover] = useState<PopoverState | null>(null);
   const [popoverOpen, setPopoverOpen] = useState(false);
@@ -52,6 +50,18 @@ export function TeacherSchedulePage() {
   const [headerHover, setHeaderHover] = useState<'back' | 'forward' | null>(null);
   const modeMenuRef = useRef<HTMLDivElement | null>(null);
   const popoverRef = useRef<HTMLDivElement | null>(null);
+  const {
+    data: currentUser,
+    isLoading: isCurrentUserLoading,
+    error: currentUserError,
+  } = useCurrentUserQuery();
+
+  const teacherId = currentUser && isStaffProfile(currentUser) ? currentUser.id : undefined;
+  const {
+    data: timetableItems,
+    isLoading: isTeacherTimetableLoading,
+    error: teacherTimetableError,
+  } = useTeacherTimetableQuery(teacherId);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -63,35 +73,20 @@ export function TeacherSchedulePage() {
     window.localStorage.setItem(STORAGE_DATE_KEY, toDateKey(selectedDate));
   }, [selectedDate]);
 
-  useEffect(() => {
-    const loadSchedule = async () => {
-      setIsScheduleLoading(true);
-      setScheduleError(null);
-
-      try {
-        const user = await getCurrentStudent();
-        if (!isStaffProfile(user)) {
-          setSlotsByDate({});
-          setScheduleError('Расписание доступно только преподавателям');
-          return;
-        }
-
-        const items = await getTeacherTimetable(user.id);
-        setSlotsByDate(groupSlotsByDate(items));
-      } catch (error) {
-        setSlotsByDate({});
-        if (error instanceof AuthApiError) {
-          setScheduleError(error.message);
-        } else {
-          setScheduleError('Не удалось загрузить расписание');
-        }
-      } finally {
-        setIsScheduleLoading(false);
-      }
-    };
-
-    void loadSchedule();
-  }, []);
+  const isScheduleLoading = isCurrentUserLoading || isTeacherTimetableLoading;
+  const scheduleError = currentUserError instanceof AuthApiError
+    ? currentUserError.message
+    : teacherTimetableError instanceof AuthApiError
+      ? teacherTimetableError.message
+      : currentUserError || teacherTimetableError
+        ? 'Не удалось загрузить расписание'
+        : currentUser && !isStaffProfile(currentUser)
+          ? 'Расписание доступно только преподавателям'
+          : null;
+  const slotsByDate = useMemo<Record<string, Slot[]>>(
+    () => groupSlotsByDate(timetableItems ?? []),
+    [timetableItems],
+  );
 
   const getDateSlots = (date: Date) => slotsByDate[toDateKey(date)] ?? [];
 

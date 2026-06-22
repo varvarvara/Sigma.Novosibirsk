@@ -1,14 +1,14 @@
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { AuthApiError } from "../../../entities/auth";
 import {
-    listExtracurricularScores,
-    listExtracurricularTeams,
-} from "../../../entities/organizer/api/extracurricular.api";
+    useListScoresQuery,
+    useListTeamsQuery,
+} from "../../../entities/organizer/queries/extracurricular.queries";
 import {
-    getSeasonExtracurricularTeamMembers,
-    getSeasonStudents,
-} from "../../../entities/organizer/api/season.api";
+    useSeasonExtracurricularTeamMembersQuery,
+    useSeasonStudentsQuery,
+} from "../../../entities/organizer/queries/season.queries";
 import type { ExtracurricularTeam } from "../../../entities/organizer/model/extracurricular.types";
 import type { SeasonStudent, SeasonTeamMember } from "../../../entities/organizer/model/season.types";
 import { DEFAULT_SEASON_ID } from "../../../features/auth/student-registration";
@@ -102,50 +102,52 @@ export function TeamFormationPage() {
     const [collapsedTeamIds, setCollapsedTeamIds] = useState<number[]>([]);
     const [notice, setNotice] = useState("");
     const [memberScores, setMemberScores] = useState<Record<string, MemberScoreEntry>>({});
-    const [isLoading, setIsLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
+    const {
+        data: apiTeams = [],
+        isLoading: isTeamsLoading,
+        error: teamsError,
+    } = useListTeamsQuery();
+    const {
+        data: scores = [],
+        isLoading: isScoresLoading,
+        error: scoresError,
+    } = useListScoresQuery();
+    const {
+        data: memberships = [],
+        isLoading: isMembershipsLoading,
+        error: membershipsError,
+    } = useSeasonExtracurricularTeamMembersQuery(DEFAULT_SEASON_ID);
+    const {
+        data: students = [],
+        isLoading: isStudentsLoading,
+        error: studentsError,
+    } = useSeasonStudentsQuery(DEFAULT_SEASON_ID);
 
-    const loadTeams = useCallback(async () => {
-        setIsLoading(true);
-        setError(null);
+    const isLoading = isTeamsLoading || isScoresLoading || isMembershipsLoading || isStudentsLoading;
+    const error =
+        teamsError instanceof AuthApiError ? teamsError.message :
+        scoresError instanceof AuthApiError ? scoresError.message :
+        membershipsError instanceof AuthApiError ? membershipsError.message :
+        studentsError instanceof AuthApiError ? studentsError.message :
+        teamsError || scoresError || membershipsError || studentsError ? "Не удалось загрузить команды" : null;
 
-        try {
-            const [apiTeams, scores, memberships, students] = await Promise.all([
-                listExtracurricularTeams(),
-                listExtracurricularScores(),
-                getSeasonExtracurricularTeamMembers(DEFAULT_SEASON_ID),
-                getSeasonStudents(DEFAULT_SEASON_ID),
-            ]);
+    const mappedTeams = useMemo(() => {
+        const studentsById = new Map(students.map((student) => [student.id, student] as const));
+        const teamPoints = scores.reduce<Map<number, number>>((acc, score) => {
+            acc.set(score.team_id, (acc.get(score.team_id) ?? 0) + score.score);
+            return acc;
+        }, new Map());
 
-            const studentsById = new Map(students.map((student) => [student.id, student]));
-
-            const teamPoints = scores.reduce<Map<number, number>>((acc, score) => {
-                acc.set(score.team_id, (acc.get(score.team_id) ?? 0) + score.score);
-                return acc;
-            }, new Map());
-
-            const mapped = apiTeams.map((team, index) =>
-                mapTeam(team, index, teamPoints, buildMembersForTeam(team.id, memberships, studentsById)),
-            );
-
-            setTeamItems(mapped);
-            setCollapsedTeamIds(mapped.map((team) => team.id));
-            setNotice("");
-        } catch (loadError) {
-            if (loadError instanceof AuthApiError) {
-                setError(loadError.message);
-            } else {
-                setError("Не удалось загрузить команды");
-            }
-            setTeamItems([]);
-        } finally {
-            setIsLoading(false);
-        }
-    }, []);
+        return apiTeams.map((team, index) =>
+            mapTeam(team, index, teamPoints, buildMembersForTeam(team.id, memberships, studentsById)),
+        );
+    }, [apiTeams, memberships, scores, students]);
 
     useEffect(() => {
-        void loadTeams();
-    }, [loadTeams]);
+        setTeamItems(mappedTeams);
+        setCollapsedTeamIds(mappedTeams.map((team) => team.id));
+        setNotice("");
+    }, [mappedTeams]);
 
     const updateMemberScore = (
         teamId: number,
@@ -215,7 +217,6 @@ export function TeamFormationPage() {
                         variant="error"
                         title="Не удалось загрузить команды"
                         message={error}
-                        onRetry={() => void loadTeams()}
                     />
                 ) : teamItems.length === 0 ? (
                     <OrgPanelState

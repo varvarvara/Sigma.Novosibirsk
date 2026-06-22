@@ -1,11 +1,11 @@
 import { type CSSProperties, useEffect, useMemo, useState } from 'react';
-import { getMyTeacherCourses } from '../../../entities/teacher/api/courses.api';
-import type { TeacherCourse } from '../../../entities/teacher/model/courses.types';
-import {
-  assignAchievement,
-  getCourseAchievementMatrix,
-} from '../../../entities/teacher/api/attendance.api';
+import { AuthApiError } from '../../../entities/auth';
 import type { TeacherAchievementMatrix } from '../../../entities/teacher/model/attendance.types';
+import {
+  useAssignAchievementMutation,
+  useTeacherCourseAchievementMatrixQuery,
+} from '../../../entities/teacher/queries/attendance.queries';
+import { useGetMyTeacherCourses } from '../../../entities/teacher/queries/courses.queries';
 import { TeacherAppShell } from '../../../widgets/teacher-sidebar/teacher-app-shell';
 import './achievements-page.css';
 
@@ -26,96 +26,66 @@ function buildAchievementDraft(matrix: TeacherAchievementMatrix) {
 }
 
 export function TeacherAchievementsPage() {
-  const [courses, setCourses] = useState<TeacherCourse[]>([]);
   const [selectedCourseId, setSelectedCourseId] = useState<number | null>(null);
-  const [matrix, setMatrix] = useState<TeacherAchievementMatrix | null>(null);
   const [achievementDraft, setAchievementDraft] = useState<Record<number, Record<number, boolean>>>({});
   const [initialAchievementDraft, setInitialAchievementDraft] = useState<Record<number, Record<number, boolean>>>({});
   const [currentPage, setCurrentPage] = useState(1);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isSaving, setIsSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
 
+  const {
+    data: courses = [],
+    isLoading: isCoursesLoading,
+    error: coursesError,
+  } = useGetMyTeacherCourses();
+
   useEffect(() => {
-    let isMounted = true;
-
-    async function loadCourses() {
-      try {
-        setIsLoading(true);
-        setError(null);
-        const teacherCourses = await getMyTeacherCourses();
-        if (!isMounted) {
-          return;
-        }
-
-        setCourses(teacherCourses);
-        setSelectedCourseId((currentCourseId) => currentCourseId ?? teacherCourses[0]?.id ?? null);
-      } catch (loadError) {
-        if (isMounted) {
-          setError(loadError instanceof Error ? loadError.message : 'Не удалось загрузить курсы преподавателя');
-        }
-      } finally {
-        if (isMounted) {
-          setIsLoading(false);
-        }
-      }
+    if (!courses.length) {
+      return;
     }
 
-    void loadCourses();
+    setSelectedCourseId((currentCourseId) => currentCourseId ?? courses[0]?.id ?? null);
+  }, [courses]);
 
-    return () => {
-      isMounted = false;
-    };
-  }, []);
+  const {
+    data: matrix,
+    isLoading: isMatrixLoading,
+    error: matrixError,
+  } = useTeacherCourseAchievementMatrixQuery(selectedCourseId ?? undefined);
+
+  const assignAchievementMutation = useAssignAchievementMutation(selectedCourseId ?? undefined);
+  const isLoading = isCoursesLoading || isMatrixLoading;
+  const isSaving = assignAchievementMutation.isPending;
+  const error =
+    coursesError instanceof AuthApiError ? coursesError.message :
+    matrixError instanceof AuthApiError ? matrixError.message :
+    coursesError || matrixError
+      ? 'Не удалось загрузить ачивки'
+      : saveError;
 
   useEffect(() => {
     if (!selectedCourseId) {
-      setMatrix(null);
       setAchievementDraft({});
       setInitialAchievementDraft({});
       return;
     }
 
-    let isMounted = true;
+    setCurrentPage(1);
+    setStatusMessage(null);
+    setSaveError(null);
+  }, [selectedCourseId]);
 
-    async function loadAchievements() {
-      try {
-        setIsLoading(true);
-        setError(null);
-        setStatusMessage(null);
-        setCurrentPage(1);
-
-        const courseMatrix = await getCourseAchievementMatrix(selectedCourseId as number);
-        const draft = buildAchievementDraft(courseMatrix);
-
-        if (!isMounted) {
-          return;
-        }
-
-        setMatrix(courseMatrix);
-        setAchievementDraft(draft);
-        setInitialAchievementDraft(draft);
-      } catch (loadError) {
-        if (isMounted) {
-          setError(loadError instanceof Error ? loadError.message : 'Не удалось загрузить ачивки');
-          setMatrix(null);
-          setAchievementDraft({});
-          setInitialAchievementDraft({});
-        }
-      } finally {
-        if (isMounted) {
-          setIsLoading(false);
-        }
-      }
+  useEffect(() => {
+    if (!matrix) {
+      setAchievementDraft({});
+      setInitialAchievementDraft({});
+      return;
     }
 
-    void loadAchievements();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [selectedCourseId]);
+    const draft = buildAchievementDraft(matrix);
+    setAchievementDraft(draft);
+    setInitialAchievementDraft(draft);
+  }, [matrix]);
 
   const students = matrix?.students ?? [];
   const achievements = matrix?.achievements ?? [];
@@ -168,27 +138,20 @@ export function TeacherAchievementsPage() {
     }
 
     try {
-      setIsSaving(true);
-      setError(null);
+      setSaveError(null);
       setStatusMessage(null);
 
-      await Promise.all(
-        assignmentsToCreate.map((assignment) => assignAchievement(assignment.studentId, assignment.achievementId)),
-      );
-
-      if (selectedCourseId) {
-        const updatedMatrix = await getCourseAchievementMatrix(selectedCourseId);
-        const updatedDraft = buildAchievementDraft(updatedMatrix);
-        setMatrix(updatedMatrix);
-        setAchievementDraft(updatedDraft);
-        setInitialAchievementDraft(updatedDraft);
-      }
+      await assignAchievementMutation.mutateAsync(assignmentsToCreate);
 
       setStatusMessage('Ачивки сохранены. За каждую ачивку студент получает 1 балл.');
     } catch (saveError) {
-      setError(saveError instanceof Error ? saveError.message : 'Не удалось сохранить ачивки');
-    } finally {
-      setIsSaving(false);
+      setSaveError(
+        saveError instanceof AuthApiError
+          ? saveError.message
+          : saveError instanceof Error
+            ? saveError.message
+            : 'Не удалось сохранить ачивки',
+      );
     }
   };
 

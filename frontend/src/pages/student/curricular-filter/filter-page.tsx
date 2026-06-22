@@ -2,8 +2,7 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { ChevronLeft } from "@untitledui/icons/ChevronLeft";
 import { AuthApiError } from "../../../entities/auth";
-import { getMyAttendanceFilterOptions } from "../../../entities/student/api/learning.api";
-import type { StudentAttendanceFilterCourseOut } from "../../../entities/student/model/learning.types";
+import { useMyAttendanceFilterOptionsQuery } from "../../../entities/student/queries/learning.queries";
 import { Button } from "../../../shared/ui/buttons/button";
 import {
     formatFilterDateLabel,
@@ -14,60 +13,48 @@ import "./filter-page.css";
 
 export function FilterPage() {
     const navigate = useNavigate();
-    const [courses, setCourses] = useState<StudentAttendanceFilterCourseOut[]>([]);
-    const [dates, setDates] = useState<string[]>([]);
     const [selectedCourseIds, setSelectedCourseIds] = useState<Set<number>>(new Set());
     const [selectedDates, setSelectedDates] = useState<Set<string>>(new Set());
-    const [isLoading, setIsLoading] = useState(true);
-    const [errorMessage, setErrorMessage] = useState("");
+    const { data: options, isLoading, error } = useMyAttendanceFilterOptionsQuery();
     const hasSelectedFilters = selectedCourseIds.size > 0 || selectedDates.size > 0;
+    const courses = options?.courses ?? [];
+    const dates = options?.dates ?? [];
+    const errorMessage =
+        error instanceof AuthApiError
+            ? error.message
+            : error
+                ? "Не удалось загрузить фильтр."
+                : "";
 
     useEffect(() => {
-        const load = async () => {
-            setIsLoading(true);
-            setErrorMessage("");
+        if (!options) {
+            return;
+        }
 
-            try {
-                const options = await getMyAttendanceFilterOptions();
-                if (options.courses.length === 0) {
-                    navigate({ to: "/curricular", replace: true });
-                    return;
-                }
+        if (options.courses.length === 0) {
+            navigate({ to: "/curricular", replace: true });
+            return;
+        }
 
-                setCourses(options.courses);
-                setDates(options.dates);
+        const saved = readCurricularChargesFilter();
+        const allCourseIds = options.courses.map((course) => course.course_id);
+        const allDates = options.dates;
 
-                const saved = readCurricularChargesFilter();
-                const allCourseIds = options.courses.map((course) => course.course_id);
-                const allDates = options.dates;
-
-                setSelectedCourseIds(
-                    new Set(
-                        saved?.courseIds.length
-                            ? saved.courseIds.filter((id) => allCourseIds.includes(id))
-                            : [],
-                    ),
-                );
-                setSelectedDates(
-                    new Set(
-                        saved?.dates.length
-                            ? saved.dates.filter((date) => allDates.includes(date))
-                            : [],
-                    ),
-                );
-            } catch (error) {
-                if (error instanceof AuthApiError) {
-                    setErrorMessage(error.message);
-                } else {
-                    setErrorMessage("Не удалось загрузить фильтр.");
-                }
-            } finally {
-                setIsLoading(false);
-            }
-        };
-
-        void load();
-    }, [navigate]);
+        setSelectedCourseIds(
+            new Set(
+                saved?.courseIds.length
+                    ? saved.courseIds.filter((id) => allCourseIds.includes(id))
+                    : [],
+            ),
+        );
+        setSelectedDates(
+            new Set(
+                saved?.dates.length
+                    ? saved.dates.filter((date) => allDates.includes(date))
+                    : [],
+            ),
+        );
+    }, [navigate, options]);
 
     const toggleCourse = (courseId: number) => {
         setSelectedCourseIds((previous) => {

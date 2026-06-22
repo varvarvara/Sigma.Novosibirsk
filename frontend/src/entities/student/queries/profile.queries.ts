@@ -30,17 +30,23 @@ export function useCurrentUserQuery() {
     })
 }
 
-export function useStudentGamificationQuery(studentId: number) {
+export function useStudentGamificationQuery(studentId?: number) {
     return useQuery({
-        queryKey: studentQueryKeys.studentGamification(studentId),
+        queryKey: studentId
+            ? studentQueryKeys.studentGamification(studentId)
+            : ["studentGamification", "unknown"],
         queryFn: () => getStudentGamification(studentId as number),
+        enabled: typeof studentId === "number",
     })
 }
 
-export function useStudentTeamQuery(studentId: number) {
+export function useStudentTeamQuery(studentId?: number) {
     return useQuery({
-        queryKey: studentQueryKeys.studentTeam(studentId),
-        queryFn: () => getStudentTeam(studentId),
+        queryKey: studentId
+            ? studentQueryKeys.studentTeam(studentId)
+            : ["studentTeam", "unknown"],
+        queryFn: () => getStudentTeam(studentId as number),
+        enabled: typeof studentId === "number",
     })
 }
 

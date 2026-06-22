@@ -3,20 +3,18 @@ import { useEffect, useMemo, useState } from "react";
 import { ChevronLeft } from "@untitledui/icons/ChevronLeft";
 import { AuthApiError } from "../../../entities/auth";
 import {
-    getMyAttendanceCharges,
-    getMyAttendanceDashboard,
-    getMyAttendanceFilterOptions,
-    getMyAchievements,
-    getMyEnrollments,
-} from "../../../entities/student/api/learning.api";
-import { getCurrentStudent, getStudentGamification } from "../../../entities/student/api/profile.api";
-import type { Student } from "../../../entities/student/model/profile.types";
+    useMyAchievementsQuery,
+    useMyAttendanceChargesQuery,
+    useMyAttendanceDashboardQuery,
+    useMyAttendanceFilterOptionsQuery,
+    useMyEnrollmentsQuery,
+} from "../../../entities/student/queries/learning.queries";
 import {
-    type ChargeGroup,
-    applyAchievementFilter,
-    applyChargesFilter,
-    groupLearningCharges,
-} from "../../../features/curricular-filter/lib/charge-groups";
+    useCurrentUserQuery,
+    useStudentGamificationQuery,
+} from "../../../entities/student/queries/profile.queries";
+import type { Student } from "../../../entities/student/model/profile.types";
+import { applyAchievementFilter, applyChargesFilter, groupLearningCharges } from "../../../features/curricular-filter/lib/charge-groups";
 import {
     CURRICULAR_CHARGES_FILTER_KEY,
     readCurricularChargesFilter,
@@ -28,14 +26,40 @@ function isStudentProfile(user: unknown): user is Student {
 }
 
 export function CurricularPage() {
-    const { hash, pathname } = useLocation();
-    const [isLoading, setIsLoading] = useState(true);
-    const [errorMessage, setErrorMessage] = useState("");
-    const [attendancePoints, setAttendancePoints] = useState(0);
-    const [achievementPoints, setAchievementPoints] = useState(0);
-    const [hasActiveEnrollments, setHasActiveEnrollments] = useState(false);
-    const [chargeGroups, setChargeGroups] = useState<ChargeGroup[]>([]);
+    const { hash } = useLocation();
     const [filterRevision, setFilterRevision] = useState(0);
+
+    const { data: currentUser, error: currentUserError } = useCurrentUserQuery();
+    const studentId = isStudentProfile(currentUser) ? currentUser.id : undefined;
+    const { data: gamification } = useStudentGamificationQuery(studentId);
+    const { data: attendanceDashboard, error: dashboardError, isLoading: isDashboardLoading } = useMyAttendanceDashboardQuery();
+    const { data: enrollments, error: enrollmentsError, isLoading: isEnrollmentsLoading } = useMyEnrollmentsQuery();
+    const { data: filterOptions, error: filterOptionsError, isLoading: isFilterOptionsLoading } = useMyAttendanceFilterOptionsQuery();
+    const { data: charges, error: chargesError, isLoading: isChargesLoading } = useMyAttendanceChargesQuery();
+    const { data: achievements, error: achievementsError, isLoading: isAchievementsLoading } = useMyAchievementsQuery();
+
+    const isLoading =
+        isDashboardLoading ||
+        isEnrollmentsLoading ||
+        isFilterOptionsLoading ||
+        isChargesLoading ||
+        isAchievementsLoading;
+
+    const errorMessage =
+        currentUserError instanceof AuthApiError ? currentUserError.message :
+        dashboardError instanceof AuthApiError ? dashboardError.message :
+        enrollmentsError instanceof AuthApiError ? enrollmentsError.message :
+        filterOptionsError instanceof AuthApiError ? filterOptionsError.message :
+        chargesError instanceof AuthApiError ? chargesError.message :
+        achievementsError instanceof AuthApiError ? achievementsError.message :
+        currentUserError || dashboardError || enrollmentsError || filterOptionsError || chargesError || achievementsError
+            ? "Не удалось загрузить учебную активность."
+            : "";
+
+    const attendancePoints = attendanceDashboard?.attendance_points ?? 0;
+    const achievementPoints = gamification?.achievement_score ?? 0;
+    const hasEnrollments = (enrollments ?? []).some((item) => item.enrollment_status === "Active");
+    const hasActiveEnrollments = hasEnrollments && (filterOptions?.courses.length ?? 0) > 0;
 
     useEffect(() => {
         if (hash === "charges") {
@@ -54,63 +78,17 @@ export function CurricularPage() {
         return () => window.removeEventListener("storage", onStorage);
     }, []);
 
-    useEffect(() => {
-        const load = async () => {
-            setIsLoading(true);
-            setErrorMessage("");
+    const chargeGroups = useMemo(() => {
+        if (!hasActiveEnrollments) {
+            return [];
+        }
 
-            try {
-                const [currentUser, attendance, enrollments] = await Promise.all([
-                    getCurrentStudent(),
-                    getMyAttendanceDashboard(),
-                    getMyEnrollments(),
-                ]);
+        const filter = readCurricularChargesFilter();
+        const filteredCharges = applyChargesFilter(charges ?? [], filter);
+        const filteredAchievements = applyAchievementFilter(achievements ?? [], filter);
 
-                const hasEnrollments = enrollments.some((item) => item.enrollment_status === "Active");
-                setHasActiveEnrollments(hasEnrollments);
-
-                let achievementScore = 0;
-                if (isStudentProfile(currentUser)) {
-                    try {
-                        const gamification = await getStudentGamification(currentUser.id);
-                        achievementScore = gamification.achievement_score;
-                    } catch {
-                        achievementScore = 0;
-                    }
-                }
-
-                setAttendancePoints(attendance.attendance_points);
-                setAchievementPoints(achievementScore);
-
-                if (hasEnrollments) {
-                    const [filterOptions, charges, achievements] = await Promise.all([
-                        getMyAttendanceFilterOptions(),
-                        getMyAttendanceCharges(),
-                        getMyAchievements(),
-                    ]);
-
-                    setHasActiveEnrollments(filterOptions.courses.length > 0);
-
-                    const filter = readCurricularChargesFilter();
-                    const filteredCharges = applyChargesFilter(charges, filter);
-                    const filteredAchievements = applyAchievementFilter(achievements, filter);
-                    setChargeGroups(groupLearningCharges(filteredCharges, filteredAchievements));
-                } else {
-                    setChargeGroups([]);
-                }
-            } catch (error) {
-                if (error instanceof AuthApiError) {
-                    setErrorMessage(error.message);
-                } else {
-                    setErrorMessage("Не удалось загрузить учебную активность.");
-                }
-            } finally {
-                setIsLoading(false);
-            }
-        };
-
-        void load();
-    }, [filterRevision, pathname]);
+        return groupLearningCharges(filteredCharges, filteredAchievements);
+    }, [achievements, charges, filterRevision, hasActiveEnrollments]);
 
     const totalPoints = useMemo(() => attendancePoints + achievementPoints, [attendancePoints, achievementPoints]);
 
