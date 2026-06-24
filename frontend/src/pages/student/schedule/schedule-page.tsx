@@ -3,7 +3,11 @@ import { MarkerPin01 } from '@untitledui/icons/MarkerPin01'
 import { User01 } from '@untitledui/icons/User01'
 import { AuthApiError } from '../../../entities/auth'
 import type { ScheduleEvent } from '../../../entities/student/model/learning.types'
-import { isScheduleReadyForStudent } from '../../../features/course-flow/resolve-course-flow'
+import { DEFAULT_SEASON_ID } from '../../../features/auth/student-registration'
+import {
+  isScheduleReadyForStudent,
+  scheduleReadyForStudentQueryKey,
+} from '../../../features/course-flow/resolve-course-flow'
 import { addDays, getDayLabel } from './schedule-page.utils'
 import type { ScheduleItem } from './schedule-page.types'
 import './schedule-page.css'
@@ -13,8 +17,6 @@ import { useMyScheduleEventsQuery } from '../../../entities/student/queries/lear
 const DAYS_BEFORE = 60
 const DAYS_AFTER = 120
 const DEFAULT_ACTIVE_INDEX = DAYS_BEFORE
-const parsedSeasonId = Number(import.meta.env.VITE_DEFAULT_SEASON_ID ?? 1)
-const DEFAULT_SEASON_ID = Number.isFinite(parsedSeasonId) && parsedSeasonId > 0 ? parsedSeasonId : 1
 
 function toScheduleItem(event: ScheduleEvent): ScheduleItem {
   const start = new Date(event.start)
@@ -102,7 +104,7 @@ export function SchedulePage() {
     isLoading: isScheduleReadyLoading,
     error: scheduleReadyError
   } = useQuery({
-    queryKey: ["scheduleReadyForStudent"],
+    queryKey: scheduleReadyForStudentQueryKey,
     queryFn: isScheduleReadyForStudent,
   })
 

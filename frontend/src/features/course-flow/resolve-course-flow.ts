@@ -25,6 +25,7 @@ export const COURSE_FLOW_PATH: Record<CourseFlowStage, string> = {
 };
 
 export const COURSE_SELECTION_PATHS = ["/courses", "/course-detail", "/course-card"] as const;
+export const scheduleReadyForStudentQueryKey = ["scheduleReadyForStudent"] as const;
 
 const parsedSeasonId = Number(import.meta.env.VITE_DEFAULT_SEASON_ID ?? 1);
 const DEFAULT_SEASON_ID = Number.isFinite(parsedSeasonId) && parsedSeasonId > 0 ? parsedSeasonId : 1;

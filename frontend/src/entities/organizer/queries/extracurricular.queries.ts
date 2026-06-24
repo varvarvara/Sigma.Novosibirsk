@@ -16,7 +16,7 @@ import {
     ExtracurricularTeamMemberCreate,
 } from "../model/extracurricular.types";
 
-const extracurricularQueryKeys = {
+export const organizerExtracurricularQueryKeys = {
     activities: ["listExtracurricularActivities"] as const,
     teams: ["listExtracurricularTeams"] as const,
     members: (teamId: number, seasonId: number) =>
@@ -26,7 +26,7 @@ const extracurricularQueryKeys = {
 
 export function useListActivitiesQuery() {
     return useQuery({
-        queryKey: extracurricularQueryKeys.activities,
+        queryKey: organizerExtracurricularQueryKeys.activities,
         queryFn: listExtracurricularActivities,
     });
 }
@@ -39,14 +39,14 @@ export function useCreateActivityMutation() {
             createExtracurricularActivity(payload),
         onSuccess: async () =>
             await queryClient.invalidateQueries({
-                queryKey: extracurricularQueryKeys.activities
+                queryKey: organizerExtracurricularQueryKeys.activities
             }),
     });
 }
 
 export function useListTeamsQuery() {
     return useQuery({
-        queryKey: extracurricularQueryKeys.teams,
+        queryKey: organizerExtracurricularQueryKeys.teams,
         queryFn: listExtracurricularTeams,
     })
 }
@@ -59,7 +59,7 @@ export function useCreateTeamMutation() {
             createExtracurricularTeam(payload),
         onSuccess: async () => 
             await queryClient.invalidateQueries({
-                queryKey: extracurricularQueryKeys.teams
+                queryKey: organizerExtracurricularQueryKeys.teams
             }),
     })
 }
@@ -72,7 +72,7 @@ export function useCreateTeamMemberMutation() {
             addExtracurricularTeamMember(payload),
         onSuccess: async () => {
             await queryClient.invalidateQueries({
-                queryKey: extracurricularQueryKeys.teams
+                queryKey: organizerExtracurricularQueryKeys.teams
             });
         }
     })
@@ -87,10 +87,10 @@ export function useAddTeamMemberMutation(teamId: number, seasonId: number) {
         onSuccess: async () => {
             await Promise.all([
                 queryClient.invalidateQueries({
-                    queryKey: extracurricularQueryKeys.members(teamId, seasonId)
+                    queryKey: organizerExtracurricularQueryKeys.members(teamId, seasonId)
                 }),
                 queryClient.invalidateQueries({
-                    queryKey: extracurricularQueryKeys.teams
+                    queryKey: organizerExtracurricularQueryKeys.teams
                 }),
             ]);
         }
@@ -99,14 +99,14 @@ export function useAddTeamMemberMutation(teamId: number, seasonId: number) {
 
 export function useListTeamMembersQuery(teamId: number, seasonId: number) {
     return useQuery({
-        queryKey: extracurricularQueryKeys.members(teamId, seasonId),
+        queryKey: organizerExtracurricularQueryKeys.members(teamId, seasonId),
         queryFn: () => listExtracurricularTeamMembers(teamId, seasonId),
     })
 }
 
 export function useListScoresQuery() {
     return useQuery({
-        queryKey: extracurricularQueryKeys.scores,
+        queryKey: organizerExtracurricularQueryKeys.scores,
         queryFn: listExtracurricularScores,
     })
 }
@@ -120,13 +120,13 @@ export function useMarkTeamAttendanceMutation() {
         onSuccess: async () =>
             await Promise.all([
                 queryClient.invalidateQueries({
-                    queryKey: extracurricularQueryKeys.scores
+                    queryKey: organizerExtracurricularQueryKeys.scores
                 }),
                 queryClient.invalidateQueries({
-                    queryKey: extracurricularQueryKeys.teams
+                    queryKey: organizerExtracurricularQueryKeys.teams
                 }),
                 queryClient.invalidateQueries({
-                    queryKey: extracurricularQueryKeys.activities
+                    queryKey: organizerExtracurricularQueryKeys.activities
                 }),
             ]),
     })

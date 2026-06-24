@@ -1,5 +1,10 @@
 import { Link, useLocation } from '@tanstack/react-router';
 import { type MouseEvent } from 'react';
+import {
+  warmRoute,
+  warmTeacherAttendanceSection,
+  warmTeacherCoursesSection,
+} from '../../app/route-warmers';
 import type { TeacherNavSection } from './teacher-nav-config';
 import { useTeacherAvatar } from './use-teacher-avatar';
 import './teacher-sidebar-styles.css';
@@ -68,6 +73,8 @@ export const TeacherSidebar = ({
           className={`nav-item ${isActive('/teacher/profile') ? 'active' : ''}`}
           title="Профиль"
           onClick={() => onPanelClose?.()}
+          onPointerEnter={() => warmRoute('/teacher/profile')}
+          onFocus={() => warmRoute('/teacher/profile')}
         >
           <svg className="nav-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <circle cx="12" cy="8" r="4" stroke="#FFFFFF" strokeWidth="2" />
@@ -87,6 +94,8 @@ export const TeacherSidebar = ({
           title="Курсы"
           aria-expanded={expandedSection === 'courses' && isPanelOpen}
           onClick={(event) => handleSectionClick(event, 'courses')}
+          onPointerEnter={warmTeacherCoursesSection}
+          onFocus={warmTeacherCoursesSection}
         >
           <img className="nav-icon" src="/teacher/sidebar/book-open.svg" alt="Курсы" />
         </Link>
@@ -97,6 +106,8 @@ export const TeacherSidebar = ({
           title="Посещаемость"
           aria-expanded={expandedSection === 'attendance' && isPanelOpen}
           onClick={(event) => handleSectionClick(event, 'attendance')}
+          onPointerEnter={warmTeacherAttendanceSection}
+          onFocus={warmTeacherAttendanceSection}
         >
           <img className="nav-icon" src="/teacher/sidebar/check-square.svg" alt="Посещаемость" />
         </Link>
@@ -106,6 +117,8 @@ export const TeacherSidebar = ({
           className={`nav-item ${isActive('/teacher/schedule') ? 'active' : ''}`}
           title="Расписание"
           onClick={() => onPanelClose?.()}
+          onPointerEnter={() => warmRoute('/teacher/schedule')}
+          onFocus={() => warmRoute('/teacher/schedule')}
         >
           <img className="nav-icon" src="/teacher/sidebar/calendar.svg" alt="Расписание" />
         </Link>
@@ -119,6 +132,8 @@ export const TeacherSidebar = ({
           className={`nav-item avatar ${isActive('/teacher/profile') ? 'active' : ''}`}
           title="Профиль"
           onClick={() => onPanelClose?.()}
+          onPointerEnter={() => warmRoute('/teacher/profile')}
+          onFocus={() => warmRoute('/teacher/profile')}
         >
           <img src={resolvedAvatarSrc} alt="Профиль" />
         </Link>

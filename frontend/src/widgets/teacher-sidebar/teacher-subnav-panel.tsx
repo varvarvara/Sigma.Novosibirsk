@@ -1,5 +1,6 @@
 import { Link, useLocation } from '@tanstack/react-router';
 import { useEffect, useState } from 'react';
+import { warmRoute } from '../../app/route-warmers';
 import { clearAuthTokens, getAccessToken, getRefreshToken, logout } from "../../entities/auth";
 import { isStaffProfile } from '../../entities/student/model/profile.types';
 import { getTeacherFullName } from "../../features/teacher/teacher-profile";
@@ -132,6 +133,8 @@ export function TeacherSubnavPanel({ section, isOpen, avatarSrc }: TeacherSubnav
               activeOptions={{ exact: true }}
               className={`teacher-subnav__item${isTeacherSubnavItemActive(location.pathname, item) ? ' active' : ''}`}
               style={{ transitionDelay: isOpen ? `${40 + index * 35}ms` : '0ms' }}
+              onPointerEnter={() => warmRoute(item.path)}
+              onFocus={() => warmRoute(item.path)}
             >
               <img className="teacher-subnav__icon" src={item.icon} alt="" />
               <span>{item.label}</span>

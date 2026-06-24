@@ -1,4 +1,5 @@
 import { Link, useLocation } from "@tanstack/react-router";
+import { warmRoute } from "../../app/route-warmers";
 import "./navbar.css";
 
 export function Navbar() {
@@ -48,6 +49,8 @@ export function Navbar() {
                         key={tab.to}
                         className={`nav-link${tab.isActive ? " nav-link-active" : ""}`}
                         to={tab.to}
+                        onPointerEnter={() => warmRoute(tab.to)}
+                        onFocus={() => warmRoute(tab.to)}
                     >
                         {tab.label}
                     </Link>

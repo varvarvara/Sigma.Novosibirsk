@@ -1,5 +1,6 @@
 import { Link, useLocation } from '@tanstack/react-router';
 import { useEffect, useState } from 'react';
+import { warmRoute } from '../../app/route-warmers';
 import { isStaffProfile } from '../../entities/student/model/profile.types';
 import {
   getOrgProfileSyncDetail,
@@ -126,6 +127,8 @@ export function OrgSidebar({ avatarSrc }: OrgSidebarProps) {
           to="/org-extracurricular"
           className={itemClass([...EXTRACURRICULAR_PATHS])}
           aria-label="Внеучебная деятельность"
+          onPointerEnter={() => warmRoute('/org-extracurricular')}
+          onFocus={() => warmRoute('/org-extracurricular')}
         >
           <SidebarIcon src={ICONS.teams} />
         </Link>
@@ -137,6 +140,8 @@ export function OrgSidebar({ avatarSrc }: OrgSidebarProps) {
           to="/org-profile"
           className={`org-sidebar__avatar${isActive(['/org-profile']) ? ' is-active' : ''}`}
           aria-label="Профиль"
+          onPointerEnter={() => warmRoute('/org-profile')}
+          onFocus={() => warmRoute('/org-profile')}
         >
           <img
             src={avatar}
