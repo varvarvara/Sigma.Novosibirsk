@@ -1,24 +1,21 @@
-import { useNavigate } from "@tanstack/react-router";
-import { Button } from "../../../shared/ui/button/button";
-import "./course-choice.css";
+import { Suspense, lazy } from "react";
+import { loadCourseChoiceContent } from "../../../app/lazy-page-loaders";
+
+const CourseChoiceContent = lazy(loadCourseChoiceContent);
+const fallbackStyle = {
+    width: "min(100%, 360px)",
+    minHeight: "100vh",
+    margin: "0 auto",
+    padding: "24px 20px 96px",
+    boxSizing: "border-box",
+    background: "#2A2730",
+    color: "#F7F6FA",
+} as const;
 
 export function CourseChoicePage() {
-    const navigate = useNavigate();
-
     return (
-        <main className="course-choice-page">
-            <section className="course-choice-content">
-                <h1 className="course-choice-title-button">Курсы не выбраны</h1>
-                <Button
-                    color="primary"
-                    size="md"
-                    className="course-choice-button"
-                    onClick={() => navigate({ to: "/courses" })}
-                >
-                    Выбрать
-                </Button>
-            </section>
-
-        </main>
+        <Suspense fallback={<main style={fallbackStyle}>Загрузка выбора...</main>}>
+            <CourseChoiceContent />
+        </Suspense>
     );
 }

@@ -1,15 +1,21 @@
-import "./course-nothing.css";
+import { Suspense, lazy } from "react";
+import { loadCourseNothingContent } from "../../../app/lazy-page-loaders";
+
+const CourseNothingContent = lazy(loadCourseNothingContent);
+const fallbackStyle = {
+    width: "min(100%, 360px)",
+    minHeight: "100vh",
+    margin: "0 auto",
+    padding: "24px 20px 96px",
+    boxSizing: "border-box",
+    background: "#2A2730",
+    color: "#F7F6FA",
+} as const;
 
 export function CourseNothingPage() {
     return (
-        <main className="course-nothing-page">
-            <section className="course-nothing-content">
-                <div className="course-nothing-title-button">
-                    <span className="course-nothing-title-main">В этом разделе ничего нет</span>
-                    <span className="course-nothing-title-sub">Попробуйте позже</span>
-                </div>
-            </section>
-
-        </main>
+        <Suspense fallback={<main style={fallbackStyle}>Загрузка...</main>}>
+            <CourseNothingContent />
+        </Suspense>
     );
 }

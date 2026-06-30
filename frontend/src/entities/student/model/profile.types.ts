@@ -37,8 +37,8 @@ export type AvatarUploadOut = {
 
 export type CurrentUser = Student | StaffProfile;
 
-export function isStaffProfile(user: CurrentUser): user is StaffProfile {
-  return "staff_role" in user;
+export function isStaffProfile(user: CurrentUser | null | undefined): user is StaffProfile {
+  return Boolean(user && typeof user === "object" && "staff_role" in user);
 }
 
 export type StudentInCreate = {

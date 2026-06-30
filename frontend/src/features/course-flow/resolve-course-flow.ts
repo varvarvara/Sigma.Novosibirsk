@@ -1,9 +1,10 @@
-import { 
-    getEnrollmentSlotOptions,
-    getMyEnrollments,
-    getMyScheduleEvents,
-    getSchedulePublishStatus
-} from "../../entities/student/api/learning.api";
+import { queryClient } from "../../app/query-client";
+import {
+    enrollmentSlotOptionsQueryOptions,
+    myEnrollmentsQueryOptions,
+    myScheduleEventsQueryOptions,
+    schedulePublishStatusQueryOptions,
+} from "../../entities/student/queries/learning.query-options";
 import {
     normalizeEnrollmentSlotOptions,
     sanitizeDraftSelectionByHour,
@@ -25,7 +26,6 @@ export const COURSE_FLOW_PATH: Record<CourseFlowStage, string> = {
 };
 
 export const COURSE_SELECTION_PATHS = ["/courses", "/course-detail", "/course-card"] as const;
-export const scheduleReadyForStudentQueryKey = ["scheduleReadyForStudent"] as const;
 
 const parsedSeasonId = Number(import.meta.env.VITE_DEFAULT_SEASON_ID ?? 1);
 const DEFAULT_SEASON_ID = Number.isFinite(parsedSeasonId) && parsedSeasonId > 0 ? parsedSeasonId : 1;
@@ -69,18 +69,27 @@ export function readDraftSelectionByHour(slots: { slot_hour: number; courses: { 
     return nextSelected;
 }
 
+async function loadCourseFlowSnapshot() {
+    const [slotOptionsRaw, enrollments, publishStatus] = await Promise.all([
+        queryClient.ensureQueryData(enrollmentSlotOptionsQueryOptions()),
+        queryClient.ensureQueryData(myEnrollmentsQueryOptions()),
+        queryClient.ensureQueryData(schedulePublishStatusQueryOptions(DEFAULT_SEASON_ID)),
+    ]);
+
+    return {
+        slotOptions: normalizeEnrollmentSlotOptions(slotOptionsRaw),
+        enrollments,
+        publishStatus,
+    };
+}
+
 export async function resolveCourseFlowStage(): Promise<CourseFlowStage> {
     const override = readStageOverride();
     if (override) {
         return override;
     }
 
-    const [slotOptionsRaw, enrollments, publishStatus] = await Promise.all([
-        getEnrollmentSlotOptions(),
-        getMyEnrollments(),
-        getSchedulePublishStatus(DEFAULT_SEASON_ID),
-    ]);
-    const slotOptions = normalizeEnrollmentSlotOptions(slotOptionsRaw);
+    const { slotOptions, enrollments, publishStatus } = await loadCourseFlowSnapshot();
 
     const hasPublishedSlots = slotOptions.slots.some((slot) => slot.courses.length > 0);
     if (!hasPublishedSlots) {
@@ -95,7 +104,9 @@ export async function resolveCourseFlowStage(): Promise<CourseFlowStage> {
             return "waiting_schedule";
         }
 
-        const schedule = await getMyScheduleEvents(DEFAULT_SEASON_ID);
+        const schedule = await queryClient.ensureQueryData(
+            myScheduleEventsQueryOptions(DEFAULT_SEASON_ID),
+        );
         const enrolledCourseIds = new Set(activeEnrollments.map((item) => item.course_id));
         const hasScheduleForCourses =
             schedule.schedule_published !== false &&
@@ -122,12 +133,7 @@ export async function resolveCourseFlowStage(): Promise<CourseFlowStage> {
 
 /** Расписание в календаре — только после полной записи, публикации и появления занятий. */
 export async function isScheduleReadyForStudent(): Promise<boolean> {
-    const [slotOptionsRaw, enrollments, publishStatus] = await Promise.all([
-        getEnrollmentSlotOptions(),
-        getMyEnrollments(),
-        getSchedulePublishStatus(DEFAULT_SEASON_ID),
-    ]);
-    const slotOptions = normalizeEnrollmentSlotOptions(slotOptionsRaw);
+    const { slotOptions, enrollments, publishStatus } = await loadCourseFlowSnapshot();
 
     const activeEnrollments = enrollments.filter((item) => item.enrollment_status === "Active");
     const requiredCount = slotOptions.required_slot_hours.length || 3;
@@ -140,7 +146,9 @@ export async function isScheduleReadyForStudent(): Promise<boolean> {
         return false;
     }
 
-    const schedule = await getMyScheduleEvents(DEFAULT_SEASON_ID);
+    const schedule = await queryClient.ensureQueryData(
+        myScheduleEventsQueryOptions(DEFAULT_SEASON_ID),
+    );
     if (schedule.schedule_published === false) {
         return false;
     }

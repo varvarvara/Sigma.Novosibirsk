@@ -2,8 +2,8 @@ import { redirect } from "@tanstack/react-router";
 import { AuthApiError } from "../../entities/auth";
 import {
     COURSE_FLOW_PATH,
-    resolveCourseFlowStage,
     type CourseFlowStage,
+    resolveCourseFlowStage,
 } from "./resolve-course-flow";
 
 async function resolveStageOrRedirect() {

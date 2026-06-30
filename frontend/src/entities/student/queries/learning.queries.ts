@@ -1,84 +1,51 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { 
-    getEnrollmentSlotOptions,
-    submitEnrollmentSlotSelection,
-    getMyEnrollments,
-    getMyAttendanceFilterOptions,
-    getMyAttendanceCharges,
-    getMyAttendanceDashboard,
-    getMyAchievements,
-    getMyScheduleEvents,
-    getSchedulePublishStatus
-} from "../api/learning.api";
+import { submitEnrollmentSlotSelection } from "../api/learning.api";
+import {
+    enrollmentSlotOptionsQueryOptions,
+    learningQueryKeys,
+    myAchievementsQueryOptions,
+    myAttendanceChargesQueryOptions,
+    myAttendanceDashboardQueryOptions,
+    myAttendanceFilterOptionsQueryOptions,
+    myEnrollmentsQueryOptions,
+    myScheduleEventsQueryOptions,
+    schedulePublishStatusQueryOptions,
+} from "./learning.query-options";
 
 import type { EnrollmentSelectionIn } from "../model/learning.types";
 
-export const learningQueryKeys = {
-    enrollmentSlotOptions: ["getEnrollmentSlotOptions"] as const,
-    enrollmentSlotSelection: ["SubmitEnrollmentSlotSelection"] as const,
-    myEnrollments: ["getMyEnrollments"] as const,
-    myAttendanceFilterOptions: ["getMyAttendanceFilterOptions"] as const,
-    myAttendanceCharges: ["getMyAttendanceCharges"] as const,
-    myAttendanceDashboard: ["getMyAttendanceDashboard"] as const,
-    myAchievements: ["getMyAchievements"] as const,
-    myScheduleEvents: (seasonId: number) => ["getMyScheduleEvents", seasonId] as const,
-    schedulePublishStatus: (seasonId: number) => ["getSchedulePublishStatus", seasonId] as const,
-}
+export { learningQueryKeys } from "./learning.query-options";
 
 export function useEnrollmentSlotOptionsQuery() {
-    return useQuery({
-        queryKey: learningQueryKeys.enrollmentSlotOptions,
-        queryFn: getEnrollmentSlotOptions,
-    });
+    return useQuery(enrollmentSlotOptionsQueryOptions());
 }
 
 export function useMyEnrollmentsQuery() {
-    return useQuery({
-        queryKey: learningQueryKeys.myEnrollments,
-        queryFn: getMyEnrollments,
-    });
+    return useQuery(myEnrollmentsQueryOptions());
 }
 
 export function useMyAttendanceFilterOptionsQuery() {
-    return useQuery({
-        queryKey: learningQueryKeys.myAttendanceFilterOptions,
-        queryFn: getMyAttendanceFilterOptions,
-    });
+    return useQuery(myAttendanceFilterOptionsQueryOptions());
 }
 
 export function useMyAttendanceChargesQuery() {
-    return useQuery({
-        queryKey: learningQueryKeys.myAttendanceCharges,
-        queryFn: getMyAttendanceCharges,
-    });
+    return useQuery(myAttendanceChargesQueryOptions());
 }
 
 export function useMyAttendanceDashboardQuery() {
-    return useQuery({
-        queryKey: learningQueryKeys.myAttendanceDashboard,
-        queryFn: getMyAttendanceDashboard,
-    });
+    return useQuery(myAttendanceDashboardQueryOptions());
 }
 
 export function useMyAchievementsQuery() {
-    return useQuery({
-        queryKey: learningQueryKeys.myAchievements,
-        queryFn: getMyAchievements,
-    });
+    return useQuery(myAchievementsQueryOptions());
 }
 
 export function useMyScheduleEventsQuery(seasonId: number) {
-    return useQuery({
-        queryKey: learningQueryKeys.myScheduleEvents(seasonId),
-        queryFn: () => getMyScheduleEvents(seasonId),
-    });
+    return useQuery(myScheduleEventsQueryOptions(seasonId));
 }
 
 export function useSchedulePublishStatusQuery(seasonId: number) {
-    return useQuery({
-        queryKey: learningQueryKeys.schedulePublishStatus(seasonId),
-        queryFn: () => getSchedulePublishStatus(seasonId),
-    });
+    return useQuery(schedulePublishStatusQueryOptions(seasonId));
 }
 
 export function useEnrollmentSlotSelectionQuery() {
