@@ -128,6 +128,7 @@ export function OrgSidebar({ avatarSrc }: OrgSidebarProps) {
           className={itemClass([...EXTRACURRICULAR_PATHS])}
           aria-label="Внеучебная деятельность"
           onPointerEnter={() => warmRoute('/org-extracurricular')}
+          onPointerDown={() => warmRoute('/org-extracurricular')}
           onFocus={() => warmRoute('/org-extracurricular')}
         >
           <SidebarIcon src={ICONS.teams} />
@@ -141,6 +142,7 @@ export function OrgSidebar({ avatarSrc }: OrgSidebarProps) {
           className={`org-sidebar__avatar${isActive(['/org-profile']) ? ' is-active' : ''}`}
           aria-label="Профиль"
           onPointerEnter={() => warmRoute('/org-profile')}
+          onPointerDown={() => warmRoute('/org-profile')}
           onFocus={() => warmRoute('/org-profile')}
         >
           <img

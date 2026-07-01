@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
+import { warmRoute } from '../../../app/route-warmers';
 import { AuthApiError } from '../../../entities/auth';
 import {
   useCreateTeamMemberMutation,
@@ -62,6 +63,13 @@ export default function TeamCreationContent() {
     });
   }, [memberName, students]);
 
+  const warmTeamFormationRoute = () => warmRoute('/team-formation');
+
+  const openTeamFormation = () => {
+    warmTeamFormationRoute();
+    navigate({ to: '/team-formation' });
+  };
+
   const addMember = (student: SeasonStudent) => {
     setMemberIds((items) => (items.includes(student.id) ? items : [...items, student.id]));
     setMemberName('');
@@ -91,6 +99,7 @@ export default function TeamCreationContent() {
         ),
       );
 
+      warmTeamFormationRoute();
       navigate({ to: '/team-formation' });
     } catch (saveError) {
       if (saveError instanceof AuthApiError) {
@@ -109,13 +118,23 @@ export default function TeamCreationContent() {
           <p>Заполните данные и выберите участников</p>
         </div>
         <div className="team-creation-header__actions">
-          <button className="team-creation-light-button team-creation-clickable" type="button" onClick={() => navigate({ to: '/team-formation' })}>
+          <button
+            className="team-creation-light-button team-creation-clickable"
+            type="button"
+            onClick={openTeamFormation}
+            onPointerEnter={warmTeamFormationRoute}
+            onPointerDown={warmTeamFormationRoute}
+            onFocus={warmTeamFormationRoute}
+          >
             Отмена
           </button>
           <button
             className="team-creation-primary-button team-creation-clickable"
             type="button"
             onClick={() => void createTeam()}
+            onPointerEnter={warmTeamFormationRoute}
+            onPointerDown={warmTeamFormationRoute}
+            onFocus={warmTeamFormationRoute}
             disabled={isSaving}
           >
             {isSaving ? 'Создание...' : 'Создать'}

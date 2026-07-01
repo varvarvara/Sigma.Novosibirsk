@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
+import { warmRoute } from '../../../app/route-warmers';
 import { AuthApiError } from '../../../entities/auth';
 import {
   useListActivitiesQuery,
@@ -98,6 +99,33 @@ export default function OrgExtracurricularContent() {
     });
   }, [activities, activeStatus, query]);
 
+  const warmTeamFormationRoute = () => warmRoute('/team-formation');
+  const warmCreationRoute = () => warmRoute('/org-extracurricular-creation');
+  const warmPointsAddRoute = () => warmRoute('/extracurricular-points-add');
+
+  const openTeamFormation = () => {
+    warmTeamFormationRoute();
+    navigate({ to: '/team-formation' });
+  };
+
+  const openActivityCreation = () => {
+    warmCreationRoute();
+    navigate({ to: '/org-extracurricular-creation' });
+  };
+
+  const openPointsAdd = (activity: Activity) => {
+    warmPointsAddRoute();
+    setSelectedActivityId(activity.id);
+    navigate({
+      to: '/extracurricular-points-add',
+      search: {
+        activityId: activity.id,
+        title: activity.title,
+        organizer: activity.organizer,
+      },
+    });
+  };
+
   return (
     <section className="org-layout__workspace org-workspace">
       <header className="org-header">
@@ -106,12 +134,28 @@ export default function OrgExtracurricularContent() {
           <p>Управление мероприятиями, командами и баллами</p>
           <nav className="org-tabs" aria-label="Разделы внеучебки">
             <button className="org-tabs__item org-tabs__item--active org-clickable" type="button">Мероприятия</button>
-            <button className="org-tabs__item org-clickable" type="button" onClick={() => navigate({ to: '/team-formation' })}>Команды</button>
+            <button
+              className="org-tabs__item org-clickable"
+              type="button"
+              onClick={openTeamFormation}
+              onPointerEnter={warmTeamFormationRoute}
+              onPointerDown={warmTeamFormationRoute}
+              onFocus={warmTeamFormationRoute}
+            >
+              Команды
+            </button>
             <button className="org-tabs__item org-clickable" type="button">Рейтинг</button>
           </nav>
         </div>
         <div className="org-header__actions">
-          <button className="org-primary-button org-clickable" type="button" onClick={() => navigate({ to: '/org-extracurricular-creation' })}>
+          <button
+            className="org-primary-button org-clickable"
+            type="button"
+            onClick={openActivityCreation}
+            onPointerEnter={warmCreationRoute}
+            onPointerDown={warmCreationRoute}
+            onFocus={warmCreationRoute}
+          >
             Создать мероприятие
           </button>
         </div>
@@ -150,17 +194,10 @@ export default function OrgExtracurricularContent() {
                   className={`org-activity-row org-clickable${selectedActivityId === activity.id ? ' org-activity-row--active' : ''}`}
                   type="button"
                   key={activity.id}
-                  onClick={() => {
-                    setSelectedActivityId(activity.id);
-                    navigate({
-                      to: '/extracurricular-points-add',
-                      search: {
-                        activityId: activity.id,
-                        title: activity.title,
-                        organizer: activity.organizer,
-                      },
-                    });
-                  }}
+                  onClick={() => openPointsAdd(activity)}
+                  onPointerEnter={warmPointsAddRoute}
+                  onPointerDown={warmPointsAddRoute}
+                  onFocus={warmPointsAddRoute}
                 >
                   <span className="org-activity-row__title">{activity.title}</span>
                   <span>{activity.date}</span>

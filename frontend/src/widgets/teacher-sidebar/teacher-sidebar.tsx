@@ -74,6 +74,7 @@ export const TeacherSidebar = ({
           title="Профиль"
           onClick={() => onPanelClose?.()}
           onPointerEnter={() => warmRoute('/teacher/profile')}
+          onPointerDown={() => warmRoute('/teacher/profile')}
           onFocus={() => warmRoute('/teacher/profile')}
         >
           <svg className="nav-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -95,6 +96,7 @@ export const TeacherSidebar = ({
           aria-expanded={expandedSection === 'courses' && isPanelOpen}
           onClick={(event) => handleSectionClick(event, 'courses')}
           onPointerEnter={warmTeacherCoursesSection}
+          onPointerDown={warmTeacherCoursesSection}
           onFocus={warmTeacherCoursesSection}
         >
           <img className="nav-icon" src="/teacher/sidebar/book-open.svg" alt="Курсы" />
@@ -107,6 +109,7 @@ export const TeacherSidebar = ({
           aria-expanded={expandedSection === 'attendance' && isPanelOpen}
           onClick={(event) => handleSectionClick(event, 'attendance')}
           onPointerEnter={warmTeacherAttendanceSection}
+          onPointerDown={warmTeacherAttendanceSection}
           onFocus={warmTeacherAttendanceSection}
         >
           <img className="nav-icon" src="/teacher/sidebar/check-square.svg" alt="Посещаемость" />
@@ -118,6 +121,7 @@ export const TeacherSidebar = ({
           title="Расписание"
           onClick={() => onPanelClose?.()}
           onPointerEnter={() => warmRoute('/teacher/schedule')}
+          onPointerDown={() => warmRoute('/teacher/schedule')}
           onFocus={() => warmRoute('/teacher/schedule')}
         >
           <img className="nav-icon" src="/teacher/sidebar/calendar.svg" alt="Расписание" />
@@ -133,6 +137,7 @@ export const TeacherSidebar = ({
           title="Профиль"
           onClick={() => onPanelClose?.()}
           onPointerEnter={() => warmRoute('/teacher/profile')}
+          onPointerDown={() => warmRoute('/teacher/profile')}
           onFocus={() => warmRoute('/teacher/profile')}
         >
           <img src={resolvedAvatarSrc} alt="Профиль" />

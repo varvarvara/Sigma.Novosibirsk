@@ -50,6 +50,7 @@ export function Navbar() {
                         className={`nav-link${tab.isActive ? " nav-link-active" : ""}`}
                         to={tab.to}
                         onPointerEnter={() => warmRoute(tab.to)}
+                        onPointerDown={() => warmRoute(tab.to)}
                         onFocus={() => warmRoute(tab.to)}
                     >
                         {tab.label}

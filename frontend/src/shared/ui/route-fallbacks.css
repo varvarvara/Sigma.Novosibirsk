@@ -1,0 +1,129 @@
+.route-fallback {
+  position: relative;
+  overflow: hidden;
+}
+
+.route-fallback--student {
+  --route-fallback-surface: #2a2730;
+  --route-fallback-text: #f7f6fa;
+  --route-fallback-muted: rgba(247, 246, 250, 0.68);
+  --route-fallback-block: rgba(247, 246, 250, 0.1);
+  --route-fallback-shine: rgba(247, 246, 250, 0.18);
+  width: min(100%, 360px);
+  min-height: 100vh;
+  margin: 0 auto;
+  padding: var(--route-fallback-padding, 24px 20px 96px);
+  box-sizing: border-box;
+  background: var(--route-fallback-surface);
+  color: var(--route-fallback-text);
+}
+
+.route-fallback--teacher {
+  --route-fallback-surface: transparent;
+  --route-fallback-text: #101828;
+  --route-fallback-muted: #667085;
+  --route-fallback-block: #eaecf0;
+  --route-fallback-shine: #f8fafc;
+  width: 100%;
+  min-width: 0;
+  min-height: 100%;
+  padding: var(--route-fallback-padding, 32px 40px 48px);
+  box-sizing: border-box;
+  background: var(--route-fallback-surface);
+  color: var(--route-fallback-text);
+}
+
+.route-fallback--teacher.route-fallback--standalone {
+  max-width: var(--route-fallback-max-width, none);
+  margin: 0 auto;
+}
+
+.route-fallback--organizer {
+  --route-fallback-surface: #ffffff;
+  --route-fallback-text: #101828;
+  --route-fallback-muted: #667085;
+  --route-fallback-block: #eaecf0;
+  --route-fallback-shine: #f8fafc;
+  width: 100%;
+  min-width: 0;
+  min-height: 100%;
+  padding: var(--route-fallback-padding, 32px 40px 40px);
+  box-sizing: border-box;
+  background: var(--route-fallback-surface);
+  color: var(--route-fallback-text);
+}
+
+.route-fallback__header {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.route-fallback__eyebrow {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--route-fallback-muted);
+}
+
+.route-fallback__title {
+  margin: 0;
+  font-size: clamp(28px, 4vw, 40px);
+  line-height: 1.05;
+  font-weight: 700;
+  color: var(--route-fallback-text);
+}
+
+.route-fallback__line,
+.route-fallback__card,
+.route-fallback__hero {
+  position: relative;
+  overflow: hidden;
+  background: var(--route-fallback-block);
+}
+
+.route-fallback__hero {
+  height: 120px;
+  border-radius: 24px;
+  margin-bottom: 24px;
+}
+
+.route-fallback__line {
+  height: 12px;
+  border-radius: 999px;
+}
+
+.route-fallback__line--wide {
+  width: min(100%, 320px);
+}
+
+.route-fallback__grid {
+  display: grid;
+  gap: 16px;
+}
+
+.route-fallback__card {
+  min-height: 112px;
+  border-radius: 24px;
+}
+
+.route-fallback__card--compact {
+  min-height: 88px;
+}
+
+.route-fallback__pulse::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent 0%, var(--route-fallback-shine) 50%, transparent 100%);
+  transform: translateX(-100%);
+  animation: route-fallback-shimmer 1.6s ease-in-out infinite;
+}
+
+@keyframes route-fallback-shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}

@@ -134,6 +134,7 @@ export function TeacherSubnavPanel({ section, isOpen, avatarSrc }: TeacherSubnav
               className={`teacher-subnav__item${isTeacherSubnavItemActive(location.pathname, item) ? ' active' : ''}`}
               style={{ transitionDelay: isOpen ? `${40 + index * 35}ms` : '0ms' }}
               onPointerEnter={() => warmRoute(item.path)}
+              onPointerDown={() => warmRoute(item.path)}
               onFocus={() => warmRoute(item.path)}
             >
               <img className="teacher-subnav__icon" src={item.icon} alt="" />

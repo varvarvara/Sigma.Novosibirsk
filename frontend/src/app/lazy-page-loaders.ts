@@ -1,6 +1,3 @@
-export const loadRegisterPageContent = () => import('../pages/common/register/register-page-content');
-export const loadSetupStudentPageContent = () => import('../pages/common/setup-student/setup-student-page-content');
-export const loadSetupTeacherNewContent = () => import('../pages/common/setup-teacher/setup-teacher-new-content');
 export const loadProfileContent = () => import('../pages/student/profile/profile-content');
 export const loadProfileSettingsContent = () => import('../pages/student/profile-settings/profile-settings-content');
 export const loadScheduleContent = () => import('../pages/student/schedule/schedule-content');

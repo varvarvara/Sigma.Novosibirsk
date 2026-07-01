@@ -13,12 +13,16 @@ import {
   loadExtracurricularContent,
   loadFeedbackContent,
   loadMyCoursesContent,
+  loadExtracurricularPointsAddContent,
+  loadOrgExtracurricularCreationContent,
   loadProfileContent,
   loadProfileSettingsContent,
   loadScheduleContent,
   loadSoonUpdateContent,
   loadOrgExtracurricularContent,
   loadOrgProfileContent,
+  loadTeamCreationContent,
+  loadTeamFormationContent,
   loadTeacherAchievementsContent,
   loadTeacherAttendanceContent,
   loadTeacherCourseEditContent,
@@ -54,9 +58,14 @@ import { teacherQueryKey } from '../entities/teacher/queries/courses.queries';
 import { teacherScheduleQueryKeys } from '../entities/teacher/queries/schedule.queries';
 import {
   listExtracurricularActivities,
+  listExtracurricularTeams,
   listExtracurricularScores,
 } from '../entities/organizer/api/extracurricular.api';
-import { getSeasonStaff } from '../entities/organizer/api/season.api';
+import {
+  getSeasonExtracurricularTeamMembers,
+  getSeasonStaff,
+  getSeasonStudents,
+} from '../entities/organizer/api/season.api';
 import { organizerExtracurricularQueryKeys } from '../entities/organizer/queries/extracurricular.queries';
 import { seasonQueryKeys } from '../entities/organizer/queries/season.queries';
 
@@ -361,6 +370,74 @@ async function warmOrganizerExtracurricularRoute() {
   ]);
 }
 
+async function warmOrganizerExtracurricularCreationRoute() {
+  await Promise.all([
+    warmChunk(loadOrgExtracurricularCreationContent),
+    warmQuery({
+      queryKey: seasonQueryKeys.staff(DEFAULT_SEASON_ID),
+      queryFn: () => getSeasonStaff(DEFAULT_SEASON_ID),
+    }),
+    warmQuery({
+      queryKey: seasonQueryKeys.students(DEFAULT_SEASON_ID),
+      queryFn: () => getSeasonStudents(DEFAULT_SEASON_ID),
+    }),
+  ]);
+}
+
+async function warmOrganizerTeamFormationRoute() {
+  await Promise.all([
+    warmChunk(loadTeamFormationContent),
+    warmQuery({
+      queryKey: organizerExtracurricularQueryKeys.teams,
+      queryFn: listExtracurricularTeams,
+    }),
+    warmQuery({
+      queryKey: organizerExtracurricularQueryKeys.scores,
+      queryFn: listExtracurricularScores,
+    }),
+    warmQuery({
+      queryKey: seasonQueryKeys.teamMembers(DEFAULT_SEASON_ID),
+      queryFn: () => getSeasonExtracurricularTeamMembers(DEFAULT_SEASON_ID),
+    }),
+    warmQuery({
+      queryKey: seasonQueryKeys.students(DEFAULT_SEASON_ID),
+      queryFn: () => getSeasonStudents(DEFAULT_SEASON_ID),
+    }),
+  ]);
+}
+
+async function warmOrganizerTeamCreationRoute() {
+  await Promise.all([
+    warmChunk(loadTeamCreationContent),
+    warmQuery({
+      queryKey: organizerExtracurricularQueryKeys.teams,
+      queryFn: listExtracurricularTeams,
+    }),
+    warmQuery({
+      queryKey: seasonQueryKeys.students(DEFAULT_SEASON_ID),
+      queryFn: () => getSeasonStudents(DEFAULT_SEASON_ID),
+    }),
+  ]);
+}
+
+async function warmOrganizerPointsAddRoute() {
+  await Promise.all([
+    warmChunk(loadExtracurricularPointsAddContent),
+    warmQuery({
+      queryKey: organizerExtracurricularQueryKeys.teams,
+      queryFn: listExtracurricularTeams,
+    }),
+    warmQuery({
+      queryKey: organizerExtracurricularQueryKeys.activities,
+      queryFn: listExtracurricularActivities,
+    }),
+    warmQuery({
+      queryKey: organizerExtracurricularQueryKeys.scores,
+      queryFn: listExtracurricularScores,
+    }),
+  ]);
+}
+
 const routeWarmers = {
   '/profile': warmStudentProfileRoute,
   '/profile-settings': warmStudentProfileSettingsRoute,
@@ -388,6 +465,10 @@ const routeWarmers = {
   '/teacher/schedule': warmTeacherScheduleRoute,
   '/org-profile': warmOrganizerProfileRoute,
   '/org-extracurricular': warmOrganizerExtracurricularRoute,
+  '/org-extracurricular-creation': warmOrganizerExtracurricularCreationRoute,
+  '/team-formation': warmOrganizerTeamFormationRoute,
+  '/team-creation': warmOrganizerTeamCreationRoute,
+  '/extracurricular-points-add': warmOrganizerPointsAddRoute,
 } as const;
 
 export function warmRoute(path: string) {

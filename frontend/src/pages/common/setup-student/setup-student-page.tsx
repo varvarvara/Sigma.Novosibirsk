@@ -1,13 +1,5 @@
-import { Suspense, lazy } from 'react';
-import { loadSetupStudentPageContent } from '../../../app/lazy-page-loaders';
-
-const SetupStudentPageContent = lazy(loadSetupStudentPageContent);
-const fallbackStyle = { minHeight: '100vh', padding: '32px 20px', boxSizing: 'border-box' } as const;
+import SetupStudentPageContent from './setup-student-page-content';
 
 export function SetupStudentPage() {
-  return (
-    <Suspense fallback={<main style={fallbackStyle}>Загрузка регистрации ученика...</main>}>
-      <SetupStudentPageContent />
-    </Suspense>
-  );
+  return <SetupStudentPageContent />;
 }

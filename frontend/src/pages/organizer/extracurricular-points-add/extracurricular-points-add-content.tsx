@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearch } from '@tanstack/react-router';
+import { warmRoute } from '../../../app/route-warmers';
 import { AuthApiError } from '../../../entities/auth';
 import { DEFAULT_EXTRACURRICULAR_ACTIVITY_SCORE } from '../../../entities/organizer/api/extracurricular.api';
 import {
@@ -89,6 +90,19 @@ export default function ExtracurricularPointsAddContent() {
 
   const filteredTeams = teams;
 
+  const warmExtracurricularRoute = () => warmRoute('/org-extracurricular');
+  const warmTeamFormationRoute = () => warmRoute('/team-formation');
+
+  const openExtracurricular = () => {
+    warmExtracurricularRoute();
+    navigate({ to: '/org-extracurricular' });
+  };
+
+  const openTeamFormation = () => {
+    warmTeamFormationRoute();
+    navigate({ to: '/team-formation' });
+  };
+
   const updateTeam = (id: number, patch: Partial<TeamScore>) => {
     setTeams((items) => items.map((team) => (team.id === id ? { ...team, ...patch } : team)));
   };
@@ -122,6 +136,7 @@ export default function ExtracurricularPointsAddContent() {
       );
 
       setNotice('Сохранено');
+      warmExtracurricularRoute();
       navigate({ to: '/org-extracurricular' });
     } catch (saveError) {
       if (saveError instanceof AuthApiError) {
@@ -135,15 +150,41 @@ export default function ExtracurricularPointsAddContent() {
   return (
     <section className="org-layout__workspace points-workspace">
       <header className="points-header">
-        <button className="points-back-button points-clickable" type="button" aria-label="Назад" onClick={() => navigate({ to: '/org-extracurricular' })}>
+        <button
+          className="points-back-button points-clickable"
+          type="button"
+          aria-label="Назад"
+          onClick={openExtracurricular}
+          onPointerEnter={warmExtracurricularRoute}
+          onPointerDown={warmExtracurricularRoute}
+          onFocus={warmExtracurricularRoute}
+        >
           <img src="/Back-Button.svg" alt="" />
         </button>
         <div className="points-header__left">
           <h1>{title}</h1>
           <p>{date} • {time} | Ответственный: {formatResponsible(organizer)}</p>
           <nav className="points-tabs" aria-label="Разделы внеучебки">
-            <button className="points-tabs__item points-tabs__item--active points-clickable" type="button" onClick={() => navigate({ to: '/org-extracurricular' })}>Мероприятия</button>
-            <button className="points-tabs__item points-clickable" type="button" onClick={() => navigate({ to: '/team-formation' })}>Команды</button>
+            <button
+              className="points-tabs__item points-tabs__item--active points-clickable"
+              type="button"
+              onClick={openExtracurricular}
+              onPointerEnter={warmExtracurricularRoute}
+              onPointerDown={warmExtracurricularRoute}
+              onFocus={warmExtracurricularRoute}
+            >
+              Мероприятия
+            </button>
+            <button
+              className="points-tabs__item points-clickable"
+              type="button"
+              onClick={openTeamFormation}
+              onPointerEnter={warmTeamFormationRoute}
+              onPointerDown={warmTeamFormationRoute}
+              onFocus={warmTeamFormationRoute}
+            >
+              Команды
+            </button>
             <button className="points-tabs__item points-clickable" type="button">Рейтинг</button>
           </nav>
         </div>

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
+import { warmRoute } from '../../../app/route-warmers';
 import { AuthApiError } from '../../../entities/auth';
 import {
   useListScoresQuery,
@@ -177,6 +178,18 @@ export default function TeamFormationContent() {
   };
 
   const normalizedQuery = query.trim().toLowerCase();
+  const warmExtracurricularRoute = () => warmRoute('/org-extracurricular');
+  const warmTeamCreationRoute = () => warmRoute('/team-creation');
+
+  const openExtracurricular = () => {
+    warmExtracurricularRoute();
+    navigate({ to: '/org-extracurricular' });
+  };
+
+  const openTeamCreation = () => {
+    warmTeamCreationRoute();
+    navigate({ to: '/team-creation' });
+  };
 
   return (
     <section className="org-layout__workspace team-workspace">
@@ -187,7 +200,10 @@ export default function TeamFormationContent() {
             <button
               className="team-tabs__item team-clickable"
               type="button"
-              onClick={() => navigate({ to: '/org-extracurricular' })}
+              onClick={openExtracurricular}
+              onPointerEnter={warmExtracurricularRoute}
+              onPointerDown={warmExtracurricularRoute}
+              onFocus={warmExtracurricularRoute}
             >
               Мероприятия
             </button>
@@ -199,7 +215,14 @@ export default function TeamFormationContent() {
             </button>
           </nav>
         </div>
-        <button className="team-primary-button team-clickable" type="button" onClick={() => navigate({ to: '/team-creation' })}>
+        <button
+          className="team-primary-button team-clickable"
+          type="button"
+          onClick={openTeamCreation}
+          onPointerEnter={warmTeamCreationRoute}
+          onPointerDown={warmTeamCreationRoute}
+          onFocus={warmTeamCreationRoute}
+        >
           Создать команду
         </button>
       </header>
