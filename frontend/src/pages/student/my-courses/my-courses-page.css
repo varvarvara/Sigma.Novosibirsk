@@ -1,5 +1,5 @@
 .my-courses-page {
-    width: 360px;
+    width: min(100%, var(--app-mobile-max-width));
     min-height: 100vh;
     margin: 0 auto;
     padding: 80px 20px 104px;
@@ -13,7 +13,7 @@
     top: 0;
     left: 50%;
     z-index: 10;
-    width: 360px;
+    width: min(100%, var(--app-mobile-max-width));
     height: 72px;
     padding: 0 20px 0 var(--back-chevron-offset);
     transform: translateX(-50%);

@@ -1,7 +1,7 @@
 import { useNavigate } from '@tanstack/react-router'
-import { AuthStarPanel } from '../../../components/auth/auth-star-panel'
+import { AuthStarPanel } from '../../../features/auth/ui/auth-star-panel'
 import { getRoleSelectionNavigateOptions, type AuthIntent } from '../../../features/auth/auth-flow'
-import '../../../components/auth/auth-split-layout.css'
+import '../../../features/auth/ui/auth-split-layout.css'
 import '../../../styles/auth-buttons.css'
 import './welcome-page.css'
 

@@ -1,15 +1,13 @@
-import "./course-nothing.css";
+import { Suspense, lazy } from "react";
+import { loadCourseNothingContent } from "../../../app/lazy-page-loaders";
+import { StudentRouteFallback } from "../../../shared/ui/route-fallbacks";
+
+const CourseNothingContent = lazy(loadCourseNothingContent);
 
 export function CourseNothingPage() {
     return (
-        <main className="course-nothing-page">
-            <section className="course-nothing-content">
-                <div className="course-nothing-title-button">
-                    <span className="course-nothing-title-main">В этом разделе ничего нет</span>
-                    <span className="course-nothing-title-sub">Попробуйте позже</span>
-                </div>
-            </section>
-
-        </main>
+        <Suspense fallback={<StudentRouteFallback title="Курсы" titleVariant="studentLarge" />}>
+            <CourseNothingContent />
+        </Suspense>
     );
 }

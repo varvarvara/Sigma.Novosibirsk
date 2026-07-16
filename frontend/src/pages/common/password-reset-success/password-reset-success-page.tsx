@@ -1,8 +1,8 @@
 import { useNavigate } from '@tanstack/react-router'
-import { AuthBackButton } from '../../../components/auth/auth-back-button'
-import { AuthStarPanel } from '../../../components/auth/auth-star-panel'
+import { AuthBackButton } from '../../../features/auth/ui/auth-back-button'
+import { AuthStarPanel } from '../../../features/auth/ui/auth-star-panel'
 import { isMobileAuthViewport } from '../../../features/auth/auth-flow'
-import '../../../components/auth/auth-split-layout.css'
+import '../../../features/auth/ui/auth-split-layout.css'
 import './password-reset-success-page.css'
 
 type PasswordResetSuccessContentProps = {

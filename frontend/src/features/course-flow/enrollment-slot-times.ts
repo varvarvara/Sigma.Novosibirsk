@@ -1,4 +1,4 @@
-import type { EnrollmentSlotOptionsOut, SlotOptionsItem } from "../../api/students/learning";
+import type { EnrollmentSlotOptionsOut, SlotOptionsItem } from "../../entities/student/model/learning.types";
 
 /** Внутренние id слотов записи (не часы на часах). */
 export const ENROLLMENT_SLOT_HOURS = [9, 10, 11] as const;

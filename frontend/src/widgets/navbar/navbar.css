@@ -4,7 +4,7 @@
     transform: translateX(-50%);
     bottom: 0;
     z-index: 100;
-    width: min(100vw, 360px);
+    width: min(100vw, var(--app-mobile-max-width));
     padding: 12px 12px 25px;
     border-radius: 20px 20px 0 0;
     background: #ffffff;

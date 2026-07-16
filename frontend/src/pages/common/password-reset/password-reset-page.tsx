@@ -1,16 +1,16 @@
 import { useState, type FormEvent } from 'react'
 import { useNavigate, useSearch } from '@tanstack/react-router'
-import { AuthBackButton } from '../../../components/auth/auth-back-button'
-import { AuthStarPanel } from '../../../components/auth/auth-star-panel'
+import { AuthBackButton } from '../../../features/auth/ui/auth-back-button'
+import { AuthStarPanel } from '../../../features/auth/ui/auth-star-panel'
 import { Eye } from '@untitledui/icons/Eye'
 import { EyeOff } from '@untitledui/icons/EyeOff'
 import {
   AuthApiError,
   confirmPasswordReset,
   requestPasswordReset,
-} from '../../../api/auth'
+} from '../../../entities/auth'
 import { isMobileAuthViewport } from '../../../features/auth/auth-flow'
-import '../../../components/auth/auth-split-layout.css'
+import '../../../features/auth/ui/auth-split-layout.css'
 import '../../../styles/field-error.css'
 import './password-reset-page.css'
 

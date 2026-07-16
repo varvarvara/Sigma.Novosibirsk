@@ -1,6 +1,7 @@
 import { createRootRoute, createRoute, createRouter, redirect } from '@tanstack/react-router'
-import { RootLayout } from '../layouts/root-layout'
-import { getAuthSession } from '../api/auth'
+import { RootLayout } from './root-layout'
+import { getAuthSession } from '../entities/auth'
+import { ErrorPage } from '../pages/common/error'
 import {
   parseAuthIntent,
   redirectDesktopRoleToSelectRole,
@@ -56,6 +57,7 @@ import { TeacherSchedulePage } from '../pages/teacher/schedule'
 
 const rootRoute = createRootRoute({
   component: RootLayout,
+  errorComponent: ErrorPage,
 })
 
 function authIntentSearch(search: Record<string, unknown>) {

@@ -55,9 +55,12 @@ export function isMobileAuthViewport() {
   return window.matchMedia(`(max-width: ${MOBILE_MAX_WIDTH_PX}px)`).matches
 }
 
-/** Всегда /role: на десктопе router перенаправит на /select-role */
+/** На мобильном ведём на /role, на десктопе сразу на /select-role */
 export function getRoleSelectionNavigateOptions(intent: AuthIntent) {
-  return { to: '/role' as const, search: { intent } }
+  return {
+    to: (isMobileAuthViewport() ? '/role' : '/select-role') as '/role' | '/select-role',
+    search: { intent },
+  }
 }
 
 /** На узком экране /select-role всегда открывает мобильную страницу /role */

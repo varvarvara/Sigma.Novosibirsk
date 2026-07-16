@@ -1,4 +1,4 @@
-import { OrgSidebar } from '../../../shared/ui/org-sidebar'
+import { OrgSidebar } from '../../../widgets/org-sidebar'
 import './org-stub-page.css'
 
 type OrgStubPageProps = {

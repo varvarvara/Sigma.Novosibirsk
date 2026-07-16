@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useSearch } from '@tanstack/react-router'
-import { AuthBackButton } from '../../../components/auth/auth-back-button'
+import { AuthBackButton } from '../../../features/auth/ui/auth-back-button'
 import {
   navigateAfterRoleSelection,
   parseAuthIntent,

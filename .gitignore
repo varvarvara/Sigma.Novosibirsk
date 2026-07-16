@@ -209,3 +209,5 @@ __marimo__/
 # Frontend dependencies
 node_modules/
 frontend/node_modules/
+
+.codex

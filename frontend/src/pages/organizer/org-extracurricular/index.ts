@@ -1,2 +1,2 @@
 export { OrgExtracurricularManagementPage as OrgExtracurricularPage } from './org-extracurricular'
-export { OrgExtracurricularPage as OrgExtracurricularCreationPage } from './org-exrtacurricular-page'
+export { OrgExtracurricularCreationPage } from './org-extracurricular-creation-page'

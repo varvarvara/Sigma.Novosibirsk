@@ -1,12 +1,21 @@
-import "./soon-update.css";
+import { Suspense, lazy } from "react";
+import { loadSoonUpdateContent } from "../../../app/lazy-page-loaders";
+
+const SoonUpdateContent = lazy(loadSoonUpdateContent);
+const fallbackStyle = {
+    width: "min(100%, var(--app-mobile-max-width))",
+    minHeight: "100vh",
+    margin: "0 auto",
+    padding: "24px 20px 96px",
+    boxSizing: "border-box",
+    background: "#2A2730",
+    color: "#F7F6FA",
+} as const;
 
 export function SoonUpdatePage() {
     return (
-        <main className="soon-update-page">
-            <section className="soon-update-content">
-                <h1 className="soon-update-title-button">Скоро тут появится нужная информация</h1>
-            </section>
-
-        </main>
+        <Suspense fallback={<main style={fallbackStyle}>Загрузка...</main>}>
+            <SoonUpdateContent />
+        </Suspense>
     );
 }
