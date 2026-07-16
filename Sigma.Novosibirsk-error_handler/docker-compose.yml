@@ -1,7 +1,0 @@
-# Convenience wrapper — infrastructure lives in backend/docker-compose.yml
-# Usage from repo root:
-#   docker compose up -d --build
-# Or: ./scripts/dev-up.sh
-
-include:
-  - path: backend/docker-compose.yml
