@@ -1,0 +1,64 @@
+.navbar {
+    position: fixed;
+    left: 50%;
+    transform: translateX(-50%);
+    bottom: 0;
+    z-index: 100;
+    width: min(100vw, 360px);
+    padding: 12px 12px 25px;
+    border-radius: 20px 20px 0 0;
+    background: #ffffff;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.22);
+    pointer-events: auto;
+}
+
+.navbar-track {
+    --tab-count: 3;
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(var(--tab-count), 1fr);
+    align-items: stretch;
+    width: 100%;
+}
+
+.navbar-indicator {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: calc(100% / var(--tab-count));
+    height: 100%;
+    border-radius: 8px;
+    background-color: #e9e1ff;
+    transform: translateX(0);
+    transition: transform 0.38s cubic-bezier(0.33, 1, 0.68, 1);
+    will-change: transform;
+}
+
+.nav-link {
+    position: relative;
+    z-index: 1;
+    border: 0;
+    background: transparent;
+    color: #98a2b3;
+    font-family: "Inter Medium", sans-serif;
+    text-decoration: none;
+    min-width: 0;
+    text-align: center;
+    padding: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 20px;
+    transition: color 0.28s cubic-bezier(0.33, 1, 0.68, 1);
+    -webkit-tap-highlight-color: transparent;
+}
+
+.nav-link-active {
+    color: #7949ff;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .navbar-indicator,
+    .nav-link {
+        transition: none;
+    }
+}

@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#7949FF" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <title>Sigma.Novosibirsk</title>
+    <style>
+        html,
+        body {
+            min-height: 100%;
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Nunito', sans-serif;
+            background: #ffffff;
+            color: #101828;
+        }
+
+        #root {
+            display: none;
+        }
+
+        /* Заглушка по умолчанию скрыта */
+        #static-error-fallback {
+            display: none;
+        }
+        body.app-error {
+            overflow: hidden;   /* запрещает скролл, когда видна статическая заглушка */
+        }
+        /* Показываем заглушку только при ошибке */
+        body.app-error #static-error-fallback {
+            display: flex;
+            width: 100%;
+            min-height: 100vh;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            text-align: center;
+            background: #ffffff;
+        }
+
+        /* Когда React загрузился, показываем корневой элемент */
+        body.app-ready #root {
+            display: block;
+        }
+
+        /* Стили для контента заглушки */
+        .static-error-fallback__icon {
+            width: 58px;
+            height: 58px;
+            margin: 0 auto 20px;
+            border-radius: 999px;
+            background: #f9f5ff;
+            position: relative;
+            display: grid;
+            place-items: center;
+        }
+
+        .static-error-fallback__icon::before {
+            content: '';
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            border-radius: 999px;
+            background: #f4ebff;
+        }
+
+        .static-error-fallback__icon img {
+            position: relative;
+            z-index: 1;
+            width: 23px;
+            height: 24px;
+        }
+
+        .static-error-fallback__title {
+            margin: 0;
+            font-size: 24px;
+            line-height: 1.2;
+            font-weight: 800;
+        }
+
+        .static-error-fallback__description {
+            max-width: 420px;
+            margin: 12px auto 0;
+            font-size: 16px;
+            line-height: 1.45;
+            color: #667085;
+        }
+    </style>
+    <script>
+        // Если через 400 мс React не добавил класс app-ready, показываем заглушку
+        window.setTimeout(function () {
+            if (!document.body.classList.contains('app-ready')) {
+                document.body.classList.add('app-error');
+            }
+        }, 400);
+    </script>
+</head>
+<body>
+    <div id="static-error-fallback" aria-live="polite">
+        <div>
+            <div class="static-error-fallback__icon" aria-hidden="true">
+                <img src="/error/flash.svg" alt="" />
+            </div>
+            <h1 class="static-error-fallback__title">Не удалось загрузить данные</h1>
+            <p class="static-error-fallback__description">Сервер временно недоступен. Мы уже работаем над этим.</p>
+        </div>
+    </div>
+    <div id="root"></div>
+    <script type="module" src="./src/app/main.tsx"></script>
+</body>
+</html>
