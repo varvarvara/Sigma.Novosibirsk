@@ -6,7 +6,6 @@ import {
   useTeacherCourseAchievementMatrixQuery,
 } from '../../../entities/teacher/queries/attendance.queries';
 import { useGetMyTeacherCourses } from '../../../entities/teacher/queries/courses.queries';
-import './achievements-page.css';
 
 const pageSize = 10;
 

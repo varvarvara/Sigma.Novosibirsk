@@ -6,7 +6,7 @@ const CourseSelectionContent = lazy(loadCourseSelectionContent);
 
 export function CourseSelectionPage() {
     return (
-        <Suspense fallback={<StudentRouteFallback title="Выбор курсов" />}>
+        <Suspense fallback={<StudentRouteFallback title="Выбор курсов" titleVariant="studentTopbar" />}>
             <CourseSelectionContent />
         </Suspense>
     );

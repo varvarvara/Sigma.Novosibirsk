@@ -2,6 +2,7 @@
     --back-chevron-size: 24px;
     --back-chevron-offset: 24px;
     --student-bottom-nav-height: 73px;
+    --app-mobile-max-width: 440px;
 }
 
 @font-face {

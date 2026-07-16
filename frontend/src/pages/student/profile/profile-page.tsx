@@ -6,7 +6,7 @@ const ProfileContent = lazy(loadProfileContent);
 
 export function ProfilePage() {
     return (
-        <Suspense fallback={<StudentRouteFallback title="Профиль" />}>
+        <Suspense fallback={<StudentRouteFallback title="Профиль" titleVariant="studentMedium" />}>
             <ProfileContent />
         </Suspense>
     );

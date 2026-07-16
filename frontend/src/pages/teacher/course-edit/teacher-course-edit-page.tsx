@@ -6,7 +6,7 @@ const TeacherCourseEditContent = lazy(loadTeacherCourseEditContent);
 
 export function TeacherCourseEditPage() {
   return (
-    <Suspense fallback={<TeacherRouteFallback title="Редактирование курса" padding="40px 24px" maxWidth="1000px" />}>
+    <Suspense fallback={<TeacherRouteFallback title="Редактирование курса" padding="40px 24px" maxWidth="1000px" titleVariant="teacherPage" />}>
       <TeacherCourseEditContent />
     </Suspense>
   );

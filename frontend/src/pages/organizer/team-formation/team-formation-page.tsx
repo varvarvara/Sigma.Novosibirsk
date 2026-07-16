@@ -9,7 +9,7 @@ export function TeamFormationPage() {
   return (
     <main className="org-layout team-formation-page" aria-label="Команды внеучебки">
       <OrgSidebar />
-      <Suspense fallback={<OrganizerRouteFallback title="Команды" />}>
+      <Suspense fallback={<OrganizerRouteFallback title="Команды" titleVariant="organizerPage" />}>
         <TeamFormationContent />
       </Suspense>
     </main>

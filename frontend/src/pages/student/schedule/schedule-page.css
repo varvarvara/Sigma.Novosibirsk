@@ -1,5 +1,5 @@
 .schedule-page {
-    width: 360px;
+    width: min(100%, var(--app-mobile-max-width));
     height: 100dvh;
     margin: 0 auto;
     background: #2A2730;

@@ -355,6 +355,10 @@
     padding: 24px 16px;
   }
 
+  .setup-teacher-content {
+    max-width: min(100%, var(--app-mobile-max-width));
+  }
+
   .setup-teacher-title {
     font-size: 24px;
     margin-bottom: 24px;
@@ -374,6 +378,7 @@
 }
 
 .setup-teacher-success-page__content {
+  width: min(100%, var(--app-mobile-max-width));
   text-align: center;
   max-width: 600px;
   padding: 40px;

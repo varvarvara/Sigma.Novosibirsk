@@ -6,7 +6,7 @@ const CurricularAchievementsContent = lazy(loadCurricularAchievementsContent);
 
 export function CurricularAchievementsPage() {
     return (
-        <Suspense fallback={<StudentRouteFallback title="Достижения" />}>
+        <Suspense fallback={<StudentRouteFallback title="Учебная активность" titleVariant="studentTopbar" />}>
             <CurricularAchievementsContent />
         </Suspense>
     );

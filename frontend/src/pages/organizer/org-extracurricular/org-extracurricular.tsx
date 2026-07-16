@@ -9,7 +9,7 @@ export function OrgExtracurricularManagementPage() {
   return (
     <main className="org-layout org-extracurricular-page" aria-label="Внеучебка">
       <OrgSidebar />
-      <Suspense fallback={<OrganizerRouteFallback title="Внеучебная деятельность" />}>
+      <Suspense fallback={<OrganizerRouteFallback title="Внеучебная деятельность" titleVariant="organizerPage" />}>
         <OrgExtracurricularContent />
       </Suspense>
     </main>

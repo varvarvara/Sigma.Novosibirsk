@@ -3,7 +3,7 @@ import { loadSoonUpdateContent } from "../../../app/lazy-page-loaders";
 
 const SoonUpdateContent = lazy(loadSoonUpdateContent);
 const fallbackStyle = {
-    width: "min(100%, 360px)",
+    width: "min(100%, var(--app-mobile-max-width))",
     minHeight: "100vh",
     margin: "0 auto",
     padding: "24px 20px 96px",

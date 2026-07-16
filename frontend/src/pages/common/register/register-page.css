@@ -1,7 +1,7 @@
 .register-page {
   position: relative;
   width: 100%;
-  max-width: 390px;
+  max-width: var(--app-mobile-max-width);
   height: 100dvh;
   margin: 0 auto;
   padding: 18px 35px 40px;

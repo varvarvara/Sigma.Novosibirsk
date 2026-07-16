@@ -6,7 +6,7 @@ const CourseCardContent = lazy(loadCourseCardContent);
 
 export function CourseCardPage() {
     return (
-        <Suspense fallback={<StudentRouteFallback title="Карточка курса" />}>
+        <Suspense fallback={<StudentRouteFallback title="Выбор курсов" label="Карточка курса" titleVariant="studentTopbar" />}>
             <CourseCardContent />
         </Suspense>
     );

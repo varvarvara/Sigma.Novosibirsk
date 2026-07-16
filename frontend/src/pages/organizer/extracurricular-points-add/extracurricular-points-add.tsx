@@ -9,7 +9,7 @@ export function ExtracurricularPointsAddPage() {
   return (
     <main className="org-layout points-add-page" aria-label="Начисление баллов">
       <OrgSidebar />
-      <Suspense fallback={<OrganizerRouteFallback title="Начисление баллов" />}>
+      <Suspense fallback={<OrganizerRouteFallback title="Начисление баллов" titleVariant="organizerLarge" />}>
         <ExtracurricularPointsAddContent />
       </Suspense>
     </main>

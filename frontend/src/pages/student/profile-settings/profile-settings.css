@@ -1,7 +1,7 @@
 .profile-settings-page {
     display: flex;
     flex-direction: column;
-    width: min(100%, 360px);
+    width: min(100%, var(--app-mobile-max-width));
     height: 100dvh;
     max-height: 100dvh;
     margin: 0 auto;

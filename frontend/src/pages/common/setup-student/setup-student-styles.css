@@ -312,7 +312,7 @@
   }
 
   .setup-student-content {
-    max-width: 100%;
+    max-width: min(100%, var(--app-mobile-max-width));
   }
 
   .setup-student-title {

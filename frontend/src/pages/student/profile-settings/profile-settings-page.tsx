@@ -6,7 +6,7 @@ const ProfileSettingsContent = lazy(loadProfileSettingsContent);
 
 export function ProfileSettingsPage() {
     return (
-        <Suspense fallback={<StudentRouteFallback title="Настройки профиля" />}>
+        <Suspense fallback={<StudentRouteFallback title="Настройки профиля" titleVariant="studentTopbar" />}>
             <ProfileSettingsContent />
         </Suspense>
     );

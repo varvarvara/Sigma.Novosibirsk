@@ -6,7 +6,7 @@ const CurricularContent = lazy(loadCurricularContent);
 
 export function CurricularPage() {
     return (
-        <Suspense fallback={<StudentRouteFallback title="Учебная активность" />}>
+        <Suspense fallback={<StudentRouteFallback title="Учебная активность" titleVariant="studentTopbar" />}>
             <CurricularContent />
         </Suspense>
     );

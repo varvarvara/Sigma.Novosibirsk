@@ -199,6 +199,12 @@
 }
 
 @media (max-width: 768px) {
+  .org-layout {
+    width: min(100%, var(--app-mobile-max-width));
+    max-width: var(--app-mobile-max-width);
+    margin: 0 auto;
+  }
+
   .org-sidebar {
     --org-sidebar-width: 64px;
     --org-sidebar-item: 44px;

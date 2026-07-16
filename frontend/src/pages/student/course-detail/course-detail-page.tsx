@@ -6,7 +6,7 @@ const CourseDetailContent = lazy(loadCourseDetailContent);
 
 export function CourseDetailPage() {
     return (
-        <Suspense fallback={<StudentRouteFallback title="Курсы" />}>
+        <Suspense fallback={<StudentRouteFallback title="Выбор курсов" titleVariant="studentTopbar" />}>
             <CourseDetailContent />
         </Suspense>
     );

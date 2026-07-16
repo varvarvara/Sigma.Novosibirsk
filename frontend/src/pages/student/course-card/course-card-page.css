@@ -1,5 +1,5 @@
 .course-card-page {
-    width: 360px;
+    width: min(100%, var(--app-mobile-max-width));
     height: 100dvh;
     margin: 0 auto;
     position: relative;

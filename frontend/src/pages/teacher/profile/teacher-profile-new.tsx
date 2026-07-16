@@ -7,7 +7,7 @@ const TeacherProfileContent = lazy(loadTeacherProfileContent);
 export const TeacherProfileNewPage = () => {
   return (
     <TeacherAppShell className="teacher-profile-container">
-      <Suspense fallback={<TeacherRouteFallback title="Профиль преподавателя" padding="32px 60px 48px" />}>
+      <Suspense fallback={<TeacherRouteFallback title="Профиль преподавателя" padding="32px 60px 48px" titleVariant="teacherPage" />}>
         <TeacherProfileContent />
       </Suspense>
     </TeacherAppShell>

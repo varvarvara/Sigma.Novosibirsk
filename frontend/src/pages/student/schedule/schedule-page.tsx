@@ -6,7 +6,7 @@ const ScheduleContent = lazy(loadScheduleContent);
 
 export function SchedulePage() {
     return (
-        <Suspense fallback={<StudentRouteFallback title="Расписание" />}>
+        <Suspense fallback={<StudentRouteFallback title="Расписание" titleVariant="studentLarge" />}>
             <ScheduleContent />
         </Suspense>
     );

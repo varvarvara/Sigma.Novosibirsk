@@ -6,7 +6,17 @@ type RouteFallbackProps = {
   label?: string;
   padding?: string;
   maxWidth?: string;
+  titleVariant?: RouteFallbackTitleVariant;
 };
+
+export type RouteFallbackTitleVariant =
+  | 'hero'
+  | 'studentTopbar'
+  | 'studentMedium'
+  | 'studentLarge'
+  | 'teacherPage'
+  | 'organizerPage'
+  | 'organizerLarge';
 
 function createFallbackStyle(padding?: string, maxWidth?: string) {
   return {
@@ -15,12 +25,16 @@ function createFallbackStyle(padding?: string, maxWidth?: string) {
   } as CSSProperties;
 }
 
-function RouteFallbackContent({ title, label = 'Загружаем раздел' }: Pick<RouteFallbackProps, 'title' | 'label'>) {
+function RouteFallbackContent({
+  title,
+  label = 'Загружаем раздел',
+  titleVariant = 'hero',
+}: Pick<RouteFallbackProps, 'title' | 'label' | 'titleVariant'>) {
   return (
     <>
       <header className="route-fallback__header">
         <p className="route-fallback__eyebrow">{label}</p>
-        <h1 className="route-fallback__title">{title}</h1>
+        <h1 className={`route-fallback__title route-fallback__title--${titleVariant}`}>{title}</h1>
         <div className="route-fallback__line route-fallback__line--wide route-fallback__pulse" />
       </header>
 
@@ -35,7 +49,7 @@ function RouteFallbackContent({ title, label = 'Загружаем раздел'
   );
 }
 
-export function StudentRouteFallback({ title, label, padding }: RouteFallbackProps) {
+export function StudentRouteFallback({ title, label, padding, titleVariant }: RouteFallbackProps) {
   return (
     <main
       className="route-fallback route-fallback--student"
@@ -43,12 +57,12 @@ export function StudentRouteFallback({ title, label, padding }: RouteFallbackPro
       aria-busy="true"
       aria-live="polite"
     >
-      <RouteFallbackContent title={title} label={label} />
+      <RouteFallbackContent title={title} label={label} titleVariant={titleVariant} />
     </main>
   );
 }
 
-export function TeacherRouteFallback({ title, label, padding, maxWidth }: RouteFallbackProps) {
+export function TeacherRouteFallback({ title, label, padding, maxWidth, titleVariant }: RouteFallbackProps) {
   return (
     <section
       className={`route-fallback route-fallback--teacher${maxWidth ? ' route-fallback--standalone' : ''}`}
@@ -56,12 +70,12 @@ export function TeacherRouteFallback({ title, label, padding, maxWidth }: RouteF
       aria-busy="true"
       aria-live="polite"
     >
-      <RouteFallbackContent title={title} label={label} />
+      <RouteFallbackContent title={title} label={label} titleVariant={titleVariant} />
     </section>
   );
 }
 
-export function OrganizerRouteFallback({ title, label, padding }: RouteFallbackProps) {
+export function OrganizerRouteFallback({ title, label, padding, titleVariant }: RouteFallbackProps) {
   return (
     <section
       className="org-layout__workspace route-fallback route-fallback--organizer"
@@ -69,7 +83,7 @@ export function OrganizerRouteFallback({ title, label, padding }: RouteFallbackP
       aria-busy="true"
       aria-live="polite"
     >
-      <RouteFallbackContent title={title} label={label} />
+      <RouteFallbackContent title={title} label={label} titleVariant={titleVariant} />
     </section>
   );
 }

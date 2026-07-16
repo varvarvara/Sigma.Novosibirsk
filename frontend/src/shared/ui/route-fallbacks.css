@@ -9,7 +9,7 @@
   --route-fallback-muted: rgba(247, 246, 250, 0.68);
   --route-fallback-block: rgba(247, 246, 250, 0.1);
   --route-fallback-shine: rgba(247, 246, 250, 0.18);
-  width: min(100%, 360px);
+  width: min(100%, var(--app-mobile-max-width));
   min-height: 100vh;
   margin: 0 auto;
   padding: var(--route-fallback-padding, 24px 20px 96px);
@@ -19,14 +19,14 @@
 }
 
 .route-fallback--teacher {
-  --route-fallback-surface: transparent;
+  --route-fallback-surface: #ffffff;
   --route-fallback-text: #101828;
   --route-fallback-muted: #667085;
   --route-fallback-block: #eaecf0;
   --route-fallback-shine: #f8fafc;
   width: 100%;
   min-width: 0;
-  min-height: 100%;
+  min-height: 100vh;
   padding: var(--route-fallback-padding, 32px 40px 48px);
   box-sizing: border-box;
   background: var(--route-fallback-surface);
@@ -70,10 +70,49 @@
 
 .route-fallback__title {
   margin: 0;
+  color: var(--route-fallback-text);
+}
+
+.route-fallback__title--hero {
   font-size: clamp(28px, 4vw, 40px);
   line-height: 1.05;
   font-weight: 700;
-  color: var(--route-fallback-text);
+}
+
+.route-fallback__title--studentTopbar {
+  font-size: 14px;
+  line-height: 17px;
+  font-weight: 600;
+}
+
+.route-fallback__title--studentMedium {
+  font-size: 18px;
+  line-height: 22px;
+  font-weight: 600;
+}
+
+.route-fallback__title--studentLarge {
+  font-size: 20px;
+  line-height: 24px;
+  font-weight: 600;
+}
+
+.route-fallback__title--teacherPage {
+  font-size: 30px;
+  line-height: 38px;
+  font-weight: 600;
+}
+
+.route-fallback__title--organizerPage {
+  font-size: 30px;
+  line-height: 40px;
+  font-weight: 600;
+}
+
+.route-fallback__title--organizerLarge {
+  font-size: 32px;
+  line-height: 40px;
+  font-weight: 600;
 }
 
 .route-fallback__line,

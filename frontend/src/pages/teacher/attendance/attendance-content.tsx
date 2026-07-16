@@ -10,7 +10,6 @@ import {
   useTeacherCourseAttendanceSummaryQuery,
 } from '../../../entities/teacher/queries/attendance.queries';
 import { useGetMyTeacherCourses } from '../../../entities/teacher/queries/courses.queries';
-import './attendance-page.css';
 
 const pageSize = 10;
 

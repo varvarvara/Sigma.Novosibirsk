@@ -6,7 +6,7 @@ const CurricularFilterContent = lazy(loadCurricularFilterContent);
 
 export function FilterPage() {
     return (
-        <Suspense fallback={<StudentRouteFallback title="Фильтр" />}>
+        <Suspense fallback={<StudentRouteFallback title="Фильтр" titleVariant="studentTopbar" />}>
             <CurricularFilterContent />
         </Suspense>
     );

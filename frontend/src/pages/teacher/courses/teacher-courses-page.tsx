@@ -7,7 +7,7 @@ const TeacherCoursesContent = lazy(loadTeacherCoursesContent);
 export function TeacherCoursesPage() {
   return (
     <TeacherAppShell className="courses-layout">
-      <Suspense fallback={<TeacherRouteFallback title="Курсы" padding="clamp(24px, 3vw, 48px)" />}>
+      <Suspense fallback={<TeacherRouteFallback title="Курсы" padding="clamp(24px, 3vw, 48px)" titleVariant="teacherPage" />}>
         <TeacherCoursesContent />
       </Suspense>
     </TeacherAppShell>

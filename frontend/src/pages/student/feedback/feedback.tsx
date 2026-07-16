@@ -6,7 +6,7 @@ const FeedbackContent = lazy(loadFeedbackContent);
 
 export function FeedbackPage() {
     return (
-        <Suspense fallback={<StudentRouteFallback title="Фидбэк" />}>
+        <Suspense fallback={<StudentRouteFallback title="Мои курсы" label="Фидбэк" titleVariant="studentTopbar" />}>
             <FeedbackContent />
         </Suspense>
     );

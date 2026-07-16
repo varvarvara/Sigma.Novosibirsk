@@ -2,6 +2,7 @@
   --teacher-rail-width: 72px;
   --teacher-panel-width: 0px;
   min-height: 100vh;
+  background: #ffffff;
 }
 
 .teacher-app-shell--panel-open {
@@ -16,6 +17,7 @@
   max-width: calc(100vw - (var(--teacher-rail-width) + var(--teacher-panel-width)));
   box-sizing: border-box;
   overflow-x: hidden;
+  background: #ffffff;
   transition: margin-left 0.28s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -180,13 +182,26 @@
 @media (max-width: 768px) {
   .teacher-app-shell {
     --teacher-rail-width: 64px;
+    --teacher-shell-width: min(100vw, var(--app-mobile-max-width));
+    --teacher-shell-offset: max(0px, calc((100vw - var(--teacher-shell-width)) / 2));
   }
 
   .teacher-app-shell--panel-open {
     --teacher-panel-width: 220px;
   }
 
+  .teacher-app-shell__main {
+    margin-left: calc(var(--teacher-shell-offset) + var(--teacher-rail-width) + var(--teacher-panel-width));
+    max-width: calc(var(--teacher-shell-width) - (var(--teacher-rail-width) + var(--teacher-panel-width)));
+  }
+
+  .teacher-sidebar {
+    left: var(--teacher-shell-offset);
+    width: var(--teacher-rail-width);
+  }
+
   .teacher-subnav {
+    left: calc(var(--teacher-shell-offset) + var(--teacher-rail-width));
     width: 220px;
   }
 }

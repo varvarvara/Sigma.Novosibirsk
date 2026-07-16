@@ -6,7 +6,7 @@ const ExtracurricularContent = lazy(loadExtracurricularContent);
 
 export function ExtracurricularPage() {
     return (
-        <Suspense fallback={<StudentRouteFallback title="Внеучебка" />}>
+        <Suspense fallback={<StudentRouteFallback title="Внеучебка // Внеучебная активность" titleVariant="studentTopbar" />}>
             <ExtracurricularContent />
         </Suspense>
     );

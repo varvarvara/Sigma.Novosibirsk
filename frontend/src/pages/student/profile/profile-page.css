@@ -1,5 +1,5 @@
 .profile-page {
-    width: 360px;
+    width: min(100%, var(--app-mobile-max-width));
     min-height: 100vh;
     background: #2A2730;
     color: #2A282F;
