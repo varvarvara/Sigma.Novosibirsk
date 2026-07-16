@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Response, status
+from fastapi import APIRouter, Depends, Request, Response, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.orm import Session
 
@@ -49,8 +49,12 @@ def staff_pre_registration(body: PreRegistrationCreateIn, session: Session = Dep
 
 
 @authRouter.post("/password-reset/request", response_model=MessageOut)
-def request_password_reset(body: PasswordResetRequestIn, session: Session = Depends(get_db)):
-    return AuthService(session=session).request_password_reset(body=body)
+def request_password_reset(body: PasswordResetRequestIn, request: Request, session: Session = Depends(get_db)):
+    forwarded_for = request.headers.get("x-forwarded-for")
+    client_ip = forwarded_for.split(",", 1)[0].strip() if forwarded_for else None
+    if not client_ip and request.client is not None:
+        client_ip = request.client.host
+    return AuthService(session=session).request_password_reset(body=body, client_ip=client_ip)
 
 
 @authRouter.post("/password-reset/confirm", response_model=MessageOut)

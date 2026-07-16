@@ -17,6 +17,7 @@ from app.modules.users.repository import UsersRepository
 from app.security.authHandler import AuthHandler
 from app.security.email_service import _smtp_is_configured, send_password_reset_email
 from app.security.hashHelper import HashHelper
+from app.security.rate_limit import is_password_reset_limited, mark_password_reset_sent
 from app.tasks import send_password_reset_email_task
 from enums import PreRegistrationStatuses
 
@@ -159,8 +160,11 @@ class AuthService:
 
         logger.error("Password reset email was not sent for %s: SMTP is not configured", email)
 
-    def request_password_reset(self, body: PasswordResetRequestIn) -> MessageOut:
+    def request_password_reset(self, body: PasswordResetRequestIn, client_ip: str | None = None) -> MessageOut:
         email = str(body.email).strip()
+        if is_password_reset_limited(email=email, client_ip=client_ip):
+            return MessageOut(message=PASSWORD_RESET_REQUEST_MESSAGE)
+
         student = self._users_repository.get_student_by_email(email=email)
         staff = None if student is not None else self._users_repository.get_staff_by_email(email=email)
 
@@ -171,6 +175,7 @@ class AuthService:
                 email=email,
             )
             self._dispatch_password_reset_email(email=email, reset_url=self._build_password_reset_url(reset_token))
+            mark_password_reset_sent(email=email)
         elif staff is not None:
             reset_token = AuthHandler.create_password_reset_token(
                 user_id=staff.id,
@@ -178,6 +183,7 @@ class AuthService:
                 email=email,
             )
             self._dispatch_password_reset_email(email=email, reset_url=self._build_password_reset_url(reset_token))
+            mark_password_reset_sent(email=email)
 
         return MessageOut(message=PASSWORD_RESET_REQUEST_MESSAGE)
 

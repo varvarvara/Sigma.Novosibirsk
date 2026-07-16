@@ -142,15 +142,26 @@ class TokenStore:
 class CacheStore:
     def __init__(self, redis_client: Redis | None):
         self._redis = redis_client
+        self._memory: dict[str, dict] = {}
 
     def set_json(self, key: str, value: dict, ttl_seconds: int = 300) -> None:
         if not self._redis:
+            self._memory[key] = {
+                "value": value,
+                "exp": TokenStore._now_ts() + max(ttl_seconds, 1),
+            }
             return
         self._redis.setex(key, max(ttl_seconds, 1), json.dumps(value))
 
     def get_json(self, key: str) -> dict | None:
         if not self._redis:
-            return None
+            item = self._memory.get(key)
+            if not item:
+                return None
+            if int(item["exp"]) <= TokenStore._now_ts():
+                self._memory.pop(key, None)
+                return None
+            return item["value"]
         raw = self._redis.get(key)
         if not raw:
             return None
@@ -158,8 +169,45 @@ class CacheStore:
 
     def delete(self, key: str) -> None:
         if not self._redis:
+            self._memory.pop(key, None)
             return
         self._redis.delete(key)
+
+    def exists(self, key: str) -> bool:
+        if self._redis:
+            return self._redis.exists(key) == 1
+        return self.get_json(key) is not None
+
+    def set_flag(self, key: str, ttl_seconds: int) -> None:
+        ttl = max(ttl_seconds, 1)
+        if self._redis:
+            self._redis.setex(key, ttl, "1")
+            return
+        self._memory[key] = {
+            "value": {"value": "1"},
+            "exp": TokenStore._now_ts() + ttl,
+        }
+
+    def increment(self, key: str, ttl_seconds: int) -> int:
+        ttl = max(ttl_seconds, 1)
+        if self._redis:
+            value = int(self._redis.incr(key))
+            if value == 1:
+                self._redis.expire(key, ttl)
+            return value
+
+        item = self._memory.get(key)
+        now_ts = TokenStore._now_ts()
+        if not item or int(item["exp"]) <= now_ts:
+            self._memory[key] = {
+                "value": {"count": 1},
+                "exp": now_ts + ttl,
+            }
+            return 1
+
+        value = int(item["value"].get("count", 0)) + 1
+        item["value"]["count"] = value
+        return value
 
 
 token_store = TokenStore()
@@ -176,6 +224,18 @@ def get_cache(key: str) -> dict | None:
 
 def delete_cache(key: str) -> None:
     cache_store.delete(key=key)
+
+
+def cache_exists(key: str) -> bool:
+    return cache_store.exists(key=key)
+
+
+def set_cache_flag(key: str, ttl_seconds: int) -> None:
+    cache_store.set_flag(key=key, ttl_seconds=ttl_seconds)
+
+
+def increment_cache_counter(key: str, ttl_seconds: int) -> int:
+    return cache_store.increment(key=key, ttl_seconds=ttl_seconds)
 
 
 def gamification_cache_key(student_id: int) -> str:
