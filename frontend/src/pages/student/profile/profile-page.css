@@ -1,0 +1,319 @@
+.profile-page {
+    width: min(100%, var(--app-mobile-max-width));
+    min-height: 100vh;
+    background: #2A2730;
+    color: #2A282F;
+    padding: 0 20px 96px;
+    margin: 0 auto;
+    overflow-x: hidden;
+}
+
+.user-info-section {
+    width: calc(100% + 40px);
+    min-height: 218px;
+    margin: 0 -20px 0;
+    background: #F7F6FA;
+    border-radius: 0 0 20px 20px;
+    padding: 8px 20px 28px;
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.logout-menu {
+    position: absolute;
+    right: 12px;
+    top: 12px;
+    z-index: 12;
+}
+
+.logout-trigger {
+    display: grid;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    box-sizing: border-box;
+    padding: 0;
+    border: 0;
+    border-radius: 12px;
+    background: #F7F6FA;
+    color: #2A282F;
+    cursor: pointer;
+    transition: background-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
+}
+
+.logout-trigger:hover,
+.logout-trigger:focus-visible {
+    background: #E9E1FF;
+    color: #7949FF;
+    transform: translateY(-1px);
+    outline: none;
+}
+
+.logout-trigger:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.profile-settings-link {
+    position: absolute;
+    left: 12px;
+    top: 12px;
+    z-index: 12;
+    display: grid;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    box-sizing: border-box;
+    padding: 0;
+    border-radius: 12px;
+    color: #2A282F;
+    text-decoration: none;
+    transition: background-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
+}
+
+.profile-action-icon {
+    display: block;
+    width: 24px;
+    height: 24px;
+    flex: 0 0 24px;
+    transform: scale(0.92);
+}
+
+.profile-settings-link:hover,
+.profile-settings-link:focus-visible {
+    background: #E9E1FF;
+    color: #7949FF;
+    transform: translateY(-1px);
+    outline: none;
+}
+
+.profile-avatar-wrap {
+    display: flex;
+    justify-content: center;
+    margin: 4px 0 6px;
+    flex-shrink: 0;
+}
+
+.profile-image {
+    display: block;
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    object-fit: cover;
+    background: #FFFFFF;
+    border: 2px solid #EDE9F5;
+    box-shadow: none;
+}
+
+.user-fullname {
+    margin: 0;
+    font-family: "Inter SemiBold", "Inter", sans-serif;
+    text-align: center;
+    font-size: 18px;
+    line-height: 22px;
+    font-weight: 600;
+    letter-spacing: -0.3px;
+    color: #2A282F;
+}
+
+.user-role {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin: 10px 0 0;
+    min-height: 34px;
+    padding: 8px 16px;
+    border-radius: 999px;
+    background: #E9E1FF;
+    color: #7949FF;
+    font-family: "Inter Medium", "Inter", sans-serif;
+    font-size: 14px;
+    line-height: 18px;
+    font-weight: 500;
+}
+
+.user-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-top: 20px;
+    width: 320px;
+}
+
+.stats-item {
+    width: 100%;
+    min-height: 44px;
+    height: auto;
+    padding: 6px 8px 8px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    min-width: 0;
+    text-align: center;
+    border-radius: 10px;
+    transition: background-color 0.2s ease, transform 0.2s ease;
+    user-select: none;
+}
+
+.stats-item:hover {
+    background: rgba(121, 73, 255, 0.12);
+    transform: translateY(-1px);
+}
+
+.stats-item img {
+    width: 19.2px;
+    height: 19.2px;
+    object-fit: contain;
+}
+
+.stats-value {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    font-weight: 600;
+}
+
+.stats-value p {
+    margin: 0;
+    color: #2A282F;
+    font-family: "Inter SemiBold", "Inter", sans-serif;
+    font-size: 16px;
+    line-height: 20px;
+    font-weight: 600;
+}
+
+.stats-label {
+    margin-top: 0;
+    font-family: "Inter Medium", "Inter", sans-serif;
+    font-weight: 500;
+    font-size: 12px;
+    line-height: 16px;
+    color: #625F68;
+    white-space: nowrap;
+    transition: color 0.2s ease;
+}
+
+.stats-item:hover .stats-value p {
+    color: #7949FF;
+}
+
+.stats-item:hover .stats-label {
+    color: #4f3fb3;
+}
+
+.activities-section {
+    position: relative;
+    z-index: 1;
+    margin-top: 40px;
+}
+
+.activities-title {
+    color: white;
+    margin-bottom: 20px;
+    font-family: "Inter SemiBold", "Inter", sans-serif;
+    font-size: 17px;
+    line-height: 24px;
+    font-weight: 600;
+}
+
+.activities-list {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.activity-card {
+    width: 100%;
+    min-height: 112px;
+    background: #FFFFFF;
+    border-radius: 12px;
+    padding: 16px;
+    display: grid;
+    grid-template-columns: 92px 1fr;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 0;
+    position: relative;
+    border: 0;
+    text-align: left;
+    font: inherit;
+    color: inherit;
+}
+
+.activity-card[role="link"] {
+    cursor: pointer;
+    transition: background-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.activity-card[role="link"]:hover,
+.activity-card[role="link"]:focus-visible {
+    box-shadow: 0 12px 28px rgba(42, 39, 48, 0.2);
+    transform: translateY(-2px);
+    outline: none;
+}
+
+.activity-image {
+    width: 92px;
+    height: 92px;
+    object-fit: contain;
+    border-radius: 18px;
+    padding: 0;
+    pointer-events: none;
+}
+
+.activity-info {
+    font-family: "Inter SemiBold", "Inter", sans-serif;
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    min-width: 0;
+}
+
+.activity-info h3 {
+    margin: 0;
+    color: #2A282F;
+    font-size: 16px;
+    line-height: 20px;
+    font-weight: 600;
+}
+
+.activity-info a {
+    font-family: "Inter Medium", "Inter", sans-serif;
+    margin: 0;
+    font-size: 12px;
+    line-height: 15px;
+    font-weight: 500;
+    color: #625F68;
+    text-decoration: none;
+}
+
+.activity-info a:hover {
+    text-decoration: underline;
+}
+
+.team-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.team-my {
+    margin: 0;
+    font-size: 14px;
+    line-height: 17px;
+    font-weight: 500;
+    color: #625F68;
+    cursor: default;
+    transition: color 0.15s ease;
+}
+
+.team-my:hover {
+    color: #7949FF;
+}

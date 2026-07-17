@@ -1,0 +1,312 @@
+import { type MouseEvent, useEffect, useState } from "react";
+import { Link, useNavigate } from "@tanstack/react-router";
+import { LogOut01 } from "@untitledui/icons/LogOut01";
+import { warmRoute } from "../../../app/route-warmers";
+import {
+    AuthApiError,
+    clearAuthTokens,
+    getAccessToken,
+    getRefreshToken,
+    logout,
+} from "../../../entities/auth";
+import { 
+    useCurrentUserQuery,
+    useStudentGamificationQuery,
+    useStudentTeamQuery
+} from "../../../entities/student/queries/profile.queries";
+import type { CurrentUser, Student } from "../../../entities/student/model/profile.types";
+import "./profile-page.css";
+
+const DEFAULT_AVATAR_SRC = "/default-avatar.svg";
+
+function isStudentProfile(user: CurrentUser | null | undefined): user is Student {
+    return Boolean(user && typeof user === "object" && "year_of_study" in user);
+}
+
+function getRoleLabel(user: CurrentUser | null) {
+    if (!user) {
+        return "Студент";
+    }
+
+    if (isStudentProfile(user)) {
+        return "Студент";
+    }
+
+    if (user.staff_role === "Teacher") {
+        return "Преподаватель";
+    }
+
+    if (user.staff_role === "Admin") {
+        return "Организатор";
+    }
+
+    return user.staff_role;
+}
+
+export default function ProfileContent() {
+    const navigate = useNavigate();
+    const [isLoggingOut, setIsLoggingOut] = useState(false);
+    const [avatarSrc, setAvatarSrc] = useState(DEFAULT_AVATAR_SRC);
+
+    const {
+        data: currentUser,
+        isLoading: isProfileLoading,
+        error: profileError,
+    } = useCurrentUserQuery();
+
+    const studentId = currentUser && isStudentProfile(currentUser) ? currentUser.id : undefined;
+
+    const { data: gamification } = useStudentGamificationQuery(studentId);
+    const { data: team } = useStudentTeamQuery(studentId);
+
+    const stats = isStudentProfile(currentUser)
+        ? {
+            achievements: gamification?.achievement_score ?? 0,
+            points: gamification?.total_score ?? 0,
+            sigmaCoins: gamification?.extracurricular_score ?? 0,
+        }
+        : {
+            achievements: 0,
+            points: 0,
+            sigmaCoins: 0,
+        };
+
+    const teamName = team?.team_name ?? null;
+
+    useEffect(() => {
+        const accessToken = getAccessToken();
+        if (!accessToken) {
+            navigate({ to: "/login" });
+            return;
+        }
+
+        if (profileError instanceof AuthApiError && profileError.status === 401) {
+            clearAuthTokens();
+            navigate({ to: "/login" });
+        }
+    }, [navigate, profileError]);
+
+    useEffect(() => {
+        setAvatarSrc(currentUser?.avatar_url ?? DEFAULT_AVATAR_SRC);
+    }, [currentUser]);
+
+    const handleLogout = async () => {
+        if (isLoggingOut) {
+            return;
+        }
+
+        setIsLoggingOut(true);
+        const accessToken = getAccessToken();
+        const refreshToken = getRefreshToken();
+
+        try {
+            if (accessToken || refreshToken) {
+                await logout({ refresh_token: refreshToken }, accessToken);
+            }
+        } catch {
+            // Logout continues locally even if the API request fails.
+        } finally {
+            clearAuthTokens();
+            setIsLoggingOut(false);
+            navigate({ to: "/enter" });
+        }
+    };
+
+    const openCurricularCharges = (event: MouseEvent<HTMLAnchorElement>) => {
+        event.preventDefault();
+        event.stopPropagation();
+        navigate({ to: "/curricular", hash: "charges" });
+    };
+
+    const openCharges = (event: MouseEvent<HTMLAnchorElement>) => {
+        event.preventDefault();
+        event.stopPropagation();
+        navigate({ to: "/extracurricular", hash: "charges" });
+    };
+
+    const openCurricularAchievements = (event: MouseEvent<HTMLAnchorElement>) => {
+        event.preventDefault();
+        event.stopPropagation();
+        navigate({ to: "/curricular-achievements" });
+    };
+
+    return (
+        <main className="profile-page">
+            <section className="user-info-section">
+                <div className="logout-menu">
+                    <button
+                        className="logout-trigger"
+                        type="button"
+                        aria-label="Выйти"
+                        onClick={handleLogout}
+                        disabled={isLoggingOut}
+                    >
+                        <LogOut01 className="profile-action-icon profile-action-icon--logout" size={24} color="currentColor" />
+                    </button>
+                </div>
+
+                <Link
+                    className="profile-settings-link"
+                    to="/profile-settings"
+                    aria-label="Открыть настройки профиля"
+                    onPointerEnter={() => warmRoute("/profile-settings")}
+                    onFocus={() => warmRoute("/profile-settings")}
+                >
+                    <svg
+                        width="20"
+                        height="20"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        xmlns="http://www.w3.org/2000/svg"
+                        aria-hidden="true"
+                        className="profile-action-icon profile-action-icon--edit"
+                    >
+                        <path
+                            d="M4.75 19.25H8.3L18.61 8.94C19.39 8.16 19.39 6.89 18.61 6.11L17.89 5.39C17.11 4.61 15.84 4.61 15.06 5.39L4.75 15.7V19.25Z"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                        />
+                        <path
+                            d="M13.75 6.75L17.25 10.25"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                        />
+                    </svg>
+                </Link>
+
+                <div className="profile-avatar-wrap">
+                    <img
+                        className="profile-image"
+                        src={avatarSrc}
+                        alt="Аватар пользователя"
+                        onError={() => setAvatarSrc(DEFAULT_AVATAR_SRC)}
+                    />
+                </div>
+
+                <h1 className="user-fullname">
+                    {currentUser ? (
+                        <>
+                            {currentUser.last_name}
+                            <br />
+                            {currentUser.first_name}
+                        </>
+                    ) : (
+                        <>
+                            Фамилия
+                            <br />
+                            Имя
+                        </>
+                    )}
+                </h1>
+
+                <p className="user-role">{getRoleLabel(currentUser)}</p>
+                <div className="user-stats">
+                    <div className="stats-item">
+                        <div className="stats-value">
+                            <img src="/raster-icons/star.png" alt="" />
+                            <p>{isProfileLoading ? "..." : stats.achievements}</p>
+                        </div>
+                        <p className="stats-label">ачивок</p>
+                    </div>
+
+                    <div className="stats-item">
+                        <div className="stats-value">
+                            <img src="/raster-icons/flash.png" alt="" />
+                            <p>{isProfileLoading ? "..." : stats.points}</p>
+                        </div>
+                        <p className="stats-label">баллов</p>
+                    </div>
+
+                    <div className="stats-item">
+                        <div className="stats-value">
+                            <img src="/raster-icons/sigmacoins.png" alt="" />
+                            <p>{isProfileLoading ? "..." : stats.sigmaCoins}</p>
+                        </div>
+                        <p className="stats-label">сигмакойнов</p>
+                    </div>
+                </div>
+            </section>
+
+            <section className="activities-section">
+                <h2 className="activities-title">Мои активности</h2>
+
+                <div className="activities-list">
+                    <div
+                        className="activity-card"
+                        role="link"
+                        tabIndex={0}
+                        onPointerEnter={() => warmRoute("/curricular")}
+                        onFocus={() => warmRoute("/curricular")}
+                        onClick={() => navigate({ to: "/curricular" })}
+                        onKeyDown={(event) => {
+                            if (event.key === "Enter" || event.key === " ") {
+                                navigate({ to: "/curricular" });
+                            }
+                        }}
+                    >
+                        <img className="activity-image" src="/student/activity-learning.png" alt="" />
+
+                        <div className="activity-info">
+                            <h3>Учебная активность</h3>
+                            <Link
+                                to="/curricular"
+                                hash="charges"
+                                onClick={openCurricularCharges}
+                                onPointerEnter={() => warmRoute("/curricular")}
+                                onFocus={() => warmRoute("/curricular")}
+                            >
+                                Посмотреть начисления
+                            </Link>
+                            <Link
+                                to="/curricular-achievements"
+                                onClick={openCurricularAchievements}
+                                onPointerEnter={() => warmRoute("/curricular-achievements")}
+                                onFocus={() => warmRoute("/curricular-achievements")}
+                            >
+                                Посмотреть ачивки
+                            </Link>
+                        </div>
+                    </div>
+
+                    <div
+                        className="activity-card"
+                        role="link"
+                        tabIndex={0}
+                        onPointerEnter={() => warmRoute("/extracurricular")}
+                        onFocus={() => warmRoute("/extracurricular")}
+                        onClick={() => navigate({ to: "/extracurricular" })}
+                        onKeyDown={(event) => {
+                            if (event.key === "Enter" || event.key === " ") {
+                                navigate({ to: "/extracurricular" });
+                            }
+                        }}
+                    >
+                        <img className="activity-image" src="/student/activity-extracurricular.png" alt="" />
+
+                        <div className="activity-info">
+                            <h3>Внеучебка</h3>
+                            <div className="team-meta">
+                                <p className="team-my" onClick={(event) => event.stopPropagation()}>
+                                    {teamName ?? "Команда не назначена"}
+                                </p>
+                                <Link
+                                    to="/extracurricular"
+                                    hash="charges"
+                                    onClick={openCharges}
+                                    onPointerEnter={() => warmRoute("/extracurricular")}
+                                    onFocus={() => warmRoute("/extracurricular")}
+                                >
+                                    Посмотреть начисления
+                                </Link>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+    );
+}

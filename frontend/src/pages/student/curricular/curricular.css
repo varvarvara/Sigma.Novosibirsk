@@ -1,0 +1,346 @@
+.curricular-page {
+    width: min(100%, var(--app-mobile-max-width));
+    min-height: 100vh;
+    margin: 0 auto;
+    padding: 72px 0 104px;
+    background: #2A2730;
+    color: #2A282F;
+    overflow-x: hidden;
+}
+
+.curricular-header {
+    position: fixed;
+    top: 0;
+    left: 50%;
+    z-index: 10;
+    width: min(100%, var(--app-mobile-max-width));
+    height: 72px;
+    padding: 0 20px 0 var(--back-chevron-offset);
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #2A2730;
+}
+
+.back-button {
+    color: #F7F6FA;
+}
+
+.back-button svg {
+    display: block;
+}
+
+.curricular-header h1 {
+    margin: 0;
+    color: #F7F6FA;
+    font-family: 'Inter SemiBold';
+    font-size: 14px;
+    line-height: 17px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.curricular-summary {
+    width: 302px;
+    min-height: 124px;
+    margin: 0 auto;
+    transform: translateY(12px);
+    border-radius: 22px;
+    background: #F7F6FA;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 14px 32px rgba(20, 18, 26, 0.18);
+    transition: transform 0.22s ease, box-shadow 0.22s ease, background-color 0.22s ease;
+}
+
+.summary-main {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    height: 54px;
+}
+
+.summary-main img,
+.summary-details img,
+.curricular-charge-points img {
+    width: 19.2px;
+    height: 19.2px;
+    object-fit: contain;
+}
+
+.summary-main p {
+    margin: 0;
+    color: #2A282F;
+    font-family: 'Inter SemiBold';
+    font-size: 17px;
+    line-height: 21px;
+    font-weight: 600;
+}
+
+.curricular-summary::after {
+    content: "";
+    position: absolute;
+    top: 52px;
+    left: 0;
+    width: 100%;
+    height: 1px;
+    background: #e2dee9;
+}
+
+.summary-details {
+    min-height: 70px;
+    padding: 14px 24px 15px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    align-items: start;
+    column-gap: 0;
+}
+
+.summary-details div {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+
+.summary-details h2 {
+    margin: 0;
+    color: #2A282F;
+    font-family: 'Inter Medium';
+    font-size: 13px;
+    line-height: 16px;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.summary-details p {
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 6px;
+    color: #2A282F;
+    font-family: 'Inter SemiBold';
+    font-size: 16px;
+    line-height: 20px;
+    font-weight: 600;
+}
+
+.curricular-charges {
+    padding: 28px 29px 0;
+    scroll-margin-top: 60px;
+}
+
+.curricular-charges-header {
+    width: 302px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.curricular-charges-header h2 {
+    margin: 0;
+    color: #FFFFFF;
+    font-family: 'Inter SemiBold';
+    font-size: 16px;
+    line-height: 22px;
+    font-weight: 600;
+}
+
+.curricular-filter-button {
+    width: 32px;
+    height: 32px;
+    display: grid;
+    place-items: center;
+    border-radius: 10px;
+    text-decoration: none;
+    transition: background-color 0.22s ease, transform 0.18s ease;
+}
+
+.curricular-filter-button img {
+    width: 24px;
+    height: 24px;
+    object-fit: contain;
+}
+
+.curricular-charges-list {
+    margin-top: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.curricular-charge-group {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.curricular-charge-group + .curricular-charge-group {
+    margin-top: 24px;
+}
+
+.curricular-date-row {
+    width: 302px;
+    min-height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.curricular-date-row p,
+.curricular-date-bonus span {
+    margin: 0;
+    font-family: 'Inter Medium';
+    font-size: 12px;
+    line-height: 15px;
+    font-weight: 500;
+}
+
+.curricular-date-row p {
+    color: #FFFFFF;
+}
+
+.curricular-date-bonus {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.curricular-date-bonus span {
+    color: #A8A6AC;
+}
+
+.curricular-date-bonus img {
+    width: 19.2px;
+    height: 19.2px;
+    object-fit: contain;
+}
+
+.curricular-charge-row {
+    width: 302px;
+    min-height: 96px;
+    padding: 14px 16px;
+    border-radius: 20px;
+    background: #F7F6FA;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    gap: 12px;
+    box-shadow: 0 10px 26px rgba(20, 18, 26, 0.12);
+    transition: transform 0.22s ease, box-shadow 0.22s ease, background-color 0.22s ease;
+}
+
+.curricular-charge-row-large {
+    height: 92px;
+    align-items: center;
+    padding-top: 12px;
+}
+
+.curricular-charge-info {
+    min-width: 0;
+}
+
+.curricular-charge-info h3 {
+    margin: 0;
+    color: #2A282F;
+    font-family: 'Inter SemiBold';
+    font-size: 13px;
+    line-height: 17px;
+    font-weight: 600;
+    overflow-wrap: anywhere;
+}
+
+.curricular-charge-info p {
+    margin: 5px 0 0;
+    color: #A8A6AC;
+    font-family: 'Inter Medium';
+    font-size: 11px;
+    line-height: 15px;
+    font-weight: 500;
+    overflow-wrap: anywhere;
+}
+
+.curricular-charge-description {
+    color: #625F68 !important;
+}
+
+.curricular-achievement-link {
+    width: 85px;
+    height: 24px;
+    margin-top: 10px;
+    border-radius: 14px;
+    background: #7949FF;
+    color: #FFFFFF;
+    font-family: 'Inter SemiBold';
+    font-size: 12px;
+    line-height: 15px;
+    font-weight: 600;
+    display: grid;
+    place-items: center;
+    text-decoration: none;
+    user-select: none;
+    box-shadow: 0 8px 18px rgba(121, 73, 255, 0.2);
+    transition: background-color 0.22s ease, transform 0.18s ease, box-shadow 0.22s ease;
+}
+
+.curricular-achievement-link:hover {
+    background: #6d3ff5;
+}
+
+.curricular-achievement-link:active {
+    transform: translateY(1px);
+}
+
+.curricular-achievement-link:focus-visible {
+    outline: 2px solid rgba(121, 73, 255, 0.45);
+    outline-offset: 2px;
+}
+
+.curricular-charge-points {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 5px;
+    min-width: 56px;
+    padding: 6px 8px;
+    border-radius: 999px;
+    background: #ECE6FF;
+    color: #2A282F;
+    font-family: 'Inter SemiBold';
+    font-size: 13px;
+    line-height: 16px;
+    font-weight: 600;
+}
+
+@media (hover: hover) {
+    .curricular-summary:hover {
+        transform: translateY(10px);
+        background: #FFFFFF;
+        box-shadow: 0 18px 38px rgba(20, 18, 26, 0.23);
+    }
+
+    .curricular-filter-button:hover {
+        background: rgba(247, 246, 250, 0.1);
+        transform: translateY(-1px);
+    }
+
+    .curricular-charge-row:hover {
+        transform: translateY(-2px);
+        background: #FFFFFF;
+        box-shadow: 0 16px 32px rgba(20, 18, 26, 0.18);
+    }
+
+    .curricular-achievement-link:hover {
+        background: #6d3ff5;
+        box-shadow: 0 10px 22px rgba(121, 73, 255, 0.28);
+    }
+}
+
+.curricular-filter-button:active,
+.curricular-charge-row:active,
+.curricular-achievement-link:active {
+    transform: translateY(1px) scale(0.995);
+}

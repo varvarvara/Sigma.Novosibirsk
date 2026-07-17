@@ -1,0 +1,32 @@
+export const loadProfileContent = () => import('../pages/student/profile/profile-content');
+export const loadProfileSettingsContent = () => import('../pages/student/profile-settings/profile-settings-content');
+export const loadScheduleContent = () => import('../pages/student/schedule/schedule-content');
+export const loadExtracurricularContent = () => import('../pages/student/extracurricular/extracurricular-content');
+export const loadCurricularContent = () => import('../pages/student/curricular/curricular-content');
+export const loadCurricularAchievementsContent = () => import('../pages/student/curricular-achievements/curricular-achievements-content');
+export const loadCurricularFilterContent = () => import('../pages/student/curricular-filter/filter-content');
+export const loadCoursesEntryContent = () => import('../pages/student/courses-entry/courses-entry-content');
+export const loadCourseSelectionContent = () => import('../pages/student/course-selection/course-selection-content');
+export const loadCourseDetailContent = () => import('../pages/student/course-detail/course-detail-content');
+export const loadCourseCardContent = () => import('../pages/student/course-card/course-card-content');
+export const loadCourseChoiceContent = () => import('../pages/student/course-choice/course-choice-content');
+export const loadCourseNothingContent = () => import('../pages/student/course-nothing/course-nothing-content');
+export const loadSoonUpdateContent = () => import('../pages/student/soon-update/soon-update-content');
+export const loadMyCoursesContent = () => import('../pages/student/my-courses/my-courses-content');
+export const loadFeedbackContent = () => import('../pages/student/feedback/feedback-content');
+
+export const loadTeacherProfileContent = () => import('../pages/teacher/profile/teacher-profile-content');
+export const loadTeacherCoursesContent = () => import('../pages/teacher/courses/teacher-courses-content');
+export const loadTeacherCoursesApplyContent = () => import('../pages/teacher/courses/teacher-courses-apply-content');
+export const loadTeacherCoursesCertificatesContent = () => import('../pages/teacher/courses/teacher-courses-certificates-content');
+export const loadTeacherCourseEditContent = () => import('../pages/teacher/course-edit/teacher-course-edit-content');
+export const loadTeacherAttendanceContent = () => import('../pages/teacher/attendance/attendance-content');
+export const loadTeacherAchievementsContent = () => import('../pages/teacher/achievements/achievements-content');
+export const loadTeacherScheduleContent = () => import('../pages/teacher/schedule/teacher-schedule-content');
+
+export const loadOrgProfileContent = () => import('../pages/organizer/profile/org-profile-content');
+export const loadOrgExtracurricularContent = () => import('../pages/organizer/org-extracurricular/org-extracurricular-content');
+export const loadOrgExtracurricularCreationContent = () => import('../pages/organizer/org-extracurricular/org-extracurricular-creation-content');
+export const loadTeamFormationContent = () => import('../pages/organizer/team-formation/team-formation-content');
+export const loadTeamCreationContent = () => import('../pages/organizer/team-creation/team-creation-content');
+export const loadExtracurricularPointsAddContent = () => import('../pages/organizer/extracurricular-points-add/extracurricular-points-add-content');

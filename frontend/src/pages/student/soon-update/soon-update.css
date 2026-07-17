@@ -1,0 +1,33 @@
+.soon-update-page {
+    width: min(100%, var(--app-mobile-max-width));
+    min-height: 100vh;
+    margin: 0 auto;
+    padding: 0 20px 84px;
+    background: #2A2730;
+    color: #F7F6FA;
+    overflow-x: hidden;
+}
+
+.soon-update-content {
+    margin: 0;
+    min-height: calc(100dvh - 84px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #F7F6FA;
+    text-align: center;
+}
+
+.soon-update-title-button {
+    width: 277px;
+    margin: 0;
+    border: 0;
+    padding: 0;
+    background: transparent;
+    color: #F7F6FA;
+    font-family: 'Inter SemiBold';
+    font-size: 20px;
+    line-height: 24px;
+    font-weight: 600;
+    text-align: center;
+}

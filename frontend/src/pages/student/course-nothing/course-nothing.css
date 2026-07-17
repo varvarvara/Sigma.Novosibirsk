@@ -1,0 +1,50 @@
+.course-nothing-page {
+    width: min(100%, var(--app-mobile-max-width));
+    min-height: 100vh;
+    margin: 0 auto;
+    padding: 0 20px 84px;
+    background: #2A2730;
+    color: #F7F6FA;
+    overflow-x: hidden;
+}
+
+.course-nothing-content {
+    margin: 0;
+    min-height: calc(100dvh - 84px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #F7F6FA;
+    text-align: center;
+}
+
+.course-nothing-title-button {
+    border: 0;
+    padding: 0;
+    background: transparent;
+    color: #F7F6FA;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+.course-nothing-title-main {
+    width: 277px;
+    margin: 0;
+    font-family: 'Inter SemiBold';
+    font-size: 20px;
+    line-height: 24px;
+    font-weight: 600;
+}
+
+.course-nothing-title-sub {
+    width: 277px;
+    margin: 0;
+    margin-top: 12px;
+    font-family: 'Inter Regular';
+    font-size: 16px;
+    line-height: 17px;
+    font-weight: 400;
+}
