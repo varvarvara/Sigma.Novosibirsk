@@ -10,15 +10,21 @@ from app.modules.admin.schemas import (
     IntakeStatusOut,
     PreRegistrationApproveIn,
     StaffCreateByAdminIn,
+    StudentPasswordSetupSendIn,
+    StudentPasswordSetupSendOut,
 )
 from app.modules.auth.schemas import PreRegistrationOut
 from app.modules.users.repository import UsersRepository
 from app.modules.users.schemas import StaffOutput
 from app.security.authHandler import AuthHandler
-from app.security.email_service import _smtp_is_configured, send_teacher_password_setup_email
+from app.security.email_service import (
+    _smtp_is_configured,
+    send_student_password_setup_email,
+    send_teacher_password_setup_email,
+)
 from app.security.hashHelper import HashHelper
 from app.security.password_policy import generate_temporary_password
-from app.tasks import send_teacher_password_setup_email_task
+from app.tasks import send_student_password_setup_email_task, send_teacher_password_setup_email_task
 from enums import PreRegistrationStatuses, StaffRoles
 
 
@@ -26,6 +32,11 @@ logger = logging.getLogger(__name__)
 
 
 def _build_teacher_password_setup_url(reset_token: str) -> str:
+    base_url = settings.FRONTEND_APP_URL.rstrip("/")
+    return f"{base_url}/password-reset?token={reset_token}&mode=setup"
+
+
+def _build_student_password_setup_url(reset_token: str) -> str:
     base_url = settings.FRONTEND_APP_URL.rstrip("/")
     return f"{base_url}/password-reset?token={reset_token}&mode=setup"
 
@@ -52,6 +63,30 @@ def _dispatch_teacher_password_setup_email(*, email: str, first_name: str, setup
             return
 
     logger.error("Teacher password setup email was not sent for %s: SMTP is not configured", email)
+
+
+def _dispatch_student_password_setup_email(*, email: str, first_name: str, setup_url: str) -> None:
+    """Queue Celery email when possible; in dev fall back to sync SMTP or log the setup link."""
+    if _smtp_is_configured():
+        try:
+            send_student_password_setup_email_task.delay(email=email, first_name=first_name, setup_url=setup_url)
+            return
+        except Exception:
+            logger.exception("Failed to enqueue student password setup email for %s", email)
+
+    if settings.APP_ENV == "dev":
+        try:
+            send_student_password_setup_email(to_email=email, first_name=first_name, setup_url=setup_url)
+            return
+        except Exception:
+            logger.warning(
+                "Student password setup link for %s (SMTP unavailable): %s",
+                email,
+                setup_url,
+            )
+            return
+
+    logger.error("Student password setup email was not sent for %s: SMTP is not configured", email)
 
 
 class AdminService:
@@ -148,6 +183,61 @@ class AdminService:
         password = HashHelper.get_password_hash(plain_password=data.password)
         staff = self._users_repository.create_staff_by_admin(data=data, password=password)
         return StaffOutput.model_validate(staff)
+
+    def send_student_password_setup_emails(self, data: StudentPasswordSetupSendIn) -> StudentPasswordSetupSendOut:
+        students = self._users_repository.list_students_for_password_setup(
+            emails=[str(email) for email in data.emails] if data.emails else None,
+        )
+
+        sent = 0
+        for student in students:
+            technical_password = generate_temporary_password(length=32)
+            password_hash = HashHelper.get_password_hash(plain_password=technical_password)
+            self._users_repository.update_student_password(student_id=student.id, password_hash=password_hash)
+
+            reset_token = AuthHandler.create_password_reset_token(
+                user_id=student.id,
+                user_type="student",
+                email=student.email,
+            )
+            _dispatch_student_password_setup_email(
+                email=student.email,
+                first_name=student.first_name,
+                setup_url=_build_student_password_setup_url(reset_token),
+            )
+            sent += 1
+
+        return StudentPasswordSetupSendOut(
+            matched=len(students),
+            sent=sent,
+            message=f"Отправлено писем для задания пароля: {sent}.",
+        )
+
+    def send_student_password_setup_email(self, student_id: int) -> StudentPasswordSetupSendOut:
+        student = self._users_repository.get_student_by_id(user_id=student_id)
+        if student is None:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Student not found")
+
+        technical_password = generate_temporary_password(length=32)
+        password_hash = HashHelper.get_password_hash(plain_password=technical_password)
+        self._users_repository.update_student_password(student_id=student.id, password_hash=password_hash)
+
+        reset_token = AuthHandler.create_password_reset_token(
+            user_id=student.id,
+            user_type="student",
+            email=student.email,
+        )
+        _dispatch_student_password_setup_email(
+            email=student.email,
+            first_name=student.first_name,
+            setup_url=_build_student_password_setup_url(reset_token),
+        )
+
+        return StudentPasswordSetupSendOut(
+            matched=1,
+            sent=1,
+            message=f"Письмо для задания пароля отправлено ученику {student.email}.",
+        )
 
     def get_admin(self, admin_id: int) -> StaffOutput:
         admin = self._users_repository.get_admin_by_id(admin_id=admin_id)

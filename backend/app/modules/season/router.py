@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from app.modules.season.service import SeasonService
+from app.modules.season.schemas import SeasonCreate, SeasonOutput
 from app.db.session import get_db
 from app.security.permissions import require_admin
 
@@ -12,6 +13,11 @@ seasonRouter = APIRouter(
 
 def get_service(db: Session):
     return SeasonService(db)
+
+
+@seasonRouter.post("", status_code=201, response_model=SeasonOutput)
+def create_season(payload: SeasonCreate, db: Session = Depends(get_db)):
+    return get_service(db).create_season(payload)
 
 
 @seasonRouter.get("/{season_id}/staff")

@@ -1,9 +1,10 @@
 from datetime import datetime
 
+from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from app.modules.users.models import IntakeControl, PreRegistration, Staff, Student
-from app.modules.users.schemas import StaffInCreate, StudentInCreate
+from app.modules.users.schemas import StaffInCreate, StudentInCreate, StudentInCreate2026
 from enums import PreRegistrationStatuses, StaffRoles, StudentStatuses
 
 
@@ -18,6 +19,31 @@ class UsersRepository:
             .order_by(Student.id.desc())
             .all()
         )
+
+    def list_students_for_password_setup(
+        self,
+        *,
+        season_id: int | None = None,
+        student_ids: list[int] | None = None,
+        emails: list[str] | None = None,
+    ) -> list[Student]:
+        query = self.session.query(Student)
+
+        if season_id is not None:
+            query = query.filter(Student.season_id == season_id)
+
+        filters = []
+        if student_ids:
+            filters.append(Student.id.in_(student_ids))
+        if emails:
+            normalized_emails = [email.strip() for email in emails if email.strip()]
+            if normalized_emails:
+                filters.append(Student.email.in_(normalized_emails))
+
+        if filters:
+            query = query.filter(or_(*filters))
+
+        return query.order_by(Student.id.asc()).all()
 
     def get_teachers_by_season(self, season_id: int) -> list[Staff]:
         return (
@@ -53,6 +79,24 @@ class UsersRepository:
         self.session.commit()
         self.session.refresh(new_student)
         return new_student
+
+    def create_student_user_2026(self, user_data: StudentInCreate2026) -> Student:
+        new_student = Student(**user_data.model_dump(mode="json"))
+        self.session.add(new_student)
+        self.session.commit()
+        self.session.refresh(new_student)
+        return new_student
+
+    def create_student_users_2026(
+        self,
+        users_data: list[StudentInCreate2026],
+    ) -> list[Student]:
+        students = [Student(**user_data.model_dump(mode="json")) for user_data in users_data]
+        self.session.add_all(students)
+        self.session.commit()
+        for student in students:
+            self.session.refresh(student)
+        return students
 
     def create_staff_user(self, user_data: StaffInCreate, password: str) -> Staff:
         new_staff = Staff(

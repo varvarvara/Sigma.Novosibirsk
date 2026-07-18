@@ -9,6 +9,7 @@ from app.modules.users.schemas import (
     ProfileMeUpdate,
     StaffOutput,
     StudentInCreate,
+    StudentInCreate2026,
     StudentOutput,
 )
 from app.modules.users.models import Staff, Student
@@ -118,6 +119,44 @@ class UsersService:
             password=password,
         )
         return self._student_output(student)
+
+    def signup_student_2026(self, user_details: StudentInCreate2026) -> StudentOutput:
+        if self._users_repository.user_exist_by_email(email=user_details.email):
+            raise HTTPException(status_code=400, detail="Пользователь уже существует, выполните вход")
+
+        student = self._users_repository.create_student_user_2026(user_data=user_details)
+        return self._student_output(student)
+
+    def mass_signup_students_2026(
+        self,
+        users_details: list[StudentInCreate2026],
+    ) -> list[StudentOutput]:
+        if not users_details:
+            raise HTTPException(status_code=400, detail="Список пользователей не может быть пустым")
+
+        normalized_emails = [str(user.email).lower() for user in users_details]
+        duplicate_emails = sorted(
+            email for email in set(normalized_emails) if normalized_emails.count(email) > 1
+        )
+        if duplicate_emails:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Email повторяется в запросе: {', '.join(duplicate_emails)}",
+            )
+
+        existing_emails = [
+            str(user.email)
+            for user in users_details
+            if self._users_repository.user_exist_by_email(email=user.email)
+        ]
+        if existing_emails:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Пользователи уже существуют: {', '.join(existing_emails)}",
+            )
+
+        students = self._users_repository.create_student_users_2026(users_data=users_details)
+        return [self._student_output(student) for student in students]
 
     def signup_staff(self, user_details: StaffInCreate) -> StaffOutput:
         if self._users_repository.user_exist_by_email(email=user_details.email):

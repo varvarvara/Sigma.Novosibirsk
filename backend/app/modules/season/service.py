@@ -15,6 +15,7 @@ from app.modules.media.service import get_media_service
 from app.modules.scheduling.models import Schedule, Slot
 from app.modules.users.models import Student, Staff, PreRegistration, TeacherCertificate
 from app.modules.season.models import Season
+from app.modules.season.schemas import SeasonCreate
 
 class SeasonService:
     def __init__(self, db: Session):
@@ -32,6 +33,13 @@ class SeasonService:
 
     def get_season_by_id(self, season_id: int) -> Season | None:
         return self.db.query(Season).filter(Season.id == season_id).first()
+
+    def create_season(self, data: SeasonCreate) -> Season:
+        season = Season(**data.model_dump())
+        self.db.add(season)
+        self.db.commit()
+        self.db.refresh(season)
+        return season
 
     def get_staff_by_season(self, season_id: int) -> list[Staff]:
         return self.db.query(Staff).filter(Staff.season_id == season_id).all()
@@ -93,5 +101,4 @@ class SeasonService:
 
     def get_enrollments_by_season(self, season_id: int) -> list[Enrollment]:
         return self.db.query(Enrollment).filter(Enrollment.season_id == season_id).all()
-
 

@@ -8,7 +8,9 @@ from app.security.password_policy import validate_password_strength
 from enums import StaffRoles, StudentStatuses
 
 LETTER_MATCH_PATTERN = re.compile(r"^[а-яА-ЯёЁa-zA-Z\-]+$")
+FULL_NAME_MATCH_PATTERN = re.compile(r"^[а-яА-ЯёЁa-zA-Z\-]+(?: [а-яА-ЯёЁa-zA-Z\-]+)*$")
 PHONE_MATCH_PATTERN = re.compile(r"^\+?[0-9]{10,20}$")
+BCRYPT_HASH_PATTERN = re.compile(r"^\$2[aby]\$\d{2}\$[./A-Za-z0-9]{53}$")
 
 
 class StudentInCreate(BaseModel):
@@ -16,7 +18,7 @@ class StudentInCreate(BaseModel):
     last_name: str
     partonymic: str | None = None
     email: EmailStr
-    phone: str
+    phone: str | None = None
     tg_nickname: str | None = None
     birth_date: date | None = None
     year_of_study: int
@@ -34,7 +36,7 @@ class StudentInCreate(BaseModel):
             value["partonymic"] = value.get("patronymic")
         return value
 
-    @field_validator("first_name", "last_name", "partonymic", "parent_name")
+    @field_validator("first_name", "last_name", "partonymic")
     def validate_name_fields(cls, value):
         if value is None:
             return value
@@ -45,11 +47,20 @@ class StudentInCreate(BaseModel):
             )
         return value
 
+    @field_validator("parent_name")
+    def validate_parent_name(cls, value):
+        if not FULL_NAME_MATCH_PATTERN.fullmatch(value):
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="Parent name should contain only letters, spaces and hyphens",
+            )
+        return value
+
     @field_validator("year_of_study")
     def validate_year_of_study(cls, value):
         if value is None:
             return value
-        if value < 8 or value > 11:
+        if value < 7 or value > 11:
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                 detail="Year of study must be between 8 and 11",
@@ -58,6 +69,8 @@ class StudentInCreate(BaseModel):
 
     @field_validator("phone", "parent_phone")
     def validate_phone_fields(cls, value):
+        if value is None:
+            return value
         if not PHONE_MATCH_PATTERN.fullmatch(value):
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
@@ -68,6 +81,21 @@ class StudentInCreate(BaseModel):
     @field_validator("password")
     def validate_password(cls, value):
         return validate_password_strength(value)
+
+
+class StudentInCreate2026(StudentInCreate):
+    phone: str
+    student_status: StudentStatuses
+
+    @field_validator("password")
+    @classmethod
+    def validate_password(cls, value: str) -> str:
+        if not BCRYPT_HASH_PATTERN.fullmatch(value):
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="Password must be a valid bcrypt hash",
+            )
+        return value
 
 
 class StaffInCreate(BaseModel):
@@ -123,7 +151,7 @@ class StudentOutput(BaseModel):
     last_name: str
     partonymic: str | None = None
     email: EmailStr
-    phone: str
+    phone: str | None = None
     tg_nickname: str | None = None
     birth_date: date | None = None
     year_of_study: int

@@ -47,7 +47,17 @@ class StaffCreateByAdminIn(BaseModel):
         return validate_password_strength(value)
 
 
+class StudentPasswordSetupSendIn(BaseModel):
+    emails: list[EmailStr] = Field(..., min_length=1)
+
+
 class ActionMessage(BaseModel):
+    message: str
+
+
+class StudentPasswordSetupSendOut(BaseModel):
+    matched: int
+    sent: int
     message: str
 
 

@@ -8,6 +8,8 @@ from app.modules.admin.schemas import (
     IntakeStatusOut,
     PreRegistrationApproveIn,
     StaffCreateByAdminIn,
+    StudentPasswordSetupSendIn,
+    StudentPasswordSetupSendOut,
 )
 from app.modules.admin.service import AdminService
 from app.modules.auth.schemas import PreRegistrationOut
@@ -69,3 +71,21 @@ def create_staff(
     session: Session = Depends(get_db),
 ):
     return AdminService(session=session).create_staff(data=body)
+
+
+@adminRouter.post("/students/password-setup/send", response_model=StudentPasswordSetupSendOut)
+def send_student_password_setup_emails(
+    body: StudentPasswordSetupSendIn,
+    _: dict = Depends(require_admin),
+    session: Session = Depends(get_db),
+):
+    return AdminService(session=session).send_student_password_setup_emails(data=body)
+
+
+@adminRouter.post("/students/{student_id}/password-setup/send", response_model=StudentPasswordSetupSendOut)
+def send_student_password_setup_email(
+    student_id: int,
+    _: dict = Depends(require_admin),
+    session: Session = Depends(get_db),
+):
+    return AdminService(session=session).send_student_password_setup_email(student_id=student_id)

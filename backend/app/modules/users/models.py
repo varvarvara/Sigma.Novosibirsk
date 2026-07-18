@@ -49,7 +49,7 @@ class Student(Base):
     partonymic = Column(String(50))
     email = Column(String(254), unique=True, nullable=False)
     password = Column(String(255), nullable=False)
-    phone = Column(String(20), nullable=False)
+    phone = Column(String(20))
     tg_nickname = Column(String(50))
     birth_date = Column(Date, nullable=True)
     year_of_study = Column(Integer, nullable=False)

@@ -56,6 +56,19 @@ def send_teacher_password_setup_email(*, to_email: str, first_name: str, setup_u
     send_email(to_email=to_email, subject=subject, body=body)
 
 
+def send_student_password_setup_email(*, to_email: str, first_name: str, setup_url: str) -> None:
+    subject = "Доступ к Сигма. Новосибирск"
+    body = (
+        f"Привет, {first_name}!\n\n"
+        "Мы создали новую платформу для работы школы sigmanovosibirsk.ru. Чтобы у тебя был к ней доступ тебе необходимо заново задать пароль от личного кабинета.\n"
+        "Задать его можно по ссылке:\n"
+        f"{setup_url}\n\n"
+        "С нетерпением ждём тебя на сезоне!\n"
+        "Ссылка действует ограниченное время. Если это письмо пришло по ошибке, просто игнорируй его.\n"
+    )
+    send_email(to_email=to_email, subject=subject, body=body)
+
+
 def send_password_reset_email(*, to_email: str, reset_url: str) -> None:
     subject = "Восстановление пароля Sigma.Novosibirsk"
     body = (
