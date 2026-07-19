@@ -58,6 +58,15 @@ def create_course(data: CourseCreate, current_user: dict = Depends(require_teach
     return CourseService(db=db).create_course(data=data, current_user=current_user)
 
 
+@courseRouter.post("/mass-course-creation-2026", response_model=list[CourseOutput], status_code=201)
+def mass_course_creation_2026(
+    data: list[CourseCreate],
+    current_user: dict = Depends(require_teacher_or_admin),
+    db: Session = Depends(get_db),
+):
+    return CourseService(db=db).mass_create_courses_2026(items=data, current_user=current_user)
+
+
 @courseRouter.patch("/{course_id}", response_model=CourseOutput)
 def update_course(
     course_id: int,

@@ -87,6 +87,18 @@ class CourseRepository:
         self.db.refresh(db_course)
         return db_course
 
+    def create_courses(self, items: list[dict]) -> list[Course]:
+        courses = [Course(**item) for item in items]
+        try:
+            self.db.add_all(courses)
+            self.db.commit()
+            for course in courses:
+                self.db.refresh(course)
+        except Exception:
+            self.db.rollback()
+            raise
+        return courses
+
     def set_cover_image_key(self, course_id: int, cover_image_key: str | None) -> Course | None:
         course = self.get_by_id(course_id=course_id)
         if course is None:

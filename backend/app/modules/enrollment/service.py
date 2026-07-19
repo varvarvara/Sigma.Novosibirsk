@@ -9,7 +9,9 @@ from app.modules.enrollment.schemas import (
     ALLOWED_SLOT_HOURS,
     SCHEDULE_HOUR_TO_ENROLLMENT_SLOT,
     EnrollmentInUpdateStatus,
+    Enrollment2026In,
     EnrollmentOutput,
+    MassEnrollment2026Out,
     EnrollmentSelectionIn,
     EnrollmentSlotOptionsOut,
     EnrollmentStatus,
@@ -106,6 +108,50 @@ class EnrollmentService:
             course_type=course_type,
             teacher_id=teacher_id,
             teacher_name=teacher_name,
+        )
+
+    def create_enrollments_2026(
+        self,
+        data: list[Enrollment2026In],
+        current_user: dict,
+    ) -> MassEnrollment2026Out:
+        if not self._is_admin(current_user):
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin access required")
+
+        rows = []
+        for index, item in enumerate(data):
+            if self.repository.get_student_by_id(student_id=item.student_id) is None:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail=f"Student {item.student_id} not found (item {index})",
+                )
+
+            course = self.repository.get_course_by_id(course_id=item.course_id)
+            if course is None:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail=f"Course {item.course_id} not found (item {index})",
+                )
+
+            if self.repository.get_season_by_id(season_id=item.season_id) is None:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail=f"Season {item.season_id} not found (item {index})",
+                )
+
+            rows.append(
+                {
+                    "student_id": item.student_id,
+                    "course_id": item.course_id,
+                    "enrollment_status": item.enrollment_status.value,
+                    "season_id": item.season_id,
+                }
+            )
+
+        created = self.repository.create_enrollments(items=rows)
+        return MassEnrollment2026Out(
+            created_count=len(created),
+            items=[self._to_output(enrollment) for enrollment in created],
         )
 
     def _validate_full_selection(self, selections: list[EnrollmentSelectionIn]) -> dict[int, int]:

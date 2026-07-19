@@ -2,9 +2,11 @@ from fastapi import HTTPException, UploadFile, status
 from sqlalchemy.orm import Session
 
 from app.modules.media.service import get_media_service
+from app.modules.auth.schemas import PreRegistrationOut
 from app.modules.users.repository import UsersRepository
 from app.modules.users.schemas import (
     AvatarUploadOut,
+    PreRegistrationInCreate2026,
     StaffInCreate,
     ProfileMeUpdate,
     StaffOutput,
@@ -157,6 +159,37 @@ class UsersService:
 
         students = self._users_repository.create_student_users_2026(users_data=users_details)
         return [self._student_output(student) for student in students]
+
+    def mass_create_pre_registrations_2026(
+        self,
+        items: list[PreRegistrationInCreate2026],
+    ) -> list[PreRegistrationOut]:
+        if not items:
+            raise HTTPException(status_code=400, detail="Список пререгистраций не может быть пустым")
+
+        normalized_emails = [str(item.email).lower() for item in items]
+        duplicate_emails = sorted(
+            email for email in set(normalized_emails) if normalized_emails.count(email) > 1
+        )
+        if duplicate_emails:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Email повторяется в запросе: {', '.join(duplicate_emails)}",
+            )
+
+        existing_emails = [
+            str(item.email)
+            for item in items
+            if self._users_repository.user_exist_by_email(email=item.email)
+        ]
+        if existing_emails:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Пользователи уже существуют: {', '.join(existing_emails)}",
+            )
+
+        created = self._users_repository.create_pre_registrations_2026(items=items)
+        return [PreRegistrationOut.model_validate(item) for item in created]
 
     def signup_staff(self, user_details: StaffInCreate) -> StaffOutput:
         if self._users_repository.user_exist_by_email(email=user_details.email):

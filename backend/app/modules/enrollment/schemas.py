@@ -23,6 +23,18 @@ class EnrollmentInUpdateStatus(BaseModel):
     enrollment_status: EnrollmentStatus
 
 
+class Enrollment2026In(BaseModel):
+    student_id: int
+    course_id: int
+    season_id: int
+    enrollment_status: EnrollmentStatus
+
+
+class MassEnrollment2026Out(BaseModel):
+    created_count: int
+    items: list["EnrollmentOutput"]
+
+
 class EnrollmentSelectionIn(BaseModel):
     slot_hour: int
     course_id: int

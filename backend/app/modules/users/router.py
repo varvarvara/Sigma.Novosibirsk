@@ -2,8 +2,10 @@ from fastapi import APIRouter, Depends, File, UploadFile
 from sqlalchemy.orm import Session
 
 from app.db.session import get_db
+from app.modules.auth.schemas import PreRegistrationOut
 from app.modules.users.schemas import (
     AvatarUploadOut,
+    PreRegistrationInCreate2026,
     ProfileMeUpdate,
     StaffOutput,
     StudentInCreate,
@@ -73,3 +75,15 @@ def mass_student_signup_2026(
     return UsersService(session=session).mass_signup_students_2026(
         users_details=signup_details,
     )
+
+
+@usersRouter.post(
+    "/mass-preregistration-2026",
+    status_code=201,
+    response_model=list[PreRegistrationOut],
+)
+def mass_preregistration_2026(
+    items: list[PreRegistrationInCreate2026],
+    session: Session = Depends(get_db),
+):
+    return UsersService(session=session).mass_create_pre_registrations_2026(items=items)

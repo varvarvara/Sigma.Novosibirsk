@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 from app.modules.courses.models import Course, CourseClass
 from app.modules.enrollment.models import Enrollment
 from app.modules.scheduling.models import Schedule
+from app.modules.season.models import Season
 from app.modules.users.models import IntakeControl, Staff, Student
 
 
@@ -38,6 +39,9 @@ class EnrollmentRepository:
 
     def get_course_by_id(self, course_id: int) -> Course | None:
         return self.db.query(Course).filter(Course.id == course_id).first()
+
+    def get_season_by_id(self, season_id: int) -> Season | None:
+        return self.db.query(Season).filter(Season.id == season_id).first()
 
     def list_published_courses_with_schedule(self) -> list[Course]:
         return (
@@ -91,11 +95,29 @@ class EnrollmentRepository:
         )
 
     def create_enrollment(self, student_id: int, course_id: int) -> Enrollment:
-        db_enrollment = Enrollment(student_id=student_id, course_id=course_id, enrollment_status="Active")
+        course = self.get_course_by_id(course_id=course_id)
+        db_enrollment = Enrollment(
+            student_id=student_id,
+            course_id=course_id,
+            enrollment_status="Active",
+            season_id=course.season_id,
+        )
         self.db.add(db_enrollment)
         self.db.commit()
         self.db.refresh(db_enrollment)
         return db_enrollment
+
+    def create_enrollments(self, items: list[dict]) -> list[Enrollment]:
+        enrollments = [Enrollment(**item) for item in items]
+        try:
+            self.db.add_all(enrollments)
+            self.db.commit()
+            for enrollment in enrollments:
+                self.db.refresh(enrollment)
+        except Exception:
+            self.db.rollback()
+            raise
+        return enrollments
 
     def update_enrollment_status(self, enrollment: Enrollment, new_status: str) -> Enrollment:
         enrollment.enrollment_status = new_status

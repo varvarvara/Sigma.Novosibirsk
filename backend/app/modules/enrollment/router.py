@@ -3,17 +3,38 @@ from sqlalchemy.orm import Session
 
 from app.db.session import get_db
 from app.modules.enrollment.schemas import (
+    Enrollment2026In,
     EnrollmentInUpdateStatus,
     EnrollmentOutput,
     EnrollmentSlotOptionsOut,
     EnrollmentSubmitIn,
     EnrollmentSubmitOut,
+    MassEnrollment2026Out,
 )
 from app.modules.enrollment.service import EnrollmentService
 from app.security.permissions import require_admin, require_student, require_teacher_or_admin
 
 
 enrollmentRouter = APIRouter(prefix="/enrollment", tags=["enrollment"])
+
+
+@enrollmentRouter.post("/mass-enrollment-2026", status_code=201, response_model=MassEnrollment2026Out)
+def create_mass_enrollment_2026(
+    body: list[Enrollment2026In],
+    current_user: dict = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    return EnrollmentService(db=db).create_enrollments_2026(data=body, current_user=current_user)
+
+
+@enrollmentRouter.post("/enrollment-2026", status_code=201, response_model=EnrollmentOutput)
+def create_enrollment_2026(
+    body: Enrollment2026In,
+    current_user: dict = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    result = EnrollmentService(db=db).create_enrollments_2026(data=[body], current_user=current_user)
+    return result.items[0]
 
 
 @enrollmentRouter.get("/slots/options", response_model=EnrollmentSlotOptionsOut)

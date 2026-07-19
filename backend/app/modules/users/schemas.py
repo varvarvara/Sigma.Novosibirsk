@@ -4,8 +4,9 @@ from datetime import date
 from fastapi import HTTPException, status
 from pydantic import BaseModel, EmailStr, field_validator, model_validator
 
+from app.modules.auth.schemas import PreRegistrationCreateIn
 from app.security.password_policy import validate_password_strength
-from enums import StaffRoles, StudentStatuses
+from enums import PreRegistrationStatuses, StaffRoles, StudentStatuses
 
 LETTER_MATCH_PATTERN = re.compile(r"^[а-яА-ЯёЁa-zA-Z\-]+$")
 FULL_NAME_MATCH_PATTERN = re.compile(r"^[а-яА-ЯёЁa-zA-Z\-]+(?: [а-яА-ЯёЁa-zA-Z\-]+)*$")
@@ -96,6 +97,10 @@ class StudentInCreate2026(StudentInCreate):
                 detail="Password must be a valid bcrypt hash",
             )
         return value
+
+
+class PreRegistrationInCreate2026(PreRegistrationCreateIn):
+    pre_registration_status: PreRegistrationStatuses
 
 
 class StaffInCreate(BaseModel):

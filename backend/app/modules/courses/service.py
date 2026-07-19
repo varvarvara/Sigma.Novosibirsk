@@ -164,6 +164,47 @@ class CourseService:
 
         return self._to_output(course)
 
+    def mass_create_courses_2026(
+        self,
+        items: list[CourseCreate],
+        current_user: dict,
+    ) -> list[CourseOutput]:
+        self._ensure_staff(current_user)
+        self._ensure_teacher_write_allowed(current_user=current_user)
+
+        if not items:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Course list cannot be empty")
+
+        rows = []
+        for index, data in enumerate(items):
+            if self._is_teacher(current_user):
+                staff_id = current_user["user"].id
+            else:
+                staff_id = data.staff_id or current_user["user"].id
+
+            if self.repository.get_staff_by_id(staff_id=staff_id) is None:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail=f"Staff {staff_id} not found (item {index})",
+                )
+
+            rows.append(
+                {
+                    "title": data.title,
+                    "descriptions": data.description,
+                    "staff_id": staff_id,
+                    "course_status": data.course_status.value,
+                    "course_duration": data.course_duration.value,
+                    "course_type": data.course_type.value,
+                    "syllabus_url": str(data.syllabus_url),
+                    "capacity": data.capacity,
+                    "season_id": data.season_id,
+                }
+            )
+
+        courses = self.repository.create_courses(items=rows)
+        return [self._to_output(course) for course in courses]
+
     def update_course(self, course_id: int, data: CourseUpdate, current_user: dict) -> CourseOutput:
         course = self.repository.get_by_id(course_id=course_id)
         if course is None:

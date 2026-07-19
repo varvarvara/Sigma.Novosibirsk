@@ -168,6 +168,83 @@ class AdminService:
 
         return StaffOutput.model_validate(staff)
 
+    def mass_approve_pre_registrations_2026(
+        self,
+        pre_registration_ids: list[int],
+    ) -> list[StaffOutput]:
+        if not pre_registration_ids:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="ID list cannot be empty")
+
+        duplicate_ids = sorted(
+            item_id
+            for item_id in set(pre_registration_ids)
+            if pre_registration_ids.count(item_id) > 1
+        )
+        if duplicate_ids:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Duplicate pre-registration IDs: {duplicate_ids}",
+            )
+
+        records = self._users_repository.get_pre_registrations_by_ids(
+            pre_registration_ids=pre_registration_ids,
+        )
+        records_by_id = {record.id: record for record in records}
+        missing_ids = [item_id for item_id in pre_registration_ids if item_id not in records_by_id]
+        if missing_ids:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Pre-registrations not found: {missing_ids}",
+            )
+
+        ordered_records = [records_by_id[item_id] for item_id in pre_registration_ids]
+        approved_ids = [
+            record.id
+            for record in ordered_records
+            if record.pre_registration_status == PreRegistrationStatuses.APPROVED.value
+        ]
+        if approved_ids:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=f"Pre-registrations already approved: {approved_ids}",
+            )
+
+        conflicting_emails = [
+            record.email
+            for record in ordered_records
+            if self._users_repository.get_staff_by_email(email=record.email) is not None
+            or self._users_repository.get_student_by_email(email=record.email) is not None
+        ]
+        if conflicting_emails:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=f"Users with these emails already exist: {conflicting_emails}",
+            )
+
+        items = []
+        for record in ordered_records:
+            technical_password = generate_temporary_password(length=32)
+            items.append((record, HashHelper.get_password_hash(plain_password=technical_password)))
+
+        staff_members = self._users_repository.create_staff_from_pre_registrations(
+            items=items,
+            staff_role=StaffRoles.TEACHER.value,
+        )
+
+        for record, staff in zip(ordered_records, staff_members):
+            reset_token = AuthHandler.create_password_reset_token(
+                user_id=staff.id,
+                user_type="staff",
+                email=staff.email,
+            )
+            _dispatch_teacher_password_setup_email(
+                email=record.email,
+                first_name=record.first_name,
+                setup_url=_build_teacher_password_setup_url(reset_token),
+            )
+
+        return [StaffOutput.model_validate(staff) for staff in staff_members]
+
     def reject_pre_registration(self, pre_registration_id: int) -> ActionMessage:
         pre_registration = self._users_repository.get_pre_registration_by_id(pre_registration_id=pre_registration_id)
         if pre_registration is None:

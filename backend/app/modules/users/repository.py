@@ -4,7 +4,12 @@ from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from app.modules.users.models import IntakeControl, PreRegistration, Staff, Student
-from app.modules.users.schemas import StaffInCreate, StudentInCreate, StudentInCreate2026
+from app.modules.users.schemas import (
+    PreRegistrationInCreate2026,
+    StaffInCreate,
+    StudentInCreate,
+    StudentInCreate2026,
+)
 from enums import PreRegistrationStatuses, StaffRoles, StudentStatuses
 
 
@@ -142,6 +147,39 @@ class UsersRepository:
         self.session.refresh(new_staff)
         return new_staff
 
+    def create_staff_from_pre_registrations(
+        self,
+        items: list[tuple[PreRegistration, str]],
+        staff_role: str,
+    ) -> list[Staff]:
+        staff_members = [
+            Staff(
+                first_name=pre_registration.first_name,
+                last_name=pre_registration.last_name,
+                partonymic=pre_registration.partonymic,
+                email=pre_registration.email,
+                password=password_hash,
+                staff_role=staff_role,
+                season_id=pre_registration.season_id,
+                birth_date=pre_registration.birth_date,
+                university=pre_registration.university,
+                study_direction=pre_registration.study_direction,
+                study_year=pre_registration.study_year,
+            )
+            for pre_registration, password_hash in items
+        ]
+        try:
+            self.session.add_all(staff_members)
+            for pre_registration, _ in items:
+                pre_registration.pre_registration_status = PreRegistrationStatuses.APPROVED.value
+            self.session.commit()
+            for staff in staff_members:
+                self.session.refresh(staff)
+        except Exception:
+            self.session.rollback()
+            raise
+        return staff_members
+
     def get_student_by_email(self, email: str) -> Student | None:
         return self.session.query(Student).filter_by(email=email).first()
 
@@ -241,11 +279,36 @@ class UsersRepository:
         self.session.refresh(new_pre_registration)
         return new_pre_registration
 
+    def create_pre_registrations_2026(
+        self,
+        items: list[PreRegistrationInCreate2026],
+    ) -> list[PreRegistration]:
+        pre_registrations = [
+            PreRegistration(**item.model_dump(mode="json"))
+            for item in items
+        ]
+        try:
+            self.session.add_all(pre_registrations)
+            self.session.commit()
+            for pre_registration in pre_registrations:
+                self.session.refresh(pre_registration)
+        except Exception:
+            self.session.rollback()
+            raise
+        return pre_registrations
+
     def get_pre_registration_by_email(self, email: str) -> PreRegistration | None:
         return self.session.query(PreRegistration).filter_by(email=email).first()
 
     def get_pre_registration_by_id(self, pre_registration_id: int) -> PreRegistration | None:
         return self.session.query(PreRegistration).filter_by(id=pre_registration_id).first()
+
+    def get_pre_registrations_by_ids(self, pre_registration_ids: list[int]) -> list[PreRegistration]:
+        return (
+            self.session.query(PreRegistration)
+            .filter(PreRegistration.id.in_(pre_registration_ids))
+            .all()
+        )
 
     def list_pre_registrations(self) -> list[PreRegistration]:
         return self.session.query(PreRegistration).order_by(PreRegistration.id.desc()).all()

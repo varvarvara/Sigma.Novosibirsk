@@ -55,6 +55,17 @@ def approve_pre_registration(
     )
 
 
+@adminRouter.patch("/mass-pre-registration-2026", response_model=list[StaffOutput])
+def mass_approve_pre_registrations_2026(
+    pre_registration_ids: list[int],
+    _: dict = Depends(require_admin),
+    session: Session = Depends(get_db),
+):
+    return AdminService(session=session).mass_approve_pre_registrations_2026(
+        pre_registration_ids=pre_registration_ids,
+    )
+
+
 @adminRouter.patch("/pre-registrations/{pre_registration_id}/reject", response_model=ActionMessage)
 def reject_pre_registration(
     pre_registration_id: int,
