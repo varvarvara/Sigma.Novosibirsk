@@ -1,3 +1,4 @@
+import LandingPage from '../pages/landing/LandingPage';
 import { createRootRoute, createRoute, createRouter, redirect } from '@tanstack/react-router'
 import { RootLayout } from './root-layout'
 import { getAuthSession } from '../entities/auth'
@@ -489,6 +490,12 @@ const TeacherScheduleRoute = createRoute({
   component: TeacherSchedulePage,
 })
 
+const LandingRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/landing',
+  component: LandingPage,
+})
+
 const routeTree = rootRoute.addChildren([
   WelcomeRootRoute,
   EnterRoute,
@@ -534,6 +541,7 @@ const routeTree = rootRoute.addChildren([
   TeacherAttendanceRoute,
   TeacherAchievementsRoute,
   TeacherScheduleRoute,
+  LandingRoute,
 ])
 
 export const router = createRouter({

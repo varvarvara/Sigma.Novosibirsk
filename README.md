@@ -48,6 +48,7 @@ docker compose up -d --build
 cd frontend
 cp .env.example .env   # при первом запуске
 npm install
+npm install @pbe/react-yandex-maps --legacy-peer-deps # (Библиотека для работы Яндекс карт)
 npm run dev
 ```
 
