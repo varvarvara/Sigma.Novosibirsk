@@ -126,7 +126,7 @@ CREATE TABLE pre_registration (
     study_year INT NOT NULL CHECK (study_year BETWEEN 1 AND 6),
     proposed_course_title VARCHAR(150) NOT NULL,
     proposed_course_type teacher_course_types NOT NULL,
-    proposed_course_description VARCHAR(500) NOT NULL
+    proposed_course_description VARCHAR(2000) NOT NULL
 );
 
 CREATE TABLE slots (

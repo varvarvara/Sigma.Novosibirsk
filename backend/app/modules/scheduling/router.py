@@ -3,8 +3,14 @@ from sqlalchemy.orm import Session
 
 from app.db.session import get_db
 from app.modules.scheduling.schemas import (
+    CourseClass2026Out,
+    CourseClassCreate2026In,
     GlobalScheduleGenerateIn,
     GlobalScheduleGenerateOut,
+    Schedule2026Out,
+    ScheduleCreate2026In,
+    Slot2026Out,
+    SlotCreate2026In,
     TimetableItemOut,
 )
 from app.modules.scheduling.services import SchedulingService
@@ -12,6 +18,33 @@ from app.security.dependencies import get_current_user
 from app.security.permissions import require_admin, require_teacher_or_admin
 
 schedulingRouter = APIRouter(prefix="/scheduling", tags=["scheduling"])
+
+
+@schedulingRouter.post("/mass-slots-creation-2026", status_code=201, response_model=list[Slot2026Out])
+def mass_slots_creation_2026(
+    body: list[SlotCreate2026In],
+    current_user: dict = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    return SchedulingService(db=db).mass_create_slots_2026(items=body, current_user=current_user)
+
+
+@schedulingRouter.post("/mass-schedule-creation-2026", status_code=201, response_model=list[Schedule2026Out])
+def mass_schedule_creation_2026(
+    body: list[ScheduleCreate2026In],
+    current_user: dict = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    return SchedulingService(db=db).mass_create_schedules_2026(items=body, current_user=current_user)
+
+
+@schedulingRouter.post("/mass-course-class-2026", status_code=201, response_model=list[CourseClass2026Out])
+def mass_course_class_2026(
+    body: list[CourseClassCreate2026In],
+    current_user: dict = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    return SchedulingService(db=db).mass_create_course_classes_2026(items=body, current_user=current_user)
 
 @schedulingRouter.post("/generate-global", response_model=GlobalScheduleGenerateOut)
 def generate_global_schedule(

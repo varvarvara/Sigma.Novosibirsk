@@ -11,7 +11,7 @@ from enums import PreRegistrationStatuses
 
 LETTER_MATCH_PATTERN = re.compile(r"^[а-яА-ЯёЁa-zA-Z\-]+$")
 PHONE_MATCH_PATTERN = re.compile(r"^\+?[0-9]{10,20}$")
-MAX_PROPOSED_DESCRIPTION_LENGTH = 500
+MAX_PROPOSED_DESCRIPTION_LENGTH = 2000
 
 
 class TeacherCourseType(str, Enum):

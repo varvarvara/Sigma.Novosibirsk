@@ -1,5 +1,6 @@
 import smtplib
 from email.message import EmailMessage
+from email.utils import formatdate, make_msgid
 
 from app.config import settings
 
@@ -12,10 +13,14 @@ def send_email(to_email: str, subject: str, body: str) -> None:
     if not _smtp_is_configured():
         raise RuntimeError("SMTP is not configured: SMTP_HOST and SMTP_FROM are required")
 
+    from_domain = settings.SMTP_FROM.rsplit("@", 1)[-1]
     message = EmailMessage()
     message["Subject"] = subject
     message["From"] = settings.SMTP_FROM
     message["To"] = to_email
+    message["Date"] = formatdate(localtime=False, usegmt=True)
+    message["Message-ID"] = make_msgid(domain=from_domain)
+    message["Auto-Submitted"] = "auto-generated"
     message.set_content(body)
 
     if settings.SMTP_USE_SSL:
