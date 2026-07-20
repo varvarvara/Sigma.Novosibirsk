@@ -1,14 +1,55 @@
 import { useState, useEffect } from 'react';
 
+const COOKIE_CONSENT_NAME = 'sigma_cookie_consent';
+const COOKIE_CONSENT_VALUE = 'accepted';
+const COOKIE_EXPIRES_DAYS = 365;
+
+function getCookieValue(name) {
+  if (typeof document === 'undefined') {
+    return null;
+  }
+
+  return document.cookie
+    .split('; ')
+    .find((cookie) => cookie.startsWith(`${name}=`))
+    ?.split('=')[1] ?? null;
+}
+
+function saveCookieConsent() {
+  if (typeof document !== 'undefined') {
+    const secureFlag = window.location.protocol === 'https:' ? '; Secure' : '';
+    const expiresAt = new Date(Date.now() + COOKIE_EXPIRES_DAYS * 24 * 60 * 60 * 1000).toUTCString();
+    document.cookie = `${COOKIE_CONSENT_NAME}=${COOKIE_CONSENT_VALUE}; expires=${expiresAt}; path=/; SameSite=Lax${secureFlag}`;
+  }
+
+  try {
+    localStorage.setItem(COOKIE_CONSENT_NAME, COOKIE_CONSENT_VALUE);
+  } catch {
+    // Если браузер ограничил localStorage, cookie всё равно остаётся основным источником согласия.
+  }
+}
+
+function hasCookieConsent() {
+  if (getCookieValue(COOKIE_CONSENT_NAME) === COOKIE_CONSENT_VALUE) {
+    return true;
+  }
+
+  try {
+    return localStorage.getItem(COOKIE_CONSENT_NAME) === COOKIE_CONSENT_VALUE;
+  } catch {
+    return false;
+  }
+}
+
 export default function CookieConsent() {
   const [isVisible, setIsVisible] = useState(true);
   const [isClosing, setIsClosing] = useState(false);
 
   const handleAccept = () => {
+    saveCookieConsent();
     setIsClosing(true);
     setTimeout(() => {
       setIsVisible(false);
-      // TODO: сохранять согласие в localStorage
     }, 350);
   };
 
@@ -16,14 +57,13 @@ export default function CookieConsent() {
     setIsClosing(true);
     setTimeout(() => {
       setIsVisible(false);
-      // TODO: запомнить, что пользователь закрыл баннер
     }, 350);
   };
 
   useEffect(() => {
-    // Заглушка – в будущем проверка localStorage
-    // const consent = localStorage.getItem('cookieConsent');
-    // if (consent === 'true') setIsVisible(false);
+    if (hasCookieConsent()) {
+      setIsVisible(false);
+    }
   }, []);
 
   if (!isVisible) return null;

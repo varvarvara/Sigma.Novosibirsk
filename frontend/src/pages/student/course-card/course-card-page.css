@@ -158,7 +158,7 @@
     padding: 0;
     border: none;
     background: none;
-    color: #625F68;
+    color: #53389E;
     font-size: 12px;
     line-height: 15px;
     font-weight: 600;
@@ -166,15 +166,14 @@
     cursor: pointer;
     position: relative;
     z-index: 1;
-    transition: color 0.15s ease;
+    transition: color 0.2s ease, opacity 0.2s ease;
 }
 
 .course-card-item a.course-card-item__syllabus-link:hover,
 .course-card-item a.course-card-item__syllabus-link:focus-visible {
-    color: #7949FF;
-    text-decoration-line: underline;
-    text-decoration-color: #7949FF;
-    text-underline-offset: 3px;
+    color: #53389E;
+    opacity: 0.78;
+    text-decoration: none;
 }
 
 .course-card-item__syllabus-link--inactive {

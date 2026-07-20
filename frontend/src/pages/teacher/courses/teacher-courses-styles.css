@@ -275,18 +275,18 @@ a.course-syllabus-link {
   font-family: 'Inter Regular';
   display: inline-block;
   margin-top: 8px;
-  color: #475467;
-  text-decoration: underline;
-  text-decoration-color: currentColor;
-  text-underline-offset: 3px;
+  color: #53389E;
+  text-decoration: none;
   font-size: 16px;
   cursor: pointer;
-  transition: color 0.15s ease, text-decoration-color 0.15s ease;
+  transition: color 0.2s ease, opacity 0.2s ease;
 }
 
 a.course-syllabus-link:hover,
 a.course-syllabus-link:focus-visible {
   color: #53389E;
+  opacity: 0.78;
+  text-decoration: none;
 }
 
 .course-syllabus-missing {

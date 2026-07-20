@@ -3,11 +3,13 @@ import { reviewsByAudience } from '../data/landingData';
 
 export default function ReviewsSection() {
   const [reviewsTab, setReviewsTab] = useState('students');
+  const [selectedReviewsTab, setSelectedReviewsTab] = useState('students');
   const [isTransitioning, setIsTransitioning] = useState(false);
   const displayedReviews = reviewsByAudience[reviewsTab];
 
   const handleTabChange = (tab) => {
-    if (tab === reviewsTab || isTransitioning) return;
+    if (tab === selectedReviewsTab || isTransitioning) return;
+    setSelectedReviewsTab(tab);
     setIsTransitioning(true);
     setTimeout(() => {
       setReviewsTab(tab);
@@ -21,17 +23,17 @@ export default function ReviewsSection() {
         <div className="reviews-wrapper">
           <div className="section-heading section-heading--center">
             <h2>Отзывы</h2>
-            <div className="tab-group">
+            <div className="tab-group" data-active={selectedReviewsTab}>
               <button
                 type="button"
-                className={reviewsTab === 'students' ? 'tab is-active' : 'tab'}
+                className={selectedReviewsTab === 'students' ? 'tab is-active' : 'tab'}
                 onClick={() => handleTabChange('students')}
               >
                 Ученики
               </button>
               <button
                 type="button"
-                className={reviewsTab === 'teachers' ? 'tab is-active' : 'tab'}
+                className={selectedReviewsTab === 'teachers' ? 'tab is-active' : 'tab'}
                 onClick={() => handleTabChange('teachers')}
               >
                 Преподаватели

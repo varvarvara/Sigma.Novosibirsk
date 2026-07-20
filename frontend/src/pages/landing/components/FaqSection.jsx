@@ -3,12 +3,14 @@ import { faqByAudience } from '../data/landingData';
 
 export default function FaqSection() {
   const [faqTab, setFaqTab] = useState('student');
+  const [selectedFaqTab, setSelectedFaqTab] = useState('student');
   const [openFaqIndex, setOpenFaqIndex] = useState(-1);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const activeFaqs = faqByAudience[faqTab];
 
   const handleTabChange = (tab) => {
-    if (tab === faqTab || isTransitioning) return;
+    if (tab === selectedFaqTab || isTransitioning) return;
+    setSelectedFaqTab(tab);
     setIsTransitioning(true);
     setOpenFaqIndex(-1);
     setTimeout(() => {
@@ -23,17 +25,17 @@ export default function FaqSection() {
         <div className="section-heading section-heading--center">
           <h2>Часто задаваемые вопросы</h2>
 
-          <div className="tab-group" role="tablist" aria-label="Вопросы по аудитории">
+          <div className="tab-group" data-active={selectedFaqTab} role="tablist" aria-label="Вопросы по аудитории">
             <button
               type="button"
-              className={faqTab === 'student' ? 'tab is-active' : 'tab'}
+              className={selectedFaqTab === 'student' ? 'tab is-active' : 'tab'}
               onClick={() => handleTabChange('student')}
             >
               Ученик
             </button>
             <button
               type="button"
-              className={faqTab === 'teacher' ? 'tab is-active' : 'tab'}
+              className={selectedFaqTab === 'teacher' ? 'tab is-active' : 'tab'}
               onClick={() => handleTabChange('teacher')}
             >
               Преподаватель
