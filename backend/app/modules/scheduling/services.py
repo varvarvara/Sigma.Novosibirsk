@@ -16,9 +16,15 @@ from app.modules.scheduling.schedule import (
     required_lessons_for_course,
 )
 from app.modules.scheduling.schemas import (
+    CourseClass2026Out,
+    CourseClassCreate2026In,
     GlobalCourseBuildResult,
     GlobalScheduleGenerateIn,
     GlobalScheduleGenerateOut,
+    Schedule2026Out,
+    ScheduleCreate2026In,
+    Slot2026Out,
+    SlotCreate2026In,
     TimetableItemOut,
 )
 from app.modules.solver.algorithm import generate_schedule
@@ -69,6 +75,107 @@ class SchedulingService:
             classroom=schedule.classroom,
             slot_id=schedule.slot_id,
         )
+
+    def _ensure_admin(self, current_user: dict) -> None:
+        if not self._is_admin(current_user):
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin access required")
+
+    def _ensure_season_exists(self, season_id: int, index: int) -> None:
+        if self.repository.get_season_by_id(season_id=season_id) is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Season {season_id} not found (item {index})",
+            )
+
+    def mass_create_slots_2026(
+        self,
+        items: list[SlotCreate2026In],
+        current_user: dict,
+    ) -> list[Slot2026Out]:
+        self._ensure_admin(current_user)
+        if not items:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Slot list cannot be empty")
+
+        keys = [(item.staff_id, item.slot_date, item.slot_time) for item in items]
+        if len(keys) != len(set(keys)):
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Duplicate slots in request")
+
+        rows = []
+        for index, item in enumerate(items):
+            if self.repository.get_staff_by_id(staff_id=item.staff_id) is None:
+                raise HTTPException(status_code=404, detail=f"Staff {item.staff_id} not found (item {index})")
+            self._ensure_season_exists(season_id=item.season_id, index=index)
+            if self.repository.get_slot(item.staff_id, item.slot_date, item.slot_time) is not None:
+                raise HTTPException(status_code=409, detail=f"Slot already exists (item {index})")
+            rows.append(item.model_dump())
+
+        created = self.repository.create_slots_2026(items=rows)
+        return [Slot2026Out.model_validate(item) for item in created]
+
+    def mass_create_course_classes_2026(
+        self,
+        items: list[CourseClassCreate2026In],
+        current_user: dict,
+    ) -> list[CourseClass2026Out]:
+        self._ensure_admin(current_user)
+        if not items:
+            raise HTTPException(status_code=400, detail="Course class list cannot be empty")
+
+        rows = []
+        for index, item in enumerate(items):
+            if self.repository.get_course_by_id(course_id=item.course_id) is None:
+                raise HTTPException(status_code=404, detail=f"Course {item.course_id} not found (item {index})")
+            self._ensure_season_exists(season_id=item.season_id, index=index)
+            rows.append(item.model_dump())
+
+        created = self.repository.create_course_classes_2026(items=rows)
+        return [CourseClass2026Out.model_validate(item) for item in created]
+
+    def mass_create_schedules_2026(
+        self,
+        items: list[ScheduleCreate2026In],
+        current_user: dict,
+    ) -> list[Schedule2026Out]:
+        self._ensure_admin(current_user)
+        if not items:
+            raise HTTPException(status_code=400, detail="Schedule list cannot be empty")
+
+        rows = []
+        schedule_keys = []
+        for index, item in enumerate(items):
+            if self.repository.get_staff_by_id(staff_id=item.staff_id) is None:
+                raise HTTPException(status_code=404, detail=f"Staff {item.staff_id} not found (item {index})")
+            if self.repository.get_course_class_by_id(course_class_id=item.course_class_id) is None:
+                raise HTTPException(
+                    status_code=404,
+                    detail=f"Course class {item.course_class_id} not found (item {index})",
+                )
+            self._ensure_season_exists(season_id=item.season_id, index=index)
+
+            slot = self.repository.get_slot(
+                staff_id=item.staff_id,
+                slot_date=item.lesson_date,
+                slot_time=item.lesson_time,
+            )
+            if slot is None:
+                raise HTTPException(
+                    status_code=404,
+                    detail=f"Slot not found for schedule item {index}",
+                )
+
+            key = (item.staff_id, item.lesson_date, item.lesson_time)
+            if key in schedule_keys or self.repository.has_teacher_conflict(*key):
+                raise HTTPException(status_code=409, detail=f"Teacher schedule conflict (item {index})")
+            schedule_keys.append(key)
+            rows.append(
+                {
+                    **item.model_dump(),
+                    "slot_id": slot.id,
+                }
+            )
+
+        created = self.repository.create_schedules_2026(items=rows)
+        return [Schedule2026Out.model_validate(item) for item in created]
 
     @staticmethod
     def _escape_ics_text(value: str) -> str:

@@ -95,7 +95,7 @@ class PreRegistration(Base):
     study_year = Column(Integer, nullable=False)
     proposed_course_title = Column(String(150), nullable=False)
     proposed_course_type = Column(Enum("Olympiad", "Author", name="teacher_course_types"), nullable=False)
-    proposed_course_description = Column(String(500), nullable=False)
+    proposed_course_description = Column(String(2000), nullable=False)
     
     season = relationship("Season", back_populates="pre_registrations")
 

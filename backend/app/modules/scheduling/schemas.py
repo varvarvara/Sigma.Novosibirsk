@@ -1,10 +1,51 @@
 from datetime import date, time
 from enum import Enum
 
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, Field, field_validator
 
 
 ALLOWED_SLOT_HOURS = {10, 11, 12}
+
+
+class SlotCreate2026In(BaseModel):
+    staff_id: int = Field(gt=0)
+    slot_date: date
+    slot_time: time
+    season_id: int = Field(gt=0)
+
+
+class Slot2026Out(SlotCreate2026In):
+    id: int
+
+    model_config = {"from_attributes": True}
+
+
+class ScheduleCreate2026In(BaseModel):
+    staff_id: int = Field(gt=0)
+    course_class_id: int = Field(gt=0)
+    lesson_date: date
+    lesson_time: time
+    season_id: int = Field(gt=0)
+
+
+class Schedule2026Out(ScheduleCreate2026In):
+    id: int
+    slot_id: int
+
+    model_config = {"from_attributes": True}
+
+
+class CourseClassCreate2026In(BaseModel):
+    course_id: int = Field(gt=0)
+    class_number: int = Field(gt=0)
+    class_description: str = Field(min_length=1, max_length=200)
+    season_id: int = Field(gt=0)
+
+
+class CourseClass2026Out(CourseClassCreate2026In):
+    id: int
+
+    model_config = {"from_attributes": True}
 
 
 class Weekday(str, Enum):

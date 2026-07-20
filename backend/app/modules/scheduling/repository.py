@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 from app.modules.scheduling.models import ScheduleGeneration
 from app.modules.courses.models import Course, CourseClass
 from app.modules.scheduling.models import Schedule, Slot
+from app.modules.season.models import Season
 from app.modules.users.models import IntakeControl, Staff
 
 
@@ -30,6 +31,12 @@ class SchedulingRepository:
 
     def get_course_by_id(self, course_id: int) -> Course | None:
         return self.db.query(Course).filter(Course.id == course_id).first()
+
+    def get_course_class_by_id(self, course_class_id: int) -> CourseClass | None:
+        return self.db.query(CourseClass).filter(CourseClass.id == course_class_id).first()
+
+    def get_season_by_id(self, season_id: int) -> Season | None:
+        return self.db.query(Season).filter(Season.id == season_id).first()
 
     def list_courses_for_global(self) -> list[Course]:
         return (
@@ -190,6 +197,29 @@ class SchedulingRepository:
             )
             .first()
         )
+
+    def create_slots_2026(self, items: list[dict]) -> list[Slot]:
+        slots = [Slot(**item) for item in items]
+        return self._save_many(slots)
+
+    def create_schedules_2026(self, items: list[dict]) -> list[Schedule]:
+        schedules = [Schedule(**item) for item in items]
+        return self._save_many(schedules)
+
+    def create_course_classes_2026(self, items: list[dict]) -> list[CourseClass]:
+        course_classes = [CourseClass(**item) for item in items]
+        return self._save_many(course_classes)
+
+    def _save_many(self, items: list):
+        try:
+            self.db.add_all(items)
+            self.db.commit()
+            for item in items:
+                self.db.refresh(item)
+        except Exception:
+            self.db.rollback()
+            raise
+        return items
 
     def create_slot(self, staff_id: int, slot_date: date, slot_time: time) -> Slot:
         slot = Slot(staff_id=staff_id, slot_date=slot_date, slot_time=slot_time)
