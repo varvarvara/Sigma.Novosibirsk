@@ -210,3 +210,12 @@ node_modules/
 frontend/node_modules/
 
 .codex
+# Local environment files with secrets
+.env.*
+!.env.example
+!.env.prod.example
+backend/.env.*
+!backend/.env.example
+!backend/.env.prod.example
+frontend/.env.*
+!frontend/.env.example
