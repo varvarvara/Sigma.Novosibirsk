@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { Link } from '@tanstack/react-router';
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -67,6 +68,7 @@ export default function Header() {
             <a href="#reviews">Отзывы</a>
             <a href="#faq">FAQ</a>
             <a href="#contacts">Контакты</a>
+            <Link className="header-nav__login" to="/enter">Вход</Link>
           </nav>
           <button
             className="burger"
@@ -100,6 +102,7 @@ export default function Header() {
               <a href="#reviews" onClick={closeMenu}>Отзывы</a>
               <a href="#faq" onClick={closeMenu}>FAQ</a>
               <a href="#contacts" onClick={closeMenu}>Контакты</a>
+              <Link className="header-nav__login" to="/enter" onClick={closeMenu}>Вход</Link>
             </nav>
           </div>
         </>

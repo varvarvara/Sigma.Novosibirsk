@@ -146,6 +146,11 @@ html:has(.landing-page) {
   color: #6f45e3;
 }
 
+.landing-page .header-nav a.header-nav__login,
+.landing-page .mobile-nav a.header-nav__login {
+  color: #6f45e3;
+}
+
 .landing-page .header-nav {
   display: flex;
   align-items: center;

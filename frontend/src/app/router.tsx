@@ -86,6 +86,12 @@ function redirectIfAuthenticated() {
   }
 }
 
+function redirectFromRoot() {
+  const session = getAuthSession()
+
+  throw redirect({ to: session ? getRoleHomePath() : '/landing' })
+}
+
 function requireAuth() {
   const session = getAuthSession()
   if (!session) {
@@ -116,7 +122,7 @@ function requireTeacher() {
 const WelcomeRootRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/',
-  beforeLoad: redirectIfAuthenticated,
+  beforeLoad: redirectFromRoot,
   component: WelcomePage,
 })
 
@@ -493,6 +499,7 @@ const TeacherScheduleRoute = createRoute({
 const LandingRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/landing',
+  beforeLoad: redirectIfAuthenticated,
   component: LandingPage,
 })
 
