@@ -52,6 +52,7 @@
 .my-courses-list {
     position: relative;
     z-index: 1;
+    width: 100%;
     display: flex;
     flex-direction: column;
     gap: 12px;
@@ -72,7 +73,7 @@
 }
 
 .my-courses-empty-card {
-    width: 320px;
+    width: 100%;
     min-height: 164px;
     border-radius: 12px;
     padding: 20px 16px;
@@ -94,7 +95,8 @@
 }
 
 .my-course-card {
-    width: 320px;
+    width: 100%;
+    box-sizing: border-box;
     min-height: 156px;
     border-radius: 10px;
     padding: 16px;
@@ -125,6 +127,7 @@
 }
 
 .my-course-card__title-group {
+    flex: 1;
     min-width: 0;
 }
 
@@ -133,6 +136,7 @@
 }
 
 .my-course-card h2 {
+    margin: 0;
     color: #2A282F;
     font-family: 'Inter SemiBold';
     font-size: 12px;
@@ -141,6 +145,7 @@
 }
 
 .my-course-card__title-group p {
+    margin: 2px 0 0;
     color: #A8A6AC;
     font-family: 'Inter Regular';
     font-size: 12px;

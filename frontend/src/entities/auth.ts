@@ -63,6 +63,10 @@ export type MessageResponse = {
     message: string;
 };
 
+export type RegistrationStatusResponse = {
+    intake_closed: boolean;
+};
+
 export type TeacherCourseType = "Olympiad" | "Author";
 
 export type StaffPreRegistrationRequest = {
@@ -240,6 +244,15 @@ export async function requestPasswordReset(data: PasswordResetRequest) {
 export async function confirmPasswordReset(data: PasswordResetConfirmRequest) {
     try {
         const response = await authClient.post<MessageResponse>("/auth/password-reset/confirm", data);
+        return response.data;
+    } catch (error) {
+        throw toAuthApiError(error);
+    }
+};
+
+export async function getRegistrationStatus() {
+    try {
+        const response = await authClient.get<RegistrationStatusResponse>("/auth/registration/status");
         return response.data;
     } catch (error) {
         throw toAuthApiError(error);

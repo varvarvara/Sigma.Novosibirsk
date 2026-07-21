@@ -112,6 +112,9 @@ class UsersService:
         return self._staff_output(updated)
 
     def signup_student(self, user_details: StudentInCreate) -> StudentOutput:
+        if self._users_repository.is_intake_closed():
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Регистрация закрыта")
+
         if self._users_repository.user_exist_by_email(email=user_details.email):
             raise HTTPException(status_code=400, detail="Пользователь уже существует, выполните вход")
 

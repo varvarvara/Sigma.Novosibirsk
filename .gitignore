@@ -208,6 +208,8 @@ __marimo__/
 # Frontend dependencies
 node_modules/
 frontend/node_modules/
+frontend/.vite/
+frontend/openapi.json
 
 .codex
 # Local environment files with secrets

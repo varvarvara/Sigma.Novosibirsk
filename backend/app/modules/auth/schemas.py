@@ -43,6 +43,10 @@ class MessageOut(BaseModel):
     message: str
 
 
+class RegistrationStatusOut(BaseModel):
+    intake_closed: bool
+
+
 class UserWithToken(BaseModel):
     access_token: str
     refresh_token: str | None = None

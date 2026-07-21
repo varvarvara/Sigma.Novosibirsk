@@ -1,6 +1,14 @@
 import { Link } from '@tanstack/react-router';
 import { assets } from '../data/landingData';
-export default function HeroSection() {
+export default function HeroSection({ registrationClosed = false, onRegistrationClosedClick }) {
+  const handleClosedRegistrationClick = (event) => {
+    event.preventDefault();
+    onRegistrationClosedClick?.();
+  };
+
+  const registrationActionProps = registrationClosed
+    ? { to: '/registration-closed', onClick: handleClosedRegistrationClick }
+    : {};
 
   return (
     <section className="hero section" id="about">
@@ -8,9 +16,15 @@ export default function HeroSection() {
         <div className="hero__tags-group">
           <span className="chip chip--static">Сезон 2026</span>
           <span className="chip-divider" aria-hidden="true"></span>
-          <a className="chip chip--link" href="#contacts">
-            Регистрация не сезон! <span aria-hidden="true">→</span>
-          </a>
+          {registrationClosed ? (
+            <button className="chip chip--link" type="button" onClick={onRegistrationClosedClick}>
+              Регистрация закрыта <span aria-hidden="true">→</span>
+            </button>
+          ) : (
+            <a className="chip chip--link" href="#contacts">
+              Регистрация на сезон <span aria-hidden="true">→</span>
+            </a>
+          )}
         </div>
 
         <h1 className="hero__title">Летняя школа Сигма.Новосибирск</h1>
@@ -28,12 +42,14 @@ export default function HeroSection() {
           <Link
             className="button button--secondary"
             to="/setup-teacher"
+            {...registrationActionProps}
           >
             Зарегистрироваться как преподаватель
           </Link>
           <Link
             className="button"
             to="/setup-student"
+            {...registrationActionProps}
           >
             Зарегистрироваться как студент
           </Link>

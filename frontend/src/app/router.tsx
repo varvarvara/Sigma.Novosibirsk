@@ -1,7 +1,7 @@
 import LandingPage from '../pages/landing/LandingPage';
 import { createRootRoute, createRoute, createRouter, redirect } from '@tanstack/react-router'
 import { RootLayout } from './root-layout'
-import { getAuthSession } from '../entities/auth'
+import { getAuthSession, getRegistrationStatus } from '../entities/auth'
 import { ErrorPage } from '../pages/common/error'
 import {
   parseAuthIntent,
@@ -23,6 +23,7 @@ import { LoginPage } from '../pages/common/login'
 import { PasswordResetPage } from '../pages/common/password-reset'
 import { PasswordResetSuccessPage } from '../pages/common/password-reset-success'
 import { RegisterPage } from '../pages/common/register'
+import { RegistrationClosedPage } from '../pages/common/registration-closed'
 import { SetupStudentPage } from '../pages/common/setup-student'
 import { SetupTeacherNewPage, SetupTeacherSuccessPage } from '../pages/common/setup-teacher'
 import { ProfilePage } from '../pages/student/profile'
@@ -86,6 +87,21 @@ function redirectIfAuthenticated() {
   }
 }
 
+async function redirectIfRegistrationClosed() {
+  let isClosed = false
+
+  try {
+    const status = await getRegistrationStatus()
+    isClosed = status.intake_closed
+  } catch {
+    isClosed = false
+  }
+
+  if (isClosed) {
+    throw redirect({ to: '/registration-closed' })
+  }
+}
+
 function redirectFromRoot() {
   const session = getAuthSession()
 
@@ -136,8 +152,11 @@ const EnterRoute = createRoute({
 const RoleRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/role',
-  beforeLoad: ({ search }) => {
+  beforeLoad: async ({ search }) => {
     redirectIfAuthenticated()
+    if (parseAuthIntent(search) === 'register') {
+      await redirectIfRegistrationClosed()
+    }
     redirectDesktopRoleToSelectRole(search)
   },
   validateSearch: authIntentSearch,
@@ -147,8 +166,11 @@ const RoleRoute = createRoute({
 const SelectRoleRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/select-role',
-  beforeLoad: ({ search }) => {
+  beforeLoad: async ({ search }) => {
     redirectIfAuthenticated()
+    if (parseAuthIntent(search) === 'register') {
+      await redirectIfRegistrationClosed()
+    }
     redirectMobileSelectRoleToRole(search)
   },
   validateSearch: authIntentSearch,
@@ -184,21 +206,37 @@ const PasswordResetSuccessRoute = createRoute({
 const RegisterRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/register',
-  beforeLoad: redirectIfAuthenticated,
+  beforeLoad: async () => {
+    redirectIfAuthenticated()
+    await redirectIfRegistrationClosed()
+  },
   component: RegisterPage,
+})
+
+const RegistrationClosedRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/registration-closed',
+  beforeLoad: redirectIfAuthenticated,
+  component: RegistrationClosedPage,
 })
 
 const SetupStudentRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/setup-student',
-  beforeLoad: redirectIfAuthenticated,
+  beforeLoad: async () => {
+    redirectIfAuthenticated()
+    await redirectIfRegistrationClosed()
+  },
   component: SetupStudentPage,
 })
 
 const SetupTeacherRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/setup-teacher',
-  beforeLoad: redirectIfAuthenticated,
+  beforeLoad: async () => {
+    redirectIfAuthenticated()
+    await redirectIfRegistrationClosed()
+  },
   component: SetupTeacherNewPage,
 })
 
@@ -512,6 +550,7 @@ const routeTree = rootRoute.addChildren([
   PasswordResetRoute,
   PasswordResetSuccessRoute,
   RegisterRoute,
+  RegistrationClosedRoute,
   SetupStudentRoute,
   SetupTeacherRoute,
   SetupTeacherSuccessRoute,

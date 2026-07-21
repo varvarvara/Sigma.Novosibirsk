@@ -11,6 +11,7 @@ from app.modules.auth.schemas import (
     PasswordResetRequestIn,
     PreRegistrationCreateIn,
     PreRegistrationOut,
+    RegistrationStatusOut,
     RefreshTokenRequest,
     UserWithToken,
 )
@@ -18,6 +19,11 @@ from app.modules.auth.services import AuthService
 
 authRouter = APIRouter(prefix="/auth", tags=["auth"])
 bearer_scheme = HTTPBearer(auto_error=False)
+
+
+@authRouter.get("/registration/status", response_model=RegistrationStatusOut)
+def get_registration_status(session: Session = Depends(get_db)):
+    return AuthService(session=session).get_registration_status()
 
 
 @authRouter.post("/login", response_model=UserWithToken)

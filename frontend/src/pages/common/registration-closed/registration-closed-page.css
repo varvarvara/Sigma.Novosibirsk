@@ -1,0 +1,110 @@
+.registration-closed-page {
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: #f8f6ff;
+}
+
+.registration-closed-card {
+  width: min(100%, 520px);
+  padding: 40px 32px;
+  border-radius: 32px;
+  background: #ffffff;
+  box-shadow: 0 24px 80px rgba(83, 56, 158, 0.14);
+  text-align: center;
+  color: #101828;
+}
+
+.registration-closed-card__badge {
+  width: 72px;
+  height: 72px;
+  margin: 0 auto 24px;
+  display: grid;
+  place-items: center;
+  border-radius: 24px;
+  background: #ede7ff;
+  color: #7949ff;
+  font-family: 'Inter SemiBold', Inter, sans-serif;
+  font-size: 34px;
+  line-height: 1;
+}
+
+.registration-closed-card__title {
+  margin: 0;
+  font-family: 'Inter SemiBold', Inter, sans-serif;
+  font-size: clamp(30px, 6vw, 46px);
+  line-height: 1.08;
+  font-weight: 600;
+}
+
+.registration-closed-card__text {
+  margin: 18px auto 0;
+  max-width: 430px;
+  font-family: 'Inter Regular', Inter, sans-serif;
+  font-size: 18px;
+  line-height: 1.45;
+  color: #667085;
+}
+
+.registration-closed-card__actions {
+  margin-top: 30px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+
+.registration-closed-card__button,
+.registration-closed-card__link {
+  min-height: 52px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  font-family: 'Inter SemiBold', Inter, sans-serif;
+  font-size: 16px;
+  line-height: 1.2;
+  text-decoration: none;
+  transition: transform 0.2s ease, background-color 0.2s ease, color 0.2s ease;
+}
+
+.registration-closed-card__button {
+  padding: 0 28px;
+  background: #7949ff;
+  color: #ffffff;
+}
+
+.registration-closed-card__link {
+  padding: 0 10px;
+  color: #7949ff;
+}
+
+.registration-closed-card__button:hover,
+.registration-closed-card__link:hover {
+  transform: translateY(-1px);
+}
+
+.registration-closed-card__button:hover {
+  background: #53389e;
+}
+
+.registration-closed-card__link:hover {
+  color: #53389e;
+}
+
+@media (max-width: 520px) {
+  .registration-closed-page {
+    padding: 16px;
+  }
+
+  .registration-closed-card {
+    padding: 34px 22px;
+    border-radius: 28px;
+  }
+
+  .registration-closed-card__text {
+    font-size: 16px;
+  }
+}

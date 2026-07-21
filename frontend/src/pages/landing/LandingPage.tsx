@@ -12,6 +12,8 @@ import TeamSection from './components/TeamSection.jsx';
 import MapSection from './components/MapSection.jsx';
 import FooterSection from './components/FooterSection.jsx';
 import CookieConsent from './components/CookieConsent.jsx';
+import RegistrationModal from './components/RegistrationModal.jsx';
+import { getRegistrationStatus } from '../../entities/auth';
 
 // Объявляем тип для конфига
 interface Config {
@@ -24,6 +26,9 @@ interface Config {
 export default function LandingPage() {
   const [config, setConfig] = useState<Config | null>(null);
   const [configLoaded, setConfigLoaded] = useState(false);
+  const [registrationClosed, setRegistrationClosed] = useState(false);
+  const [registrationModalOpen, setRegistrationModalOpen] = useState(false);
+  const [registrationModalClosing, setRegistrationModalClosing] = useState(false);
 
   useEffect(() => {
     fetch('/config.json')
@@ -47,6 +52,32 @@ export default function LandingPage() {
       });
   }, []);
 
+  useEffect(() => {
+    getRegistrationStatus()
+      .then((status) => setRegistrationClosed(status.intake_closed))
+      .catch(() => setRegistrationClosed(false));
+  }, []);
+
+  const closeRegistrationModal = () => {
+    setRegistrationModalClosing(true);
+    setTimeout(() => {
+      setRegistrationModalOpen(false);
+      setRegistrationModalClosing(false);
+    }, 260);
+  };
+
+  const isRegistrationClosedByDate = (() => {
+    if (!config) {
+      return false;
+    }
+
+    const now = Date.now();
+    return now < new Date(config.registration.startDate).getTime() ||
+      now > new Date(config.registration.endDate).getTime();
+  })();
+
+  const isRegistrationClosed = registrationClosed || isRegistrationClosedByDate;
+
   if (!configLoaded) {
     return null;
   }
@@ -55,7 +86,11 @@ export default function LandingPage() {
     <div className="landing-page">
       <Header />
       <main>
-        <HeroSection config={config} />
+        <HeroSection
+          config={config}
+          registrationClosed={isRegistrationClosed}
+          onRegistrationClosedClick={() => setRegistrationModalOpen(true)}
+        />
         <NumbersSection />
         <hr className="landing-divider" />
         <PrinciplesSection />
@@ -73,6 +108,11 @@ export default function LandingPage() {
         <MapSection />
       </main>
       <FooterSection />
+      <RegistrationModal
+        isOpen={registrationModalOpen}
+        isClosing={registrationModalClosing}
+        onClose={closeRegistrationModal}
+      />
       <CookieConsent />
     </div>
   );

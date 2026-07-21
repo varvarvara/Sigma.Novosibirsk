@@ -11,6 +11,7 @@ from app.modules.auth.schemas import (
     PasswordResetRequestIn,
     PreRegistrationCreateIn,
     PreRegistrationOut,
+    RegistrationStatusOut,
     UserWithToken,
 )
 from app.modules.users.repository import UsersRepository
@@ -31,6 +32,9 @@ PASSWORD_RESET_REQUEST_MESSAGE = (
 class AuthService:
     def __init__(self, session: Session):
         self._users_repository = UsersRepository(session=session)
+
+    def get_registration_status(self) -> RegistrationStatusOut:
+        return RegistrationStatusOut(intake_closed=self._users_repository.is_intake_closed())
 
     @staticmethod
     def _credentials_exception(detail: str = "Incorrect email or password") -> HTTPException:
@@ -128,6 +132,9 @@ class AuthService:
             AuthHandler.revoke_access_token(access_token)
 
     def staff_pre_registration(self, data: PreRegistrationCreateIn) -> PreRegistrationOut:
+        if self._users_repository.is_intake_closed():
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Регистрация закрыта")
+
         if self._users_repository.user_exist_by_email(email=data.email):
             raise HTTPException(status_code=400, detail="Пользователь с таким email уже существует")
 
