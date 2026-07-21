@@ -211,6 +211,9 @@ frontend/node_modules/
 frontend/.vite/
 frontend/openapi.json
 
+# Local imports may contain personal or confidential data
+/backend/private_import/
+
 .codex
 # Local environment files with secrets
 .env.*
@@ -221,3 +224,4 @@ backend/.env.*
 !backend/.env.prod.example
 frontend/.env.*
 !frontend/.env.example
+
