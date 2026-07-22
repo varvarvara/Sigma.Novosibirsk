@@ -847,7 +847,7 @@ html:has(.landing-page) {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 80px;
+  gap: 48px;
   margin-top: 18px;
   flex-wrap: wrap;
 }
@@ -865,6 +865,14 @@ html:has(.landing-page) {
 .landing-page .partners-logos img {
   max-height: 84px;
   object-fit: contain;
+}
+
+.landing-page .partners-logos__logo {
+  display: block;
+}
+
+.landing-page .partners-logos__logo--alfabank {
+  width: min(100%, 260px);
 }
 
 .landing-page .partner-panel {
@@ -1841,6 +1849,10 @@ html:has(.landing-page) {
     max-height: 80px;
   }
 
+  .landing-page .partners-logos__logo--alfabank {
+    width: min(100%, 220px);
+  }
+
   .landing-page .faq-item__button {
     padding: 18px 0;
   }
@@ -1998,6 +2010,10 @@ html:has(.landing-page) {
 
   .landing-page .partners-logos img {
     max-height: 70px;
+  }
+
+  .landing-page .partners-logos__logo--alfabank {
+    width: min(100%, 200px);
   }
 }
 

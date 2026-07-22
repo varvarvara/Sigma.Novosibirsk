@@ -23,13 +23,23 @@ export default function PartnersSection() {
           >
             <img src={assets.partnerSkolkovoLogo} alt="Логотип Сколково" />
           </a>
-          {/* Новый партнёр — справа */}
           <a
             href="https://www.spotandchoos.com/"
             target="_blank"
             rel="noopener noreferrer"
           >
             <img src={assets.partnerSchLogo} alt="Логотип Spot & Choos" />
+          </a>
+          <a
+            href="https://alfabank.ru/alfafuture/"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <img
+              className="partners-logos__logo partners-logos__logo--alfabank"
+              src={assets.partnerAlfaBankLogo}
+              alt="Логотип Альфа Будущее и Альфа-Банк"
+            />
           </a>
         </div>
 

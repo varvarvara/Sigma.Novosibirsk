@@ -6,6 +6,7 @@ export const assets = {
   partnerNguLogo: '/images/partner-ngu.png',
   partnerSkolkovoLogo: '/images/partner-skolkovo.png',
   partnerSchLogo: '/images/partner-s&ch.png',
+  partnerAlfaBankLogo: '/images/partner-alfabank.png',
   teamAvatar: '/images/team-avatar.png',
   teamVkIcon: '/icons/team-vk.svg',
   teamTgIcon: '/icons/team-tg.svg',
