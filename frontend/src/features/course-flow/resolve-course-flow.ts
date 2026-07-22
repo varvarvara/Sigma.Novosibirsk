@@ -89,38 +89,20 @@ export async function resolveCourseFlowStage(): Promise<CourseFlowStage> {
         return override;
     }
 
-    const { slotOptions, enrollments, publishStatus } = await loadCourseFlowSnapshot();
+    // Access to the student's course list depends only on their enrollments.
+    // Slot and schedule endpoints must not hide already assigned courses.
+    const enrollments = await queryClient.ensureQueryData(myEnrollmentsQueryOptions());
+    const activeEnrollments = enrollments.filter((item) => item.enrollment_status === "Active");
+    if (activeEnrollments.length > 0) {
+        return "active";
+    }
+
+    const slotOptionsRaw = await queryClient.ensureQueryData(enrollmentSlotOptionsQueryOptions());
+    const slotOptions = normalizeEnrollmentSlotOptions(slotOptionsRaw);
 
     const hasPublishedSlots = slotOptions.slots.some((slot) => slot.courses.length > 0);
     if (!hasPublishedSlots) {
         return "empty";
-    }
-
-    const activeEnrollments = enrollments.filter((item) => item.enrollment_status === "Active");
-    const requiredCount = slotOptions.required_slot_hours.length || 3;
-
-    if (activeEnrollments.length >= requiredCount) {
-        if (!publishStatus.published) {
-            return "waiting_schedule";
-        }
-
-        const schedule = await queryClient.ensureQueryData(
-            myScheduleEventsQueryOptions(DEFAULT_SEASON_ID),
-        );
-        const enrolledCourseIds = new Set(activeEnrollments.map((item) => item.course_id));
-        const hasScheduleForCourses =
-            schedule.schedule_published !== false &&
-            schedule.events.some((event) => enrolledCourseIds.has(event.extendedProps.course_id));
-
-        if (hasScheduleForCourses) {
-            return "active";
-        }
-
-        return "waiting_schedule";
-    }
-
-    if (activeEnrollments.length > 0) {
-        return "waiting_schedule";
     }
 
     const draft = readDraftSelectionByHour(slotOptions.slots);
