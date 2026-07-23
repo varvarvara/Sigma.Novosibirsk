@@ -137,17 +137,24 @@ class ActivityService:
         self.repo = repo
 
     def create(self, data):
-        return self.repo.create_extracurricular_activity(
-            data.ex_course_name,
-            data.staff_id,
-            data.ex_course_score,
-        )
+        try:
+            return self.repo.create_extracurricular_activity(
+                data.ex_course_name,
+                data.staff_id,
+                data.ex_course_score,
+                data.season_id,
+            )
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e))
 
     def get_all(self):
         return self.repo.get_all_extracurricular_activities()
 
     def update(self, activity_id: int, data):
-        return self.repo.update_activity(activity_id, data)
+        try:
+            return self.repo.update_activity(activity_id, data)
+        except ValueError as e:
+            raise HTTPException(status_code=404, detail=str(e))
 
 
 class TeamService:
@@ -156,7 +163,14 @@ class TeamService:
         self.repo = repo
 
     def create(self, data):
-        return self.repo.create_team(data.ex_team_number, data.ex_team_name)
+        try:
+            return self.repo.create_team(
+                data.ex_team_number,
+                data.ex_team_name,
+                data.season_id,
+            )
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e))
 
     def get_all(self):
         return self.repo.get_all()
@@ -174,7 +188,12 @@ class TeamMemberService:
 
     def add(self, data):
         try:
-            return self.repo.add_member(data.team_id, data.student_id)
+            member = self.repo.add_member(data.team_id, data.student_id, data.season_id)
+            GamificationRepository(self.repo.session).recalculate_student(
+                data.student_id,
+                data.season_id,
+            )
+            return member
         except ValueError as e:
             raise HTTPException(status_code=400, detail=str(e))
 
@@ -193,17 +212,36 @@ class ScoreService:
         self.repo = repo
 
     def create(self, data):
-        return self.repo.mark_ex_team_attendance(
-            data.team_id,
-            data.ex_course_id,
-        )
+        try:
+            score = self.repo.mark_ex_team_attendance(
+                data.team_id,
+                data.ex_course_id,
+                data.season_id,
+            )
+            member_ids = (
+                self.repo.session.query(ExtracurricularTeamMember.student_id)
+                .filter(
+                    ExtracurricularTeamMember.team_id == data.team_id,
+                    ExtracurricularTeamMember.season_id == data.season_id,
+                )
+                .all()
+            )
+            gamification_repo = GamificationRepository(self.repo.session)
+            for student_id, in member_ids:
+                gamification_repo.recalculate_student(student_id, data.season_id)
+            return score
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e))
 
     def update(self, team_id, course_id, data):
-        return self.repo.update_score(
-            team_id,
-            course_id,
-            data.ex_team_score,
-        )
+        try:
+            return self.repo.update_score(
+                team_id,
+                course_id,
+                data.ex_team_score,
+            )
+        except ValueError as e:
+            raise HTTPException(status_code=404, detail=str(e))
 
     def get_all(self):
         return self.repo.get_all_scores()

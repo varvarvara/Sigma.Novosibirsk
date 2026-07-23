@@ -287,7 +287,7 @@ class ExtracurricularActivityRepository():
     def get_extracurricular_activity_by_season(self, season_id: int) -> list[ExtracurricularActivity]:
         return self.session.query(ExtracurricularActivity).filter(ExtracurricularActivity.season_id == season_id).all()
 
-    def create_extracurricular_activity(self, name: str, staff_id: int, score: int) -> ExtracurricularActivity:
+    def create_extracurricular_activity(self, name: str, staff_id: int, score: int, season_id: int) -> ExtracurricularActivity:
 
         if score < 0:
             raise ValueError("Score не может быть отрицательным")
@@ -295,7 +295,8 @@ class ExtracurricularActivityRepository():
         activity = ExtracurricularActivity(
             ex_course_name=name,
             staff_id=staff_id,
-            ex_course_score=score
+            ex_course_score=score,
+            season_id=season_id,
         )
 
         self.session.add(activity)
@@ -363,10 +364,15 @@ class ExtracurricularTeamRepository():
     def get_extracurricular_team_by_season(self, season_id: int) -> list[ExtracurricularTeam]:
         return self.session.query(ExtracurricularTeam).filter(ExtracurricularTeam.season_id == season_id).all()
 
-    def create_team(self, team_number: int, team_name: str) -> ExtracurricularTeam:
+    def create_team(self, team_number: int, team_name: str, season_id: int) -> ExtracurricularTeam:
+        existing = self.get_by_number(team_number)
+        if existing:
+            raise ValueError("Команда с таким номером уже существует")
+
         team = ExtracurricularTeam(
             ex_team_number=team_number,
-            ex_team_name=team_name
+            ex_team_name=team_name,
+            season_id=season_id,
         )
 
         self.session.add(team)
@@ -377,7 +383,7 @@ class ExtracurricularTeamRepository():
             return team
         except IntegrityError:
             self.session.rollback()
-            raise ValueError("Команда с таким номером уже существует")
+            raise ValueError("Не удалось создать команду")
 
     def get_all(self):
         return self.session.query(ExtracurricularTeam).all()
@@ -411,10 +417,9 @@ class ExtracurricularTeamMemberRepository():
         return self.session.query(ExtracurricularTeamMember).filter(ExtracurricularTeamMember.season_id == season_id).all()
 
     def get_student_by_id(self, student_id: int):
-        from app.modules.gamification.models import Gamification
         return (
-            self.session.query(Gamification)
-            .filter(Gamification.student_id == student_id)
+            self.session.query(Student)
+            .filter(Student.id == student_id)
             .first()
         )
 
@@ -425,7 +430,7 @@ class ExtracurricularTeamMemberRepository():
             .first()
         )
 
-    def add_member(self, team_id: int, student_id: int):
+    def add_member(self, team_id: int, student_id: int, season_id: int):
         student = self.get_student_by_id(student_id)
         if not student:
             raise ValueError(f"Студент с id={student_id} не найден")
@@ -434,10 +439,26 @@ class ExtracurricularTeamMemberRepository():
         if not team:
             raise ValueError(f"Команда с id={team_id} не найден")
 
+        if team.season_id != season_id:
+            raise ValueError("Команда относится к другому сезону")
+
+        existing_membership = (
+            self.session.query(ExtracurricularTeamMember)
+            .filter(
+                ExtracurricularTeamMember.student_id == student_id,
+                ExtracurricularTeamMember.season_id == season_id,
+            )
+            .first()
+        )
+        if existing_membership:
+            if existing_membership.team_id == team_id:
+                raise ValueError("Студент уже в этой команде")
+            raise ValueError("Студент уже состоит в другой команде этого сезона")
+
         member = ExtracurricularTeamMember(
             team_id=team_id,
             student_id=student_id,
-            season_id=team.season_id,
+            season_id=season_id,
         )
 
         self.session.add(member)
@@ -448,7 +469,7 @@ class ExtracurricularTeamMemberRepository():
             return member
         except IntegrityError:
             self.session.rollback()
-            raise ValueError("Студент уже в этой команде")
+            raise ValueError("Не удалось добавить студента в команду")
 
     def get_by_team(self, team_id: int):
         return (
@@ -510,7 +531,15 @@ class ExtracurricularScoreRepository():
     def get_extracurricular_score_by_season(self, season_id: int) -> list[ExtracurricularScore]:
         return self.session.query(ExtracurricularScore).filter(ExtracurricularScore.season_id == season_id).all()
 
-    def mark_ex_team_attendance(self, team_id: int, ex_course_id: int):
+    def mark_ex_team_attendance(self, team_id: int, ex_course_id: int, season_id: int):
+        team = (
+            self.session.query(ExtracurricularTeam)
+            .filter(ExtracurricularTeam.id == team_id)
+            .first()
+        )
+        if not team:
+            raise ValueError("Команда не найдена")
+
         activity = (
             self.session.query(ExtracurricularActivity)
             .filter(ExtracurricularActivity.id == ex_course_id)
@@ -518,12 +547,31 @@ class ExtracurricularScoreRepository():
         )
 
         if not activity:
-            raise ValueError("Activity not found")
+            raise ValueError("Активность не найдена")
+
+        if team.season_id != season_id:
+            raise ValueError("Команда относится к другому сезону")
+
+        if activity.season_id != season_id:
+            raise ValueError("Активность относится к другому сезону")
+
+        existing_score = (
+            self.session.query(ExtracurricularScore)
+            .filter(
+                ExtracurricularScore.team_id == team_id,
+                ExtracurricularScore.ex_course_id == ex_course_id,
+            )
+            .first()
+        )
+        if existing_score:
+            raise ValueError("Команда уже записана в эту активность!")
 
         obj = ExtracurricularScore(
             team_id=team_id,
             ex_course_id=ex_course_id,
-            ex_team_score=activity.ex_course_score)
+            ex_team_score=activity.ex_course_score,
+            season_id=season_id,
+        )
 
         self.session.add(obj)
 
@@ -533,7 +581,7 @@ class ExtracurricularScoreRepository():
             return obj
         except IntegrityError:
             self.session.rollback()
-            raise ValueError("Команда уже записана в эту активность!")
+            raise ValueError("Не удалось начислить баллы команде")
 
     def update_score(self, team_id: int, ex_course_id: int, new_score: int):
         obj = (
