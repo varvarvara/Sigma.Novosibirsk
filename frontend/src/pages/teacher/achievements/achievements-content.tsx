@@ -141,7 +141,7 @@ export default function TeacherAchievementsContent() {
 
       await assignAchievementMutation.mutateAsync(assignmentsToCreate);
 
-      setStatusMessage('Ачивки сохранены. За каждую ачивку студент получает 1 балл.');
+      setStatusMessage('Ачивки сохранены. За каждую ачивку студент получает 3 балла.');
     } catch (saveError) {
       setSaveError(
         saveError instanceof AuthApiError
