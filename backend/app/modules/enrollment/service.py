@@ -379,12 +379,16 @@ class EnrollmentService:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Course not found")
 
         if self._is_teacher(current_user):
-            if course.staff_id != current_user["user"].id:
+            if not self.repository.teacher_has_course_group_access(
+                course_id=course_id,
+                teacher_staff_id=current_user["user"].id,
+            ):
                 raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
         elif not self._is_admin(current_user):
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Teacher/Admin access required")
 
-        rows = self.repository.list_enrollments_by_course(course_id=course_id, offset=offset, limit=limit)
+        related_course_ids = self.repository.get_related_course_ids(course_id=course_id)
+        rows = self.repository.list_enrollments_by_course(course_id=related_course_ids, offset=offset, limit=limit)
         return [self._to_output(row) for row in rows]
 
     def get_student_enrollments(

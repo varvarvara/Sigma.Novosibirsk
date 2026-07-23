@@ -1,6 +1,6 @@
 from datetime import date
 
-from sqlalchemy import func, or_
+from sqlalchemy import and_, func, or_
 from sqlalchemy.orm import Session
 from fastapi import HTTPException
 from sqlalchemy.exc import IntegrityError
@@ -16,6 +16,12 @@ from app.modules.users.models import Staff, Student
 class AttendanceRepository:
     def __init__(self, db: Session):
         self.db = db
+
+    @staticmethod
+    def _coerce_course_ids(course_ids: int | list[int]) -> list[int]:
+        if isinstance(course_ids, list):
+            return sorted(set(course_ids))
+        return [course_ids]
         
     def get_attendance_by_season(self, season_id: int) -> list[Attendance]:
         return self.db.query(Attendance).filter(Attendance.season_id == season_id).all()
@@ -38,15 +44,46 @@ class AttendanceRepository:
             .first()
         )
 
+    def get_related_course_ids(self, course_id: int) -> list[int]:
+        course = self.db.query(Course).filter(Course.id == course_id).first()
+        if course is None:
+            return []
+
+        rows = (
+            self.db.query(Course.id)
+            .filter(
+                Course.season_id == course.season_id,
+                Course.title == course.title,
+                Course.course_type == course.course_type,
+                Course.course_duration == course.course_duration,
+            )
+            .order_by(Course.id.asc())
+            .all()
+        )
+        return [row.id for row in rows]
+
+    def teacher_has_course_group_access(self, course_id: int, teacher_staff_id: int) -> bool:
+        related_course_ids = self.get_related_course_ids(course_id=course_id)
+        if not related_course_ids:
+            return False
+
+        return (
+            self.db.query(Course.id)
+            .filter(Course.id.in_(related_course_ids), Course.staff_id == teacher_staff_id)
+            .first()
+            is not None
+        )
+
     def get_student_by_id(self, student_id: int) -> Student | None:
         return self.db.query(Student).filter(Student.id == student_id).first()
 
-    def is_student_enrolled_in_course(self, student_id: int, course_id: int) -> bool:
+    def is_student_enrolled_in_course(self, student_id: int, course_id: int | list[int]) -> bool:
+        course_ids = self._coerce_course_ids(course_ids=course_id)
         return (
             self.db.query(Enrollment.id)
             .filter(
                 Enrollment.student_id == student_id,
-                Enrollment.course_id == course_id,
+                Enrollment.course_id.in_(course_ids),
                 Enrollment.enrollment_status != "Dropped",
             )
             .first()
@@ -90,16 +127,18 @@ class AttendanceRepository:
         self.db.refresh(attendance)
         return attendance, created
 
-    def count_course_lessons(self, course_id: int) -> int:
+    def count_course_lessons(self, course_id: int | list[int]) -> int:
+        course_ids = self._coerce_course_ids(course_ids=course_id)
         return (
             self.db.query(Schedule.id)
             .join(CourseClass, Schedule.course_class_id == CourseClass.id)
-            .filter(CourseClass.course_id == course_id)
+            .filter(CourseClass.course_id.in_(course_ids))
             .count()
         )
 
-    def list_course_student_summaries(self, course_id: int, search: str | None = None) -> list[dict]:
-        total_lessons = self.count_course_lessons(course_id=course_id)
+    def list_course_student_summaries(self, course_id: int | list[int], search: str | None = None) -> list[dict]:
+        course_ids = self._coerce_course_ids(course_ids=course_id)
+        total_lessons = self.count_course_lessons(course_id=course_ids)
 
         attended_subq = (
             self.db.query(
@@ -109,7 +148,7 @@ class AttendanceRepository:
             .join(Schedule, Attendance.schedule_id == Schedule.id)
             .join(CourseClass, Schedule.course_class_id == CourseClass.id)
             .filter(
-                CourseClass.course_id == course_id,
+                CourseClass.course_id.in_(course_ids),
                 Attendance.attendance_status.is_(True),
             )
             .group_by(Attendance.student_id)
@@ -127,7 +166,7 @@ class AttendanceRepository:
             .join(Enrollment, Enrollment.student_id == Student.id)
             .outerjoin(attended_subq, attended_subq.c.student_id == Student.id)
             .filter(
-                Enrollment.course_id == course_id,
+                Enrollment.course_id.in_(course_ids),
                 Enrollment.enrollment_status != "Dropped",
             )
         )
@@ -164,19 +203,22 @@ class AttendanceRepository:
 
         return results
 
-    def list_course_students(self, course_id: int) -> list[Student]:
+    def list_course_students(self, course_id: int | list[int]) -> list[Student]:
+        course_ids = self._coerce_course_ids(course_ids=course_id)
         return (
             self.db.query(Student)
             .join(Enrollment, Enrollment.student_id == Student.id)
             .filter(
-                Enrollment.course_id == course_id,
+                Enrollment.course_id.in_(course_ids),
                 Enrollment.enrollment_status != "Dropped",
             )
+            .distinct(Student.id)
             .order_by(Student.last_name.asc(), Student.first_name.asc())
             .all()
         )
 
-    def list_course_lessons_with_student_attendance(self, course_id: int, student_id: int) -> list[dict]:
+    def list_course_lessons_with_student_attendance(self, course_id: int | list[int], student_id: int) -> list[dict]:
+        course_ids = self._coerce_course_ids(course_ids=course_id)
         rows = (
             self.db.query(
                 Schedule.id.label("schedule_id"),
@@ -189,7 +231,7 @@ class AttendanceRepository:
                 Attendance,
                 (Attendance.schedule_id == Schedule.id) & (Attendance.student_id == student_id),
             )
-            .filter(CourseClass.course_id == course_id)
+            .filter(CourseClass.course_id.in_(course_ids))
             .order_by(Schedule.lesson_date.asc(), Schedule.lesson_time.asc())
             .all()
         )
@@ -220,13 +262,14 @@ class AttendanceRepository:
             .all()
         )
 
-    def search_students_in_course(self, course_id: int, query_value: str, limit: int = 50) -> list[Student]:
+    def search_students_in_course(self, course_id: int | list[int], query_value: str, limit: int = 50) -> list[Student]:
+        course_ids = self._coerce_course_ids(course_ids=course_id)
         like_query = f"%{query_value}%"
         return (
             self.db.query(Student)
             .join(Enrollment, Enrollment.student_id == Student.id)
             .filter(
-                Enrollment.course_id == course_id,
+                Enrollment.course_id.in_(course_ids),
                 Enrollment.enrollment_status != "Dropped",
                 or_(
                     Student.first_name.ilike(like_query),
@@ -234,6 +277,7 @@ class AttendanceRepository:
                     Student.email.ilike(like_query),
                 ),
             )
+            .distinct(Student.id)
             .order_by(Student.last_name.asc(), Student.first_name.asc())
             .limit(limit)
             .all()
@@ -241,12 +285,31 @@ class AttendanceRepository:
 
     def search_students_for_teacher(self, teacher_staff_id: int, query_value: str, limit: int = 50) -> list[Student]:
         like_query = f"%{query_value}%"
+        owned_groups = (
+            self.db.query(
+                Course.season_id.label("season_id"),
+                Course.title.label("title"),
+                Course.course_type.label("course_type"),
+                Course.course_duration.label("course_duration"),
+            )
+            .filter(Course.staff_id == teacher_staff_id)
+            .distinct()
+            .subquery()
+        )
         return (
             self.db.query(Student)
             .join(Enrollment, Enrollment.student_id == Student.id)
             .join(Course, Course.id == Enrollment.course_id)
+            .join(
+                owned_groups,
+                and_(
+                    Course.season_id == owned_groups.c.season_id,
+                    Course.title == owned_groups.c.title,
+                    Course.course_type == owned_groups.c.course_type,
+                    Course.course_duration == owned_groups.c.course_duration,
+                ),
+            )
             .filter(
-                Course.staff_id == teacher_staff_id,
                 Enrollment.enrollment_status != "Dropped",
                 or_(
                     Student.first_name.ilike(like_query),
@@ -403,6 +466,12 @@ class AttendanceRepository:
 class AchievementRepository:
     def __init__(self, db: Session):
         self.db = db
+
+    @staticmethod
+    def _coerce_course_ids(course_ids: int | list[int]) -> list[int]:
+        if isinstance(course_ids, list):
+            return sorted(set(course_ids))
+        return [course_ids]
         
     def get_achievement_by_season(self, season_id: int) -> list[Achievement]:
         return self.db.query(Achievement).filter(Achievement.season_id == season_id).all()
@@ -410,10 +479,11 @@ class AchievementRepository:
     def get_achievement_by_id(self, achievement_id: int) -> Achievement | None:
         return self.db.query(Achievement).filter(Achievement.id == achievement_id).first()
 
-    def list_course_achievements(self, course_id: int) -> list[Achievement]:
+    def list_course_achievements(self, course_id: int | list[int]) -> list[Achievement]:
+        course_ids = self._coerce_course_ids(course_ids=course_id)
         return (
             self.db.query(Achievement)
-            .filter(Achievement.course_id == course_id)
+            .filter(Achievement.course_id.in_(course_ids))
             .order_by(Achievement.id.asc())
             .all()
         )
@@ -470,21 +540,23 @@ class AchievementRepository:
 
         return obj
 
-    def list_course_student_achievement_assignments(self, course_id: int, student_ids: list[int]) -> list[StudentAchievement]:
+    def list_course_student_achievement_assignments(self, course_id: int | list[int], student_ids: list[int]) -> list[StudentAchievement]:
         if not student_ids:
             return []
+        course_ids = self._coerce_course_ids(course_ids=course_id)
 
         return (
             self.db.query(StudentAchievement)
             .join(Achievement, StudentAchievement.achievement_id == Achievement.id)
             .filter(
-                Achievement.course_id == course_id,
+                Achievement.course_id.in_(course_ids),
                 StudentAchievement.student_id.in_(student_ids),
             )
             .all()
         )
 
-    def get_student_course_achievements(self, student_id: int, course_id: int):
+    def get_student_course_achievements(self, student_id: int, course_id: int | list[int]):
+        course_ids = self._coerce_course_ids(course_ids=course_id)
         return (
             self.db.query(
                 Achievement.course_id.label("course_id"),
@@ -493,7 +565,7 @@ class AchievementRepository:
             .join(StudentAchievement, StudentAchievement.achievement_id == Achievement.id)
             .filter(
                 StudentAchievement.student_id == student_id,
-                Achievement.course_id == course_id,
+                Achievement.course_id.in_(course_ids),
             )
             .all()
         )

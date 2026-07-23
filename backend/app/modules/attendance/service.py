@@ -65,7 +65,10 @@ class AttendanceService:
 
         course, _staff = course_info
 
-        if self._is_teacher(current_user) and course.staff_id != current_user["user"].id:
+        if self._is_teacher(current_user) and not self.repository.teacher_has_course_group_access(
+            course_id=course_id,
+            teacher_staff_id=current_user["user"].id,
+        ):
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
 
         return course_info
@@ -77,7 +80,10 @@ class AttendanceService:
 
         schedule, _course_class, course, _staff = row
 
-        if self._is_teacher(current_user) and course.staff_id != current_user["user"].id:
+        if self._is_teacher(current_user) and not self.repository.teacher_has_course_group_access(
+            course_id=course.id,
+            teacher_staff_id=current_user["user"].id,
+        ):
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
 
         return schedule, course
@@ -95,6 +101,7 @@ class AttendanceService:
     def mark_attendance(self, data: AttendanceMarkIn, current_user: dict) -> AttendanceMarkOut:
         self._require_teacher_or_admin(current_user=current_user)
         schedule, course = self._ensure_schedule_access(schedule_id=data.schedule_id, current_user=current_user)
+        related_course_ids = self.repository.get_related_course_ids(course_id=course.id)
 
         student = self.repository.get_student_by_id(student_id=data.student_id)
         if student is None:
@@ -106,7 +113,10 @@ class AttendanceService:
                 detail="Attendance season does not match schedule season",
             )
 
-        if not self.repository.is_student_enrolled_in_course(student_id=data.student_id, course_id=course.id):
+        if not self.repository.is_student_enrolled_in_course(
+            student_id=data.student_id,
+            course_id=related_course_ids,
+        ):
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
                 detail="Student is not enrolled in this course",
@@ -140,13 +150,17 @@ class AttendanceService:
     ) -> AttendanceBulkMarkOut:
         self._require_teacher_or_admin(current_user=current_user)
         schedule, course = self._ensure_schedule_access(schedule_id=schedule_id, current_user=current_user)
+        related_course_ids = self.repository.get_related_course_ids(course_id=course.id)
 
         if not data.items:
             raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Items list is empty")
 
         not_enrolled_student_ids: list[int] = []
         for item in data.items:
-            if not self.repository.is_student_enrolled_in_course(student_id=item.student_id, course_id=course.id):
+            if not self.repository.is_student_enrolled_in_course(
+                student_id=item.student_id,
+                course_id=related_course_ids,
+            ):
                 not_enrolled_student_ids.append(item.student_id)
 
         if not_enrolled_student_ids:
@@ -194,8 +208,9 @@ class AttendanceService:
     ) -> CourseAttendanceSummaryOut:
         self._require_teacher_or_admin(current_user=current_user)
         course, staff = self._ensure_course_access(course_id=course_id, current_user=current_user)
+        related_course_ids = self.repository.get_related_course_ids(course_id=course.id)
 
-        students_data = self.repository.list_course_student_summaries(course_id=course_id, search=search)
+        students_data = self.repository.list_course_student_summaries(course_id=related_course_ids, search=search)
         students = [CourseStudentAttendanceSummaryOut(**item) for item in students_data]
 
         teacher_name = f"{staff.first_name} {staff.last_name}".strip()
@@ -215,16 +230,17 @@ class AttendanceService:
     ) -> CourseStudentAttendanceDetailOut:
         self._require_teacher_or_admin(current_user=current_user)
         course, _staff = self._ensure_course_access(course_id=course_id, current_user=current_user)
+        related_course_ids = self.repository.get_related_course_ids(course_id=course.id)
 
         student = self.repository.get_student_by_id(student_id=student_id)
         if student is None:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Student not found")
 
-        if not self.repository.is_student_enrolled_in_course(student_id=student_id, course_id=course_id):
+        if not self.repository.is_student_enrolled_in_course(student_id=student_id, course_id=related_course_ids):
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Student is not enrolled in this course")
 
         lesson_rows = self.repository.list_course_lessons_with_student_attendance(
-            course_id=course_id,
+            course_id=related_course_ids,
             student_id=student_id,
         )
         lessons = [LessonAttendanceItemOut(**item) for item in lesson_rows]
@@ -263,9 +279,10 @@ class AttendanceService:
             return []
 
         if course_id is not None:
-            self._ensure_course_access(course_id=course_id, current_user=current_user)
+            course, _staff = self._ensure_course_access(course_id=course_id, current_user=current_user)
+            related_course_ids = self.repository.get_related_course_ids(course_id=course.id)
             students = self.repository.search_students_in_course(
-                course_id=course_id,
+                course_id=related_course_ids,
                 query_value=query_value.strip(),
             )
         elif self._is_admin(current_user):
@@ -399,7 +416,10 @@ class AchievementService:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Course not found")
 
         course, _staff = course_info
-        if self._is_teacher(current_user) and course.staff_id != current_user["user"].id:
+        if self._is_teacher(current_user) and not self.attendance_repository.teacher_has_course_group_access(
+            course_id=course_id,
+            teacher_staff_id=current_user["user"].id,
+        ):
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
         if not self._is_teacher(current_user) and not self._is_admin(current_user):
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Teacher/Admin access required")
@@ -407,7 +427,8 @@ class AchievementService:
         return course
 
     def list_course_achievements(self, course_id: int, current_user: dict) -> list[AchievementOut]:
-        self._ensure_course_access(course_id=course_id, current_user=current_user)
+        course = self._ensure_course_access(course_id=course_id, current_user=current_user)
+        related_course_ids = self.attendance_repository.get_related_course_ids(course_id=course.id)
         return [
             AchievementOut(
                 id=achievement.id,
@@ -419,21 +440,22 @@ class AchievementService:
                 icon_image_key=achievement.icon_image_key,
                 icon_url=self.media.resolve_url(achievement.icon_image_key),
             )
-            for achievement in self.repository.list_course_achievements(course_id=course_id)
+            for achievement in self.repository.list_course_achievements(course_id=related_course_ids)
         ]
 
     def get_course_achievement_matrix(self, course_id: int, current_user: dict) -> CourseAchievementMatrixOut:
         course = self._ensure_course_access(course_id=course_id, current_user=current_user)
+        related_course_ids = self.attendance_repository.get_related_course_ids(course_id=course.id)
         course_info = self.attendance_repository.get_course_with_staff(course_id=course_id)
         if course_info is None:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Course not found")
 
         _course, staff = course_info
-        students = self.attendance_repository.list_course_students(course_id=course_id)
-        achievements = self.repository.list_course_achievements(course_id=course_id)
+        students = self.attendance_repository.list_course_students(course_id=related_course_ids)
+        achievements = self.repository.list_course_achievements(course_id=related_course_ids)
         student_ids = [student.id for student in students]
         assignments = self.repository.list_course_student_achievement_assignments(
-            course_id=course_id,
+            course_id=related_course_ids,
             student_ids=student_ids,
         )
         assignment_by_student_and_achievement = {
@@ -496,9 +518,10 @@ class AchievementService:
             raise HTTPException(status_code=404, detail="Achievement not found")
 
         self._ensure_course_access(course_id=achievement.course_id, current_user=current_user)
+        related_course_ids = self.attendance_repository.get_related_course_ids(course_id=achievement.course_id)
         if not self.attendance_repository.is_student_enrolled_in_course(
             student_id=data.student_id,
-            course_id=achievement.course_id,
+            course_id=related_course_ids,
         ):
             raise HTTPException(status_code=409, detail="Student is not enrolled in this course")
 
@@ -533,7 +556,8 @@ class AchievementService:
     
     
     def get_student_course_achievements(self, student_id: int, course_id: int):
-        rows = self.repository.get_student_course_achievements(student_id, course_id)
+        related_course_ids = self.attendance_repository.get_related_course_ids(course_id=course_id)
+        rows = self.repository.get_student_course_achievements(student_id, related_course_ids)
 
         return [
             {

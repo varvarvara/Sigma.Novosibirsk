@@ -13,6 +13,12 @@ class EnrollmentRepository:
     def __init__(self, db: Session):
         self.db = db
 
+    @staticmethod
+    def _coerce_course_ids(course_ids: int | list[int]) -> list[int]:
+        if isinstance(course_ids, list):
+            return sorted(set(course_ids))
+        return [course_ids]
+
     def get_enrollment_by_season(self, season_id: int) -> list[Enrollment]:
         return self.db.query(Enrollment).filter(Enrollment.season_id == season_id).all()
     
@@ -39,6 +45,36 @@ class EnrollmentRepository:
 
     def get_course_by_id(self, course_id: int) -> Course | None:
         return self.db.query(Course).filter(Course.id == course_id).first()
+
+    def get_related_course_ids(self, course_id: int) -> list[int]:
+        course = self.get_course_by_id(course_id=course_id)
+        if course is None:
+            return []
+
+        rows = (
+            self.db.query(Course.id)
+            .filter(
+                Course.season_id == course.season_id,
+                Course.title == course.title,
+                Course.course_type == course.course_type,
+                Course.course_duration == course.course_duration,
+            )
+            .order_by(Course.id.asc())
+            .all()
+        )
+        return [row.id for row in rows]
+
+    def teacher_has_course_group_access(self, course_id: int, teacher_staff_id: int) -> bool:
+        related_course_ids = self.get_related_course_ids(course_id=course_id)
+        if not related_course_ids:
+            return False
+
+        return (
+            self.db.query(Course.id)
+            .filter(Course.id.in_(related_course_ids), Course.staff_id == teacher_staff_id)
+            .first()
+            is not None
+        )
 
     def get_season_by_id(self, season_id: int) -> Season | None:
         return self.db.query(Season).filter(Season.id == season_id).first()
@@ -77,10 +113,11 @@ class EnrollmentRepository:
             .all()
         )
 
-    def list_enrollments_by_course(self, course_id: int, offset: int = 0, limit: int = 20) -> list[Enrollment]:
+    def list_enrollments_by_course(self, course_id: int | list[int], offset: int = 0, limit: int = 20) -> list[Enrollment]:
+        course_ids = self._coerce_course_ids(course_ids=course_id)
         return (
             self.db.query(Enrollment)
-            .filter(Enrollment.course_id == course_id)
+            .filter(Enrollment.course_id.in_(course_ids))
             .order_by(Enrollment.id.desc())
             .offset(offset)
             .limit(limit)
