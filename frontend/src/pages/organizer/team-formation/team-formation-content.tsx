@@ -3,8 +3,11 @@ import { useNavigate } from '@tanstack/react-router';
 import { warmRoute } from '../../../app/route-warmers';
 import { AuthApiError } from '../../../entities/auth';
 import {
+  useDeleteTeamMutation,
   useListScoresQuery,
   useListTeamsQuery,
+  useRemoveTeamMemberMutation,
+  useUpdateTeamMutation,
 } from '../../../entities/organizer/queries/extracurricular.queries';
 import {
   useSeasonExtracurricularTeamMembersQuery,
@@ -27,6 +30,7 @@ type TeamMember = {
 type Team = {
   id: number;
   title: string;
+  number: number;
   direction: string;
   captain: string;
   count: string;
@@ -85,6 +89,7 @@ function mapTeam(
   return {
     id: apiTeam.id,
     title: apiTeam.ex_team_name,
+    number: apiTeam.ex_team_number,
     direction: `Команда №${apiTeam.ex_team_number}`,
     captain: '—',
     count: formatParticipantsCount(members.length),
@@ -122,6 +127,9 @@ export default function TeamFormationContent() {
     isLoading: isStudentsLoading,
     error: studentsError,
   } = useSeasonStudentsQuery(DEFAULT_SEASON_ID);
+  const updateTeamMutation = useUpdateTeamMutation(DEFAULT_SEASON_ID);
+  const deleteTeamMutation = useDeleteTeamMutation(DEFAULT_SEASON_ID);
+  const removeTeamMemberMutation = useRemoveTeamMemberMutation(DEFAULT_SEASON_ID);
 
   const isLoading = isTeamsLoading || isScoresLoading || isMembershipsLoading || isStudentsLoading;
   const error =
@@ -173,8 +181,55 @@ export default function TeamFormationContent() {
     setCollapsedTeamIds((ids) => (ids.includes(id) ? ids.filter((teamId) => teamId !== id) : [...ids, id]));
   };
 
-  const deleteTeam = () => {
-    setNotice('Удаление команды пока недоступно на сервере');
+  const updateTeamField = (
+    teamId: number,
+    patch: Partial<Pick<Team, 'title' | 'number'>>,
+  ) => {
+    setTeamItems((current) =>
+      current.map((team) =>
+        team.id === teamId
+          ? {
+              ...team,
+              ...patch,
+              direction: `Команда №${patch.number ?? team.number}`,
+            }
+          : team,
+      ),
+    );
+  };
+
+  const saveTeam = async (team: Team) => {
+    try {
+      setNotice('');
+      await updateTeamMutation.mutateAsync({
+        teamId: team.id,
+        payload: {
+          ex_team_name: team.title.trim() || team.title,
+          ex_team_number: team.number,
+        },
+      });
+      setNotice(`Команда «${team.title}» сохранена`);
+    } catch (saveError) {
+      if (saveError instanceof AuthApiError) {
+        setNotice(saveError.message);
+      } else {
+        setNotice('Не удалось сохранить изменения команды');
+      }
+    }
+  };
+
+  const deleteTeam = async (team: Team) => {
+    try {
+      setNotice('');
+      await deleteTeamMutation.mutateAsync(team.id);
+      setNotice(`Команда «${team.title}» удалена`);
+    } catch (deleteError) {
+      if (deleteError instanceof AuthApiError) {
+        setNotice(deleteError.message);
+      } else {
+        setNotice('Не удалось удалить команду');
+      }
+    }
   };
 
   const normalizedQuery = query.trim().toLowerCase();
@@ -252,6 +307,23 @@ export default function TeamFormationContent() {
             );
             const teamTotal = team.totalPoints;
 
+            const removeMember = async (member: TeamMember) => {
+              try {
+                setNotice('');
+                await removeTeamMemberMutation.mutateAsync({
+                  teamId: team.id,
+                  studentId: member.id,
+                });
+                setNotice(`Участник «${member.name}» удалён из команды`);
+              } catch (removeError) {
+                if (removeError instanceof AuthApiError) {
+                  setNotice(removeError.message);
+                } else {
+                  setNotice('Не удалось удалить участника из команды');
+                }
+              }
+            };
+
             return (
               <section className={`team-panel team-panel--main team-list-panel${collapsed ? ' team-panel--collapsed' : ''}`} key={team.id}>
                 <div className="team-panel__head">
@@ -276,10 +348,10 @@ export default function TeamFormationContent() {
                       </>
                     ) : (
                       <>
-                        <button className="team-danger-button team-clickable" type="button" onClick={deleteTeam}>
+                        <button className="team-danger-button team-clickable" type="button" onClick={() => void deleteTeam(team)}>
                           Удалить
                         </button>
-                        <button className="team-light-button team-clickable" type="button" onClick={() => setNotice('Изменения сохранены')}>
+                        <button className="team-light-button team-clickable" type="button" onClick={() => void saveTeam(team)}>
                           Сохранить
                         </button>
                         <button className="team-icon-button team-clickable" type="button" aria-label="Свернуть" onClick={() => toggleTeamPanel(team.id)}>
@@ -292,6 +364,25 @@ export default function TeamFormationContent() {
 
                 {!collapsed && (
                   <div className="team-panel__body">
+                    <div className="team-tools">
+                      <div className="team-search">
+                        <input
+                          value={team.title}
+                          placeholder="Название команды"
+                          onChange={(event) => updateTeamField(team.id, { title: event.target.value })}
+                        />
+                      </div>
+                      <div className="team-search">
+                        <input
+                          type="number"
+                          min={1}
+                          value={team.number}
+                          placeholder="Номер команды"
+                          onChange={(event) => updateTeamField(team.id, { number: Math.max(1, Number(event.target.value) || 1) })}
+                        />
+                      </div>
+                    </div>
+
                     <div className="team-tools">
                       <div className="team-search">
                         <input
@@ -309,7 +400,7 @@ export default function TeamFormationContent() {
                       activeMemberId={activeMemberId}
                       memberScores={memberScores}
                       onSelectMember={setActiveMemberId}
-                      onRemoveMember={() => setNotice('Удаление участника пока недоступно')}
+                      onRemoveMember={(member) => void removeMember(member)}
                       onScoreChange={updateMemberScore}
                       emptyMessage={
                         team.members.length === 0

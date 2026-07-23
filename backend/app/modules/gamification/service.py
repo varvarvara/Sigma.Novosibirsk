@@ -175,9 +175,28 @@ class TeamService:
     def get_all(self):
         return self.repo.get_all()
 
+    def update(self, team_id: int, data):
+        try:
+            return self.repo.update_team(team_id, data)
+        except ValueError as e:
+            status_code = 404 if "не найдена" in str(e) else 400
+            raise HTTPException(status_code=status_code, detail=str(e))
+
     def delete(self, team_id: int):
-        if not self.repo.delete(team_id):
+        team = self.repo.get_by_id(team_id)
+        if not team:
             raise HTTPException(404, "Team not found")
+        season_id = team.season_id
+        member_ids = [
+            student_id
+            for student_id, in self.repo.session.query(ExtracurricularTeamMember.student_id)
+            .filter(ExtracurricularTeamMember.team_id == team_id)
+            .all()
+        ]
+        self.repo.delete(team_id)
+        gamification_repo = GamificationRepository(self.repo.session)
+        for student_id in member_ids:
+            gamification_repo.recalculate_student(student_id, season_id)
 
 
 
@@ -198,8 +217,14 @@ class TeamMemberService:
             raise HTTPException(status_code=400, detail=str(e))
 
     def remove(self, team_id, student_id):
+        team = self.repo.get_team_by_id(team_id)
         if not self.repo.remove_member(team_id, student_id):
             raise HTTPException(404, "Not found")
+        if team is not None:
+            GamificationRepository(self.repo.session).recalculate_student(
+                student_id,
+                team.season_id,
+            )
 
     def list_for_team(self, team_id: int, season_id: int):
         return self.repo.list_members_with_names(team_id, season_id)

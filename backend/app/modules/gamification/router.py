@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy.orm import Session
 
 from app.db.session import get_db
@@ -71,6 +71,26 @@ def get_teams(current_user=Depends(require_staff), service: TeamService = Depend
     return service.get_all()
 
 
+@gamificationRouter.patch("/team/{team_id}", response_model=ExtracurricularTeamRead)
+def update_team(
+    team_id: int,
+    data: ExtracurricularTeamUpdate,
+    current_user=Depends(require_staff),
+    service: TeamService = Depends(get_team_service),
+):
+    return service.update(team_id, data)
+
+
+@gamificationRouter.delete("/team/{team_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_team(
+    team_id: int,
+    current_user=Depends(require_staff),
+    service: TeamService = Depends(get_team_service),
+):
+    service.delete(team_id)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
 @gamificationRouter.post("/team/member", response_model=ExtracurricularTeamMemberRead)
 def add_team_member(
     data: ExtracurricularTeamMemberCreate,
@@ -78,6 +98,20 @@ def add_team_member(
     service: TeamMemberService = Depends(get_team_member_service)
 ):
     return service.add(data)
+
+
+@gamificationRouter.delete(
+    "/team/{team_id}/members/{student_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+def remove_team_member(
+    team_id: int,
+    student_id: int,
+    current_user=Depends(require_admin),
+    service: TeamMemberService = Depends(get_team_member_service),
+):
+    service.remove(team_id, student_id)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @gamificationRouter.get(

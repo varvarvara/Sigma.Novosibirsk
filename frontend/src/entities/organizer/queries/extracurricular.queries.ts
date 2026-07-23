@@ -3,18 +3,23 @@ import {
     addExtracurricularTeamMember, 
     createExtracurricularActivity, 
     createExtracurricularTeam, 
+    deleteExtracurricularTeam,
     listExtracurricularActivities, 
     listExtracurricularScores, 
     listExtracurricularTeamMembers, 
     listExtracurricularTeams, 
-    markExtracurricularTeamAttendance 
+    markExtracurricularTeamAttendance,
+    removeExtracurricularTeamMember,
+    updateExtracurricularTeam,
 } from "../api/extracurricular.api";
 import { 
     ExtracurricularActivityCreate,
     ExtracurricularScoreCreate,
     ExtracurricularTeamCreate,
     ExtracurricularTeamMemberCreate,
+    ExtracurricularTeamUpdate,
 } from "../model/extracurricular.types";
+import { seasonQueryKeys } from "./season.queries";
 
 export const organizerExtracurricularQueryKeys = {
     activities: ["listExtracurricularActivities"] as const,
@@ -64,6 +69,44 @@ export function useCreateTeamMutation() {
     })
 }
 
+export function useUpdateTeamMutation(seasonId: number) {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: ({ teamId, payload }: { teamId: number; payload: ExtracurricularTeamUpdate }) =>
+            updateExtracurricularTeam(teamId, payload),
+        onSuccess: async () =>
+            await Promise.all([
+                queryClient.invalidateQueries({
+                    queryKey: organizerExtracurricularQueryKeys.teams
+                }),
+                queryClient.invalidateQueries({
+                    queryKey: seasonQueryKeys.teamMembers(seasonId)
+                }),
+            ]),
+    })
+}
+
+export function useDeleteTeamMutation(seasonId: number) {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: (teamId: number) => deleteExtracurricularTeam(teamId),
+        onSuccess: async () =>
+            await Promise.all([
+                queryClient.invalidateQueries({
+                    queryKey: organizerExtracurricularQueryKeys.teams
+                }),
+                queryClient.invalidateQueries({
+                    queryKey: organizerExtracurricularQueryKeys.scores
+                }),
+                queryClient.invalidateQueries({
+                    queryKey: seasonQueryKeys.teamMembers(seasonId)
+                }),
+            ]),
+    })
+}
+
 export function useCreateTeamMemberMutation() {
     const queryClient = useQueryClient();
 
@@ -91,6 +134,28 @@ export function useAddTeamMemberMutation(teamId: number, seasonId: number) {
                 }),
                 queryClient.invalidateQueries({
                     queryKey: organizerExtracurricularQueryKeys.teams
+                }),
+            ]);
+        }
+    })
+}
+
+export function useRemoveTeamMemberMutation(seasonId: number) {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: ({ teamId, studentId }: { teamId: number; studentId: number }) =>
+            removeExtracurricularTeamMember(teamId, studentId),
+        onSuccess: async () => {
+            await Promise.all([
+                queryClient.invalidateQueries({
+                    queryKey: organizerExtracurricularQueryKeys.teams
+                }),
+                queryClient.invalidateQueries({
+                    queryKey: organizerExtracurricularQueryKeys.scores
+                }),
+                queryClient.invalidateQueries({
+                    queryKey: seasonQueryKeys.teamMembers(seasonId)
                 }),
             ]);
         }

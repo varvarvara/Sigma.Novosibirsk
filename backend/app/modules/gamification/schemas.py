@@ -54,6 +54,11 @@ class ExtracurricularTeamRead(BaseModel):
     ex_team_number: int
     ex_team_name: str
 
+
+class ExtracurricularTeamUpdate(BaseModel):
+    ex_team_number: int | None = Field(default=None, ge=1)
+    ex_team_name: str | None = Field(default=None, min_length=1, max_length=50)
+
 class ExtracurricularTeamMemberCreate(BaseModel):
     team_id: int
     student_id: int

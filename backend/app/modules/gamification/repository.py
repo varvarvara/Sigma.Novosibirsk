@@ -406,7 +406,29 @@ class ExtracurricularTeamRepository():
 
         self.session.delete(team)
         self.session.commit()
-        return True      
+        return True
+
+    def update_team(self, team_id: int, update_data) -> ExtracurricularTeam:
+        team = self.get_by_id(team_id)
+        if not team:
+            raise ValueError(f"Команда с id={team_id} не найдена")
+
+        data = update_data.model_dump(exclude_unset=True)
+        if "ex_team_number" in data and data["ex_team_number"] != team.ex_team_number:
+            existing = self.get_by_number(data["ex_team_number"])
+            if existing and existing.id != team_id:
+                raise ValueError("Команда с таким номером уже существует")
+
+        for field, value in data.items():
+            setattr(team, field, value)
+
+        try:
+            self.session.commit()
+            self.session.refresh(team)
+            return team
+        except IntegrityError:
+            self.session.rollback()
+            raise ValueError("Не удалось обновить команду")
     
 class ExtracurricularTeamMemberRepository():
 

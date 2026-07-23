@@ -24,6 +24,11 @@ export type ExtracurricularTeamCreate = {
   season_id: number;
 };
 
+export type ExtracurricularTeamUpdate = {
+  ex_team_number?: number;
+  ex_team_name?: string;
+};
+
 export type ExtracurricularTeamMemberCreate = {
   team_id: number;
   student_id: number;
