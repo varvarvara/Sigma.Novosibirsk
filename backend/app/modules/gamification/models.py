@@ -50,8 +50,8 @@ class ExtracurricularTeam(Base):
     ex_team_name = Column(String, nullable=False)
     season_id = Column(Integer, ForeignKey("season.id"), nullable=False)
 
-    members = relationship("ExtracurricularTeamMember", back_populates="team")
-    scores = relationship("ExtracurricularScore", back_populates="team")
+    members = relationship("ExtracurricularTeamMember", back_populates="team", passive_deletes=True)
+    scores = relationship("ExtracurricularScore", back_populates="team", passive_deletes=True)
     season = relationship("Season", back_populates="extracurricular_teams")
     
     
