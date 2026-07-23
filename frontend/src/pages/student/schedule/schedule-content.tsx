@@ -4,11 +4,9 @@ import { User01 } from '@untitledui/icons/User01'
 import { AuthApiError } from '../../../entities/auth'
 import type { ScheduleEvent } from '../../../entities/student/model/learning.types'
 import { DEFAULT_SEASON_ID } from '../../../features/auth/student-registration'
-import { scheduleReadyForStudentQueryOptions } from '../../../features/course-flow/course-flow-query-options'
 import { addDays, getDayLabel } from './schedule-page.utils'
 import type { ScheduleItem } from './schedule-page.types'
 import './schedule-page.css'
-import { useQuery } from '@tanstack/react-query'
 import { useMyScheduleEventsQuery } from '../../../entities/student/queries/learning.queries'
 
 const DAYS_BEFORE = 60
@@ -89,7 +87,6 @@ function getInitialAnchorDate(items: ScheduleItem[]) {
 }
 
 export default function ScheduleContent() {
-
   const [activeIndex, setActiveIndex] = useState(DEFAULT_ACTIVE_INDEX)
   const scrollFrameRef = useRef<number | null>(null)
 
@@ -97,47 +94,41 @@ export default function ScheduleContent() {
   const chipRefs = useRef<Array<HTMLButtonElement | null>>([])
 
   const {
-    data: isScheduleReadyResult,
-    isLoading: isScheduleReadyLoading,
-    error: scheduleReadyError
-  } = useQuery(scheduleReadyForStudentQueryOptions())
-
-  const {
     data: scheduleResponse,
     isLoading: isScheduleEventsLoading,
     error: scheduleEventsError
   } = useMyScheduleEventsQuery(DEFAULT_SEASON_ID)
 
-
   const scheduleItems = useMemo(() => {
     if (!scheduleResponse) {
-      return [];
+      return []
     }
 
-    const items = scheduleResponse.events.map(toScheduleItem);
-    const hasPublishedSchedule = 
-      scheduleResponse.schedule_published !== false && items.length > 0;
+    if (scheduleResponse.schedule_published === false) {
+      return []
+    }
 
-    return hasPublishedSchedule ? items : [];
-  }, [scheduleResponse]);
+    return scheduleResponse.events.map(toScheduleItem)
+  }, [scheduleResponse])
 
-
-  const isLoading = isScheduleReadyLoading || (isScheduleReadyResult === true && isScheduleEventsLoading);
-
+  const isLoading = isScheduleEventsLoading
 
   const errorMessage =
-    scheduleReadyError instanceof AuthApiError ?
-      scheduleReadyError.message :
-      scheduleEventsError instanceof AuthApiError ?
-        scheduleEventsError.message :
-        scheduleReadyError || scheduleEventsError ?
-          "Не удалось загрузить расписание" : ''
+    scheduleEventsError instanceof AuthApiError
+      ? scheduleEventsError.message
+      : scheduleEventsError
+        ? 'Не удалось загрузить расписание'
+        : ''
 
-    useEffect(() => {
+  const emptyStateMessage =
+    scheduleResponse?.schedule_published === false
+      ? 'Расписание пока не опубликовано'
+      : 'На эту дату занятий пока нет'
+
+  useEffect(() => {
     if (scheduleItems.length === 0) {
       return
     }
-
 
     const anchor = getInitialAnchorDate(scheduleItems)
     const nextDays = buildDateRange(anchor)
@@ -146,7 +137,6 @@ export default function ScheduleContent() {
 
     setActiveIndex(nextIndex >= 0 ? nextIndex : DEFAULT_ACTIVE_INDEX)
   }, [scheduleItems])
-
 
   const initialAnchorDate = useMemo(() => getInitialAnchorDate(scheduleItems), [scheduleItems])
   const days = useMemo(() => buildDateRange(initialAnchorDate), [initialAnchorDate])
@@ -158,7 +148,6 @@ export default function ScheduleContent() {
     () => sortByTime(scheduleItems.filter((item) => item.date === activeDateKey)),
     [activeDateKey, scheduleItems],
   )
-  
 
   const centerChip = (index: number, behavior: ScrollBehavior) => {
     const row = daysRowRef.current
@@ -270,7 +259,7 @@ export default function ScheduleContent() {
         {!isLoading && !errorMessage && dayItems.length === 0 ? (
           <article className="schedule-card schedule-card--empty">
             <div className="schedule-card__middle schedule-card__middle--empty">
-              <p className="schedule-card__topic">На эту дату занятий пока нет</p>
+              <p className="schedule-card__topic">{emptyStateMessage}</p>
             </div>
           </article>
         ) : null}
