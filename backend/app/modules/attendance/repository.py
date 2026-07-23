@@ -212,7 +212,7 @@ class AttendanceRepository:
                 Enrollment.course_id.in_(course_ids),
                 Enrollment.enrollment_status != "Dropped",
             )
-            .distinct(Student.id)
+            .distinct()
             .order_by(Student.last_name.asc(), Student.first_name.asc())
             .all()
         )
@@ -277,7 +277,7 @@ class AttendanceRepository:
                     Student.email.ilike(like_query),
                 ),
             )
-            .distinct(Student.id)
+            .distinct()
             .order_by(Student.last_name.asc(), Student.first_name.asc())
             .limit(limit)
             .all()
@@ -317,7 +317,7 @@ class AttendanceRepository:
                     Student.email.ilike(like_query),
                 ),
             )
-            .distinct(Student.id)
+            .distinct()
             .order_by(Student.last_name.asc(), Student.first_name.asc())
             .limit(limit)
             .all()
