@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { DEFAULT_SEASON_ID } from "../../../features/auth/student-registration";
 import { 
     addExtracurricularTeamMember, 
     createExtracurricularActivity, 
@@ -22,17 +23,17 @@ import {
 import { seasonQueryKeys } from "./season.queries";
 
 export const organizerExtracurricularQueryKeys = {
-    activities: ["listExtracurricularActivities"] as const,
-    teams: ["listExtracurricularTeams"] as const,
+    activities: (seasonId: number) => ["listExtracurricularActivities", seasonId] as const,
+    teams: (seasonId: number) => ["listExtracurricularTeams", seasonId] as const,
     members: (teamId: number, seasonId: number) =>
     ["listExtracurricularTeamMembers", teamId, seasonId] as const,
-    scores: ["listExtracurricularScores"] as const,
+    scores: (seasonId: number) => ["listExtracurricularScores", seasonId] as const,
 }
 
-export function useListActivitiesQuery() {
+export function useListActivitiesQuery(seasonId: number = DEFAULT_SEASON_ID) {
     return useQuery({
-        queryKey: organizerExtracurricularQueryKeys.activities,
-        queryFn: listExtracurricularActivities,
+        queryKey: organizerExtracurricularQueryKeys.activities(seasonId),
+        queryFn: () => listExtracurricularActivities(seasonId),
     });
 }
 
@@ -44,15 +45,15 @@ export function useCreateActivityMutation() {
             createExtracurricularActivity(payload),
         onSuccess: async () =>
             await queryClient.invalidateQueries({
-                queryKey: organizerExtracurricularQueryKeys.activities
+                queryKey: organizerExtracurricularQueryKeys.activities(DEFAULT_SEASON_ID)
             }),
     });
 }
 
-export function useListTeamsQuery() {
+export function useListTeamsQuery(seasonId: number = DEFAULT_SEASON_ID) {
     return useQuery({
-        queryKey: organizerExtracurricularQueryKeys.teams,
-        queryFn: listExtracurricularTeams,
+        queryKey: organizerExtracurricularQueryKeys.teams(seasonId),
+        queryFn: () => listExtracurricularTeams(seasonId),
     })
 }
 
@@ -64,7 +65,7 @@ export function useCreateTeamMutation() {
             createExtracurricularTeam(payload),
         onSuccess: async () => 
             await queryClient.invalidateQueries({
-                queryKey: organizerExtracurricularQueryKeys.teams
+                queryKey: organizerExtracurricularQueryKeys.teams(DEFAULT_SEASON_ID)
             }),
     })
 }
@@ -78,7 +79,7 @@ export function useUpdateTeamMutation(seasonId: number) {
         onSuccess: async () =>
             await Promise.all([
                 queryClient.invalidateQueries({
-                    queryKey: organizerExtracurricularQueryKeys.teams
+                    queryKey: organizerExtracurricularQueryKeys.teams(seasonId)
                 }),
                 queryClient.invalidateQueries({
                     queryKey: seasonQueryKeys.teamMembers(seasonId)
@@ -95,10 +96,10 @@ export function useDeleteTeamMutation(seasonId: number) {
         onSuccess: async () =>
             await Promise.all([
                 queryClient.invalidateQueries({
-                    queryKey: organizerExtracurricularQueryKeys.teams
+                    queryKey: organizerExtracurricularQueryKeys.teams(seasonId)
                 }),
                 queryClient.invalidateQueries({
-                    queryKey: organizerExtracurricularQueryKeys.scores
+                    queryKey: organizerExtracurricularQueryKeys.scores(seasonId)
                 }),
                 queryClient.invalidateQueries({
                     queryKey: seasonQueryKeys.teamMembers(seasonId)
@@ -115,7 +116,7 @@ export function useCreateTeamMemberMutation() {
             addExtracurricularTeamMember(payload),
         onSuccess: async () => {
             await queryClient.invalidateQueries({
-                queryKey: organizerExtracurricularQueryKeys.teams
+                queryKey: organizerExtracurricularQueryKeys.teams(DEFAULT_SEASON_ID)
             });
         }
     })
@@ -133,7 +134,7 @@ export function useAddTeamMemberMutation(teamId: number, seasonId: number) {
                     queryKey: organizerExtracurricularQueryKeys.members(teamId, seasonId)
                 }),
                 queryClient.invalidateQueries({
-                    queryKey: organizerExtracurricularQueryKeys.teams
+                    queryKey: organizerExtracurricularQueryKeys.teams(seasonId)
                 }),
             ]);
         }
@@ -149,10 +150,10 @@ export function useRemoveTeamMemberMutation(seasonId: number) {
         onSuccess: async () => {
             await Promise.all([
                 queryClient.invalidateQueries({
-                    queryKey: organizerExtracurricularQueryKeys.teams
+                    queryKey: organizerExtracurricularQueryKeys.teams(seasonId)
                 }),
                 queryClient.invalidateQueries({
-                    queryKey: organizerExtracurricularQueryKeys.scores
+                    queryKey: organizerExtracurricularQueryKeys.scores(seasonId)
                 }),
                 queryClient.invalidateQueries({
                     queryKey: seasonQueryKeys.teamMembers(seasonId)
@@ -171,8 +172,8 @@ export function useListTeamMembersQuery(teamId: number, seasonId: number) {
 
 export function useListScoresQuery() {
     return useQuery({
-        queryKey: organizerExtracurricularQueryKeys.scores,
-        queryFn: listExtracurricularScores,
+        queryKey: organizerExtracurricularQueryKeys.scores(DEFAULT_SEASON_ID),
+        queryFn: () => listExtracurricularScores(DEFAULT_SEASON_ID),
     })
 }
 
@@ -185,13 +186,13 @@ export function useMarkTeamAttendanceMutation() {
         onSuccess: async () =>
             await Promise.all([
                 queryClient.invalidateQueries({
-                    queryKey: organizerExtracurricularQueryKeys.scores
+                    queryKey: organizerExtracurricularQueryKeys.scores(DEFAULT_SEASON_ID)
                 }),
                 queryClient.invalidateQueries({
-                    queryKey: organizerExtracurricularQueryKeys.teams
+                    queryKey: organizerExtracurricularQueryKeys.teams(DEFAULT_SEASON_ID)
                 }),
                 queryClient.invalidateQueries({
-                    queryKey: organizerExtracurricularQueryKeys.activities
+                    queryKey: organizerExtracurricularQueryKeys.activities(DEFAULT_SEASON_ID)
                 }),
             ]),
     })
