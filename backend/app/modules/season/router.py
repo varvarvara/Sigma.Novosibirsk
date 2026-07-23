@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from app.modules.season.service import SeasonService
-from app.modules.season.schemas import SeasonCreate, SeasonOutput
+from app.modules.season.schemas import SeasonCreate, SeasonCourseGroupOut, SeasonOutput
 from app.db.session import get_db
 from app.security.permissions import require_admin
 
@@ -43,6 +43,11 @@ def get_teacher_certs(season_id: int, db: Session = Depends(get_db)):
 @seasonRouter.get("/{season_id}/courses")
 def get_courses(season_id: int, db: Session = Depends(get_db)):
     return get_service(db).get_courses_by_season(season_id)
+
+
+@seasonRouter.get("/{season_id}/course-groups", response_model=list[SeasonCourseGroupOut])
+def get_course_groups(season_id: int, db: Session = Depends(get_db)):
+    return get_service(db).get_course_groups_by_season(season_id)
 
 
 @seasonRouter.get("/{season_id}/course-classes")
