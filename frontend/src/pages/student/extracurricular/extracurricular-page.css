@@ -1,0 +1,419 @@
+.extracurricular-page {
+    width: min(100%, var(--app-mobile-max-width));
+    min-height: 100dvh;
+    margin: 0 auto;
+    padding: 72px 16px 104px;
+    background: #2A2730;
+    color: #2A282F;
+    overflow-x: hidden;
+    box-sizing: border-box;
+}
+
+.extracurricular-header {
+    position: fixed;
+    top: 0;
+    left: 50%;
+    z-index: 10;
+    width: min(100%, var(--app-mobile-max-width));
+    height: 72px;
+    padding: 0 20px 0 var(--back-chevron-offset);
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #2A2730;
+}
+
+.extracurricular-header h1 {
+    margin: 0;
+    color: #F7F6FA;
+    font-family: 'Inter SemiBold';
+    font-size: 14px;
+    line-height: 17px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.back-button {
+    color: #F7F6FA;
+}
+
+.back-button svg {
+    display: block;
+}
+
+.team-card {
+    width: 100%;
+    max-width: 100%;
+    min-height: 188px;
+    position: relative;
+    border-radius: 24px;
+    overflow: hidden;
+    background:
+        radial-gradient(circle at 90% 10%, rgba(255, 255, 255, 0.28), transparent 88px),
+        linear-gradient(135deg, #8A98FF 0%, #7584F2 100%);
+    box-shadow: 0 16px 34px rgba(31, 28, 38, 0.24);
+    transition: transform 0.24s ease, box-shadow 0.24s ease, filter 0.24s ease;
+}
+
+.team-card::after {
+    content: "";
+    position: absolute;
+    inset: 1px;
+    border-radius: 23px;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    pointer-events: none;
+}
+
+.team-content {
+    min-height: 188px;
+    padding: 24px;
+    position: relative;
+    z-index: 1;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 106px;
+    align-items: center;
+    gap: 18px;
+}
+
+.team-avatars {
+    display: flex;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.team-avatars img {
+    width: 32px;
+    height: 32px;
+    border: 1px solid #FFFFFF;
+    border-radius: 50%;
+    object-fit: cover;
+    background: #E9E1FF;
+}
+
+.team-avatars img + img {
+    margin-left: -4px;
+}
+
+.team-text h1 {
+    max-width: none;
+    margin: 0 0 14px;
+    color: #FFFFFF;
+    font-family: 'Inter SemiBold';
+    font-size: 18px;
+    line-height: 22px;
+    font-weight: 600;
+}
+
+.team-members {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+}
+
+.team-members p {
+    margin: 0;
+    color: rgba(255, 255, 255, 0.68);
+    font-family: 'Inter Regular';
+    font-size: 12px;
+    line-height: 17px;
+    font-weight: 400;
+}
+
+.team-stats {
+    position: static;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+.team-stats div {
+    display: grid;
+    grid-template-columns: 32px minmax(0, 1fr);
+    align-items: center;
+    gap: 8px;
+}
+
+.team-stats img {
+    width: 32px;
+    height: 32px;
+    object-fit: contain;
+}
+
+.team-stats p {
+    margin: 0;
+    color: #FFFFFF;
+    font-family: 'Inter Medium';
+    font-size: 12px;
+    line-height: 16px;
+    font-weight: 500;
+}
+
+.team-stats span {
+    display: block;
+    color: #FFFFFF;
+    font-family: 'Inter SemiBold';
+    font-size: 19px;
+    line-height: 22px;
+    font-weight: 600;
+}
+
+.extracurricular-content {
+    min-height: calc(100dvh - 72px - 104px);
+    padding: 14px 5.5px 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.extracurricular-status {
+    margin: 0;
+    color: #a8a6ac;
+    font-family: "Inter Medium", "Inter", sans-serif;
+    font-size: 14px;
+    line-height: 17px;
+    font-weight: 500;
+    text-align: center;
+}
+
+.extracurricular-empty {
+    flex: 1;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #f7f6fa;
+    font-family: "Inter Medium", "Inter", sans-serif;
+    font-size: 14px;
+    line-height: 17px;
+    font-weight: 500;
+    text-align: center;
+}
+
+.rating-panel {
+    margin-top: 32px;
+}
+
+.rating-panel h2,
+.charges-panel h2 {
+    margin: 0;
+    color: #FFFFFF;
+    font-family: 'Inter SemiBold';
+    font-size: 16px;
+    line-height: 20px;
+    font-weight: 600;
+}
+
+.rating-list {
+    margin-top: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.activity-row {
+    width: 100%;
+    max-width: 100%;
+    min-height: 82px;
+    padding: 14px 16px;
+    border-radius: 20px;
+    background: #F7F6FA;
+    display: grid;
+    grid-template-columns: 42px minmax(0, 1fr);
+    align-items: center;
+    gap: 12px;
+    box-shadow: 0 10px 26px rgba(20, 18, 26, 0.12);
+    transition: transform 0.22s ease, box-shadow 0.22s ease, background-color 0.22s ease;
+}
+
+.rating-place {
+    width: 42px;
+    min-height: 42px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    color: #2A282F;
+    font-family: 'Inter Medium';
+    font-size: 16px;
+    line-height: 20px;
+    font-weight: 500;
+}
+
+.rating-place img {
+    width: 20px;
+    height: 20px;
+    object-fit: contain;
+}
+
+.rating-info {
+    min-width: 0;
+}
+
+.rating-info h3 {
+    margin: 0;
+    color: #2A282F;
+    font-family: 'Inter SemiBold';
+    font-size: 14px;
+    line-height: 18px;
+    font-weight: 600;
+    overflow-wrap: anywhere;
+}
+
+.rating-info p {
+    margin: 4px 0 0;
+    color: #A8A6AC;
+    font-family: 'Inter Medium';
+    font-size: 11px;
+    line-height: 15px;
+    font-weight: 500;
+    overflow-wrap: anywhere;
+}
+
+.activity-row img {
+    width: 20px;
+    height: 20px;
+    object-fit: contain;
+}
+
+.charges-panel {
+    margin-top: 20px;
+    scroll-margin-top: 60px;
+}
+
+.charges-panel__header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.charges-panel__header span {
+    color: #A8A6AC;
+    font-family: 'Inter Medium';
+    font-size: 12px;
+    line-height: 15px;
+    font-weight: 500;
+    text-align: right;
+}
+
+.charges-list {
+    margin-top: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.charge-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.charge-date {
+    margin: 0;
+    color: #FFFFFF;
+    font-family: 'Inter SemiBold';
+    font-size: 12px;
+    line-height: 15px;
+    font-weight: 600;
+}
+
+.charge-row {
+    width: 100%;
+    max-width: 100%;
+    min-height: 94px;
+    padding: 14px 16px;
+    border-radius: 20px;
+    background: #F7F6FA;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    gap: 12px;
+    box-shadow: 0 10px 26px rgba(20, 18, 26, 0.12);
+    transition: transform 0.22s ease, box-shadow 0.22s ease, background-color 0.22s ease;
+}
+
+.charge-info {
+    min-width: 0;
+}
+
+.charge-info h3 {
+    margin: 0;
+    color: #2A282F;
+    font-family: 'Inter SemiBold';
+    font-size: 13px;
+    line-height: 17px;
+    font-weight: 600;
+    overflow-wrap: anywhere;
+}
+
+.charge-info p {
+    margin: 5px 0 0;
+    color: #A8A6AC;
+    font-family: 'Inter Medium';
+    font-size: 11px;
+    line-height: 15px;
+    font-weight: 500;
+}
+
+.charge-info__student-delta {
+    margin-top: 4px !important;
+    color: #7949FF !important;
+    font-family: 'Inter SemiBold' !important;
+    font-weight: 600 !important;
+}
+
+.charge-coins {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    min-width: 66px;
+    justify-content: flex-end;
+    padding: 6px 8px;
+    border-radius: 999px;
+    background: #ECE6FF;
+}
+
+.charge-coins span {
+    color: #2A282F;
+    font-family: 'Inter SemiBold';
+    font-size: 13px;
+    line-height: 16px;
+    font-weight: 600;
+}
+
+.charge-coins img {
+    width: 20px;
+    height: 20px;
+    object-fit: contain;
+}
+
+.rating-coins {
+    margin: 4px 0 0;
+    color: #6f6b78;
+    font-family: 'Inter Medium', Inter, sans-serif;
+    font-size: 11px;
+    line-height: 15px;
+    font-weight: 500;
+}
+
+@media (hover: hover) {
+    .team-card:hover {
+        transform: translateY(-2px);
+        filter: saturate(1.04);
+        box-shadow: 0 20px 42px rgba(31, 28, 38, 0.3);
+    }
+
+    .activity-row:hover,
+    .charge-row:hover {
+        transform: translateY(-2px);
+        background: #FFFFFF;
+        box-shadow: 0 16px 32px rgba(20, 18, 26, 0.18);
+    }
+}
+
+.team-card:active,
+.activity-row:active,
+.charge-row:active {
+    transform: translateY(1px) scale(0.995);
+}

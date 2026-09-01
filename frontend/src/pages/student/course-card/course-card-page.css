@@ -1,0 +1,216 @@
+.course-card-page {
+    width: min(100%, var(--app-mobile-max-width));
+    height: 100dvh;
+    margin: 0 auto;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    background: #2A2730;
+    color: #FFFFFF;
+    font-family: "Inter Semibold";
+    overflow: hidden;
+    padding: 0 20px;
+    box-sizing: border-box;
+}
+
+.course-card-header {
+    position: relative;
+    z-index: 20;
+    width: 100%;
+    min-height: 72px;
+    padding: 16px 0 12px;
+    display: grid;
+    grid-template-columns: var(--back-chevron-size) minmax(0, 1fr) auto;
+    align-items: center;
+    column-gap: 12px;
+    row-gap: 6px;
+    background: #2A2730;
+}
+
+.course-card-header__title {
+    margin: 0;
+    min-width: 0;
+    color: #F7F6FA;
+    font-size: 14px;
+    line-height: 17px;
+    font-weight: 600;
+}
+
+.course-card-header__meta {
+    justify-self: end;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    text-align: right;
+}
+
+.course-card-header__date {
+    color: #F7F6FA;
+    font-size: 14px;
+    line-height: 17px;
+    font-weight: 600;
+}
+
+.course-card-header__lesson-time {
+    font-size: 12px;
+    line-height: 15px;
+    color: #A8A6AC;
+    font-weight: 500;
+}
+
+.course-card-content {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 12px 0 120px;
+    scrollbar-width: none;
+}
+
+.course-card-content::-webkit-scrollbar {
+    display: none;
+}
+
+.course-card-item {
+    width: 100%;
+    background: #F7F6FA;
+    border-radius: 12px;
+    padding: 16px;
+    color: #2A282F;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+        "top top"
+        "text text"
+        "extra extra"
+        "extra2 extra2";
+    column-gap: 0;
+    row-gap: 8px;
+    align-items: start;
+}
+
+.course-card-item__top {
+    grid-area: top;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.course-card-item__title-group h2 {
+    margin: 0;
+    font-size: 12px;
+    line-height: 15px;
+    font-weight: 700;
+    color: #2A282F;
+}
+
+.course-card-item__teacher {
+    font-family: "Inter Regular";
+    margin-top: 2px;
+    display: block;
+    font-size: 12px;
+    line-height: 15px;
+    color: #A8A6AC;
+}
+
+.course-card-item__badge {
+    padding: 4px 12px;
+    border-radius: 999px;
+    font-size: 12px;
+    line-height: 15px;
+    font-weight: 600;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.course-card-item__badge--author {
+    background: #E9E1FF;
+    color: #7949FF;
+}
+
+.course-card-item__badge--olympiad {
+    background: linear-gradient(90deg, #7549FF 0%, #7949FF 100%);
+    color: #FFFFFF;
+}
+
+.course-card-item__text-block {
+    grid-area: text;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+}
+
+.course-card-item__description {
+    font-family: "Inter Regular";
+    margin: 0;
+    font-size: 12px;
+    line-height: 15px;
+    color: #2A282F;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+.course-card-item__syllabus-link {
+    font-family: "Inter Regular", "Inter", sans-serif;
+    width: fit-content;
+    margin: 0;
+    padding: 0;
+    border: none;
+    background: none;
+    color: #53389E;
+    font-size: 12px;
+    line-height: 15px;
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+    position: relative;
+    z-index: 1;
+    transition: color 0.2s ease, opacity 0.2s ease;
+}
+
+.course-card-item a.course-card-item__syllabus-link:hover,
+.course-card-item a.course-card-item__syllabus-link:focus-visible {
+    color: #53389E;
+    opacity: 0.78;
+    text-decoration: none;
+}
+
+.course-card-item__syllabus-link--inactive {
+    cursor: default;
+}
+
+.course-card-item__extra-line {
+    font-family: "Inter Regular";
+    margin: 0;
+    font-size: 12px;
+    line-height: 15px;
+    color: #4A4657;
+}
+
+.course-card-item__extra-line:nth-of-type(2) {
+    grid-area: extra;
+}
+
+.course-card-item__extra-line:nth-of-type(3) {
+    grid-area: extra2;
+}
+
+.course-card-page__select-btn {
+    width: 320px;
+    height: 40px;
+    border: none;
+    border-radius: 20px;
+    margin: 24px auto 0;
+    background: linear-gradient(90deg, #7549FF 0%, #7949FF 100%);
+    color: #FFFFFF;
+    font-size: 14px;
+    line-height: 20px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.course-card-page__select-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
